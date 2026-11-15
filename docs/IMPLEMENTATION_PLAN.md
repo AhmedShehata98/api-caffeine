@@ -394,8 +394,8 @@ Full requirements and priorities: [features/mcp-lab/feature-specification.md](fe
 (release slices in its §4.1). Open items: [gap-review.md](features/mcp-lab/gap-review.md).
 
 **Before S1**
-- Stitch designs: Lab shell, server list and settings, tool call, transcript / Network / Console, pending-request dialog.
-- Acceptance criteria (Given/When/Then) for the S1 requirements.
+- ~~Stitch designs~~ Done 2026-11-15: screens #14–#22 and a light variant ([stitch-mvp-progress.md](design/stitch-mvp-progress.md)).
+- ~~Acceptance criteria~~ Done 2026-11-15: [features/mcp-lab/s1-acceptance-criteria.md](features/mcp-lab/s1-acceptance-criteria.md).
 - Decide macOS distribution (sandbox blocks stdio, spec Q16) and CIMD hosting (Q13, needed for S2).
 
 **S1 — Core lab**

@@ -159,6 +159,8 @@ Answers Q5 for planning. "Must" in §7 means *Must for the slice that owns the r
 | **S4: Test Point integration** | Environment variables, saved MCP calls, history, import/export, synced catalog | FR-TPI-*, FR-CFG-05…10 |
 | **Later** | MCP Apps, Skills, extension toggles, OpenTelemetry | FR-APP-*, FR-SKL-01, FR-ERA-06/07, FR-MON-09 |
 
+S1 acceptance criteria (Given/When/Then, with test level and fixtures): [s1-acceptance-criteria.md](s1-acceptance-criteria.md). S1 also covers the core of FR-CFG-01/03/04, because it ships the Supabase catalog.
+
 ---
 
 ## 5. Requirements gathering
