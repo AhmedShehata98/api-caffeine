@@ -396,23 +396,26 @@ Full requirements and priorities: [features/mcp-lab/feature-specification.md](fe
 **Before S1**
 - ~~Stitch designs~~ Done 2026-11-15: screens #14–#22 and a light variant ([stitch-mvp-progress.md](design/stitch-mvp-progress.md)).
 - ~~Acceptance criteria~~ Done 2026-11-15: [features/mcp-lab/s1-acceptance-criteria.md](features/mcp-lab/s1-acceptance-criteria.md).
-- Decide macOS distribution (sandbox blocks stdio, spec Q16) and CIMD hosting (Q13, needed for S2).
+- ~~macOS distribution (Q16)~~ Resolved: notarized build outside the App Store, without the App Sandbox (stdio works).
+- ~~Open questions that block S1 (Q5, Q6, Q14, Q15)~~ Resolved in [feature-specification.md §12](features/mcp-lab/feature-specification.md#12-open-questions).
+- CIMD hosting (Q13) — needed for **S2**, not S1. Draft JSON in spec Appendix D; **waiting for owner:** domain or GitHub Pages URL.
 
 **S1 — Core lab**
 - Add `mcp_dart` to `pubspec.yaml` and the Core Stack table.
-- `modules/mcp_lab`: connection repository contract wrapping `mcp_dart` with frame recording; stdio launcher (login-shell `PATH`, Windows `.cmd` shims, env allow-list, process-tree kill, shutdown sequence); Streamable HTTP via the shared proxy settings.
-- `mcp_servers` migration + RLS + `DATA_MODEL.md`; catalog repository; per-device command approval stored locally.
-- Module-local `McpFailure` codes (spec §6.6).
-- Screens: nav-rail entry, server list, connect, tools (schema form + raw JSON), resources, prompts, Protocol / Network / Console.
+- `modules/mcp_lab`: connection repository contract wrapping `mcp_dart` with frame recording; stdio launcher (login-shell `PATH`, Windows `.cmd` shims, env allow-list, process-tree kill, shutdown sequence); Streamable HTTP via the shared proxy settings (FR-CON-09 precedence).
+- `mcp_servers` migration + RLS + `DATA_MODEL.md`; catalog repository; per-device command approval stored locally; secrets under `mcp-server-secrets:<server id>`.
+- Module-local `McpFailure` codes (spec §6.6; Q15).
+- Screens: top-level nav-rail entry, server list, connect, tools (schema form + raw JSON), resources, prompts, Protocol / Network / Console.
 - Both eras (`legacy` default, `modern`).
+- Default timeout = Settings request timeout; overridable per server (Q6).
 
-**S2 — Remote auth:** OAuth (CIMD → pre-registered → DCR), `iss` validation, issuer-keyed credentials, tokens in `core/secrets`, stored-auth-only mode for tests.
+**S2 — Remote auth:** OAuth (CIMD → pre-registered → DCR), `iss` validation, issuer-keyed credentials, tokens in `core/secrets`, stored-auth-only mode for tests. Blocked on Q13 owner domain.
 
-**S3 — Interactions:** subscriptions, `listChanged`, progress, elicitation (form and URL), sampling, roots, MRTR, tasks, logs.
+**S3 — Interactions:** subscriptions, `listChanged`, progress, elicitation (form and URL), sampling, roots, MRTR, tasks, logs (pending-request dialogs only, Q9).
 
-**S4 — Test Point integration:** `{{variables}}`, tabs and status bar, saved MCP calls in collections, import/export of client configs.
+**S4 — Test Point integration:** `{{variables}}`, tabs and status bar, saved MCP calls in collections, import/export of client configs. MCP Apps stay after S4 (Q8).
 
-**Tests** unit tests for the transport wrapper, launcher and services with a mocked `mcp_dart`; integration tests against fixture servers (runtime decided in spec Q14); widget tests for the tool form and transcript; launch tests on Windows, macOS and Linux.
+**Tests** unit tests for the transport wrapper, launcher and services with a mocked `mcp_dart`; integration tests against **Dart** fixture servers (Q14); widget tests for the tool form and transcript; launch tests on Windows, macOS and Linux.
 
 **Done when** each slice's requirements in spec §4.1 pass their acceptance criteria, and a new user can connect a stdio and an HTTP server and call a tool (spec NFR-USE-01).
 

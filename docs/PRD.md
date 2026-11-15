@@ -186,7 +186,7 @@ Full requirements: [features/mcp-lab/feature-specification.md](features/mcp-lab/
 | # | Question | Impact |
 | --- | --- | --- |
 | Q1 | ~~Is sign-in required for the MVP?~~ **Resolved:** start as an anonymous guest; the avatar opens an Account dialog with Continue with GitHub (see §5.8). | Auth module with Account dialogs |
-| Q2 | Should the app work offline? With Supabase only, collections need a network connection to load. | May need a local cache |
+| Q2 | ~~Should the app work offline?~~ **Resolved:** out of scope for the MVP (online-only); revisit after M6. With Supabase only, collections need a network connection to load. | Local cache deferred |
 | Q3 | ~~Should secret variables be stored in Supabase or only on the device?~~ **Resolved:** secret values stay on the device (OS secure storage); Supabase stores the key and `secret` flag with a placeholder value. See [MCP Lab spec §6.4](features/mcp-lab/feature-specification.md#64-data-persistence-proposed). | Security and sync behavior |
 | Q4 | ~~`lib/common/` or `lib/core/`?~~ **Resolved:** rename `lib/common/` to `lib/core/`. | Folder rename (Phase 0) |
 

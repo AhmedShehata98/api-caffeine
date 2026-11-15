@@ -4,7 +4,7 @@
 |---|---|
 | **Slice** | S1: Core lab ([spec §4.1](feature-specification.md#41-proposed-release-slices)) |
 | **Date** | 2026-11-15 |
-| **Status** | Draft v1, for review before S1 starts |
+| **Status** | Draft v1.1: open points resolved; S1 assumptions A1–A5 confirmed |
 | **Designs** | Stitch #14–#18, #19 (Prompts), #21 (Add server) in [stitch-mvp-progress.md](../../design/stitch-mvp-progress.md#mcp-lab-screens-phase-8-started-2026-11-15) |
 
 Each S1 requirement has one or more Given/When/Then criteria. S1 is done when every
@@ -16,10 +16,10 @@ criterion passes at its verification level and the [S1 exit check](#s1-exit-chec
 - **I**: integration test against a fixture MCP server over a real transport (`test/integration/mcp_lab/`, skipped by default like the Supabase tests).
 - **M**: manual check on each desktop OS (Windows, macOS, Linux), recorded in the PR.
 
-**Fixture servers (assumption until spec Q14 is decided).** Dart fixtures built on the
-`mcp_dart` server side, one per behaviour, so CI does not need Node. They run in two
-modes: a stdio executable and a Streamable HTTP server on `127.0.0.1`. Each fixture can
-answer as `legacy` (`initialize`) or `modern` (`server/discover`). The criteria name them as:
+**Fixture servers (confirmed Q14).** Dart fixtures built on the `mcp_dart` server side,
+one per behaviour, so CI does not need Node. They run in two modes: a stdio executable
+and a Streamable HTTP server on `127.0.0.1`. Each fixture can answer as `legacy`
+(`initialize`) or `modern` (`server/discover`). The criteria name them as:
 
 | Fixture | Behaviour |
 |---|---|
@@ -65,6 +65,9 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 | AC-CFG-01.3 | A stdio env value or header marked **secret** | The server is saved | The Supabase row stores the key with `secret: true` and the placeholder `""`; the real value is in `SecretStore` under `mcp-server-secrets:<server id>` | U, I |
 | AC-CFG-01.4 | The same server opened on a device without the local secret | The server settings render | The field shows **Not set on this device**, and Connect is blocked with a message naming the missing key; the placeholder is never sent | U, W |
 | AC-CFG-01.5 | A server with a secret is deleted | Delete completes | The Supabase row and the local `mcp-server-secrets:<id>` entry are both removed | U |
+| AC-CFG-01.6 | The user adds headers `Authorization`, `x-api-key`, `X-Github-Token` and `X-Team` (Q1, NFR-SEC-10) | The headers table renders | The first three are marked secret automatically (case-insensitive match) and `X-Team` is not | U, W |
+| AC-CFG-01.7 | An auto-marked header | The user unmarks it | The same confirmation as environments ("Stop keeping this value secret?") is shown; after confirming, the value syncs as plain text and the row keeps a warning icon (FR-SEC-03) | W |
+| AC-CFG-01.8 | The secure store is unavailable (`SecretStore` returns a failure) (Q2, NFR-SEC-05) | The user saves a server that has a secret value | The secret is not written anywhere; a warning "Secure storage is unavailable…" is shown; non-secret fields save normally. A server without secrets saves with no warning | U, W |
 | AC-CFG-03.1 | A server saved with era, timeout and headers | Its row is read back | `command`/`args`/`env`/`url`/`headers` map to the `mcpServers` entry shape, and Lab-only settings sit in `settings` (never mixed into `args`) | U |
 | AC-CFG-04.1 | A server with `url` and no `command` | It is saved without a transport | The transport is inferred as Streamable HTTP; with `command` and no `url` it is stdio; with both or neither, save is blocked | U |
 | AC-CFG-04.2 | Saving fails (network down, RLS error) | The user saves | A `StorageFailure` message is shown and the dialog keeps the entered values | U, W |
@@ -124,7 +127,8 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 | AC-MON-01.1 | Connected to any server | The handshake and a tool call happen | The Protocol view lists every frame in order with direction (→ / ←), method, id and time; each response is paired with its request and shows the duration | U, W |
 | AC-MON-01.2 | Notifications arrive | They are recorded | They appear as unpaired frames with their method | U |
 | AC-MON-01.3 | A frame is selected | Detail opens | The full JSON is shown (code viewer) with **Copy** | W |
-| AC-MON-01.4 | 10,000 frames recorded | The user scrolls and filters | Scrolling stays smooth (lazy list); the oldest frames over the buffer limit are dropped with a "N older frames dropped" counter | U, M |
+| AC-MON-01.4 | 10,000 frames recorded | The user scrolls and filters | Scrolling stays smooth (lazy list); the oldest frames over the 10,000 limit are dropped with a "N older frames dropped" counter (Q3, NFR-PRF-03) | U, M |
+| AC-MON-01.5 | A frame or HTTP body larger than 256 KB (Q3, NFR-PRF-03) | Its detail opens | It shows the first 256 KB with a "Truncated · <size>" note and **Load full**; loading the full body parses JSON off the UI isolate, and the UI stays responsive | U, W |
 | AC-MON-02.1 | An HTTP server | A request is sent | The Network view shows method, URL, status, duration, request/response headers and bodies | I, W |
 | AC-MON-02.2 | A request with `Authorization: Bearer x` | The Network view renders | The value is masked by default | W |
 | AC-MON-02.3 | A stdio server | The tab strip renders | The tab is **Console**, not Network | W |
@@ -160,7 +164,7 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 | AC-NFR-REL-06.1 | A connected stdio server | The user disconnects | stdin is closed; after the grace period (default 2 s) SIGTERM, then SIGKILL after another 2 s; the session ends within 5 s | U, I |
 | AC-NFR-REL-06.2 | `fx-hang` that spawns a child and ignores signals | The user disconnects or closes the app | The process and its child are gone within 5 s (Windows: whole tree killed) | I, M (Windows) |
 | AC-NFR-REL-06.3 | `fx-crash` exits with code 3 | The exit happens | The server shows **Disconnected** with `process_exited`, exit code 3 and the last stderr lines; pending calls fail with the same failure | I |
-| AC-NFR-CMP-06.1 | The macOS build chosen in Q16 is sandboxed | The user adds a stdio server | The UI says stdio servers are not available in this build, instead of failing at spawn | M (macOS) — only if Q16 picks the sandboxed build |
+| AC-NFR-CMP-06.1 | ~~Sandboxed macOS build~~ **N/A (Q16):** macOS ships notarized without the App Sandbox, so stdio is available. Criterion retained only if a sandboxed App Store build is added later. | — | — | — |
 
 ## 9. Failure model and harness (FR-TST-01/02/05/06, §6.6)
 
@@ -193,9 +197,19 @@ and `task` results only as the notice in AC-PRO-01.2.
 
 ## Open points this document depends on
 
-| Point | Effect on S1 criteria |
+| Point | Status |
 |---|---|
-| Q14 fixture runtime | The fixture table assumes Dart fixtures on `mcp_dart`. Node fixtures would change only the "I" setup, not the criteria. |
-| Q16 macOS distribution | Decides whether AC-NFR-CMP-06.1 applies. |
-| Q6 default timeout | S1 uses the Settings request timeout as the per-call default until decided. |
-| Secret key name | `mcp-server-secrets:<server id>` follows the `environment-secrets:<id>` pattern (spec §6.4); confirm when the migration is written. |
+| Q14 fixture runtime | **Resolved:** Dart fixtures on `mcp_dart` (fixture table stands). |
+| Q16 macOS distribution | **Resolved:** notarized unsandboxed build; AC-NFR-CMP-06.1 is N/A for v1. |
+| Q6 default timeout | **Resolved:** Settings request timeout is the per-call default (overridable per server). |
+| Q15 failure codes | **Resolved:** module-local `McpFailure.code` (AC-TST-06.* stands). |
+
+## Confirmed assumptions (A1–A5)
+
+| # | Assumption | Status | Where |
+|---|---|---|---|
+| A1 | Tool form falls back to raw JSON when the schema nests more than **32** levels or takes over **100 ms** to build | **Confirmed** | AC-TOL-02.6 |
+| A2 | stdio shutdown: close stdin → wait **2 s** → SIGTERM → wait **2 s** → SIGKILL; whole sequence within **5 s** | **Confirmed** | AC-NFR-REL-06.1/2 |
+| A3 | A new user makes a first tool call in **under 3 minutes** (NFR-USE-01 walkthrough) | **Confirmed** | S1 exit check |
+| A4 | Changing an env **value** does not require approval again; a change to command, args, cwd or env **keys** does | **Confirmed** | AC-SEC-04.2/3 |
+| A5 | Server secrets are stored under the secure-storage key `mcp-server-secrets:<server id>` | **Confirmed** | AC-CFG-01.3 |

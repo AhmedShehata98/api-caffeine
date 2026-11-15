@@ -7,8 +7,10 @@
 | **Source** | Product-owner analysis of MCP Inspector (`@modelcontextprotocol/inspector`), 2026-11-15 |
 | **Adapted for** | Test Point stack: Flutter (desktop-first), Riverpod, go_router, Dio, Supabase, modular monolith |
 | **Date** | 2026-11-15 |
-| **Status** | Draft v1.2: aligned with the final MCP 2026-07-28 spec; gaps from the review closed |
-| **Related** | [PRD.md](../../PRD.md) · [ARCHITECTURE.md](../../ARCHITECTURE.md) · [AGENTS.md](../../../AGENTS.md) · [gap-review.md](gap-review.md) |
+| **Status** | Draft v1.3: open questions resolved (except Q13 owner input); S1 unblocked |
+| **Related** | [PRD.md](../../PRD.md) · [ARCHITECTURE.md](../../ARCHITECTURE.md) · [AGENTS.md](../../../AGENTS.md) · [gap-review.md](gap-review.md) · [open-questions-brief.md](open-questions-brief.md) |
+
+> **v1.3 changes:** resolved open questions Q1–Q3, Q5–Q10, Q12, Q14–Q16 and confirmed S1 assumptions A1–A5 (see §12). Q13 remains waiting on owner domain/hosting. Requirement text updated for NFR-SEC-05/10, NFR-PRF-01…03, NFR-CMP-06, FR-CON-09, FR-SEC-03, FR-AUT-01.
 
 > **v1.2 changes:** corrections for the deprecations, tasks, subscriptions and OAuth changes in 2026-07-28; new protocol fundamentals (§7.15 FR-PRO); Test Point integration (§6.5, §7.16 FR-TPI); failure model (§6.6); platform, process and secret-store NFRs; proposed release slices (§4.1). The reasoning for each change is in [gap-review.md](gap-review.md).
 
@@ -16,6 +18,10 @@
 > 1. **Library:** use [`mcp_dart`](https://pub.dev/packages/mcp_dart) (resolves Q4).
 > 2. **Catalog:** the MCP Lab server catalog is stored in **Supabase**, scoped to the workspace (resolves Q-DATA-1).
 > 3. **Secrets:** secret values stay **on the device only** (OS secure storage). Rows synced to Supabase keep the key and the `secret` flag, but the value is replaced by a placeholder. This applies app-wide: MCP Lab and environment variables (resolves Q11 and PRD Q3). See §6.4.
+> 4. **Release slices:** S1–S4 + Later approved as in §4.1 (resolves Q5).
+> 5. **macOS:** notarized build outside the App Store, without the App Sandbox, so stdio works (resolves Q16).
+> 6. **Failures:** module-local `McpFailure` codes; do not extend core `Failure` yet (resolves Q15).
+> 7. **CI fixtures:** Dart fixtures on the `mcp_dart` server side (resolves Q14).
 
 > **How to read this document.** Capabilities are *derived* from the official MCP Inspector (Basis `Documented` / `Proposed` from the PO analysis), then **rewritten as requirements for building MCP Lab inside Test Point**. Technology that is Node/web/CLI-specific in the source is mapped to Flutter desktop equivalents. Priorities use **MoSCoW** (Must / Should / Could / Won't).
 
@@ -39,6 +45,7 @@
 - [Appendix A — Example CI smoke test (Dart)](#appendix-a--example-ci-smoke-test-dart)
 - [Appendix B — Settings, storage & platform notes](#appendix-b--settings-storage--platform-notes)
 - [Appendix C — Source → Flutter adaptation map](#appendix-c--source--flutter-adaptation-map)
+- [Appendix D — Draft CIMD client metadata (Q13)](#appendix-d--draft-cimd-client-metadata-q13)
 
 ---
 
@@ -147,9 +154,9 @@ MCP Lab is a *developer tool surface* inside Test Point — not a production gat
 - Docker image for MCP Lab itself (Test Point remains a desktop app).
 - MCP Apps sandboxed iframe/port model (Could / later — see FR-APP).
 
-### 4.1 Proposed release slices
+### 4.1 Release slices
 
-Answers Q5 for planning. "Must" in §7 means *Must for the slice that owns the requirement*, not for the first slice.
+**Resolved (Q5):** S1–S4 + Later approved as written. S1 also delivers the core of FR-CFG-01/03/04 (the Supabase catalog). "Must" in §7 means *Must for the slice that owns the requirement*, not for the first slice.
 
 | Slice | Contents | Key requirements |
 |---|---|---|
@@ -241,11 +248,11 @@ test/modules/mcp_lab/            # mirrors lib/
 | Observability | Transcript buffer, network capture, stderr console, export |
 | Secrets / OAuth | OS secure storage, loopback callback, token refresh |
 
-Shared HTTP proxy settings from `modules/settings` should be reused for remote transports where applicable (honour app proxy + `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY`).
+Shared HTTP proxy settings from `modules/settings` should be reused for remote transports where applicable (FR-CON-09 precedence: Settings on wins + `NO_PROXY`; Settings off → env vars; localhost always bypass).
 
 ### 6.3 Shell integration
 
-- Add **MCP Lab** to the nav rail (alongside Collections, Environments, Settings).
+- Add **MCP Lab** as a **top-level** nav rail section (alongside Collections, Environments, Settings) — resolved Q10.
 - Use existing theme (`ColorScheme` teal `#0F9D8A`), `multi_split_view` for resizable panes, `re_editor` / `re_highlight` for JSON bodies and transcripts.
 - Keyboard hints always say `Ctrl` (never `⌘` / `^`).
 - Labels/chips stay on one line with ellipsis.
@@ -297,7 +304,7 @@ MCP Lab is part of Test Point, not a separate app inside it. It reuses the produ
 | `store_unavailable` | `StorageFailure` | Secret store unreadable / refused (NFR-SEC-06) |
 | `process_exited` | `UnexpectedFailure` | stdio server exited unexpectedly; carries exit code + stderr tail |
 
-Whether `code` should move up into the core `Failure` for every module is open question Q15.
+**Resolved (Q15):** `code` stays module-local in `McpFailure`. Promote into core `Failure` only when a second module needs machine-readable codes.
 
 ---
 
@@ -318,7 +325,7 @@ Whether `code` should move up into the core `Failure` for every module is open q
 | FR-CON-06 | Server arguments shall be stored distinctly from Lab UI flags/settings so they are not mis-parsed. | M | D/A |
 | FR-CON-07 | The system shall display connection state per server (transport, connected/disconnected) and allow connect / disconnect / inspect / remove. | M | D |
 | FR-CON-08 | The system shall allow configurable per-request timeouts, including reset on progress notifications. | S | D |
-| FR-CON-09 | The system shall honour app proxy settings and `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` for outbound remote connections. Dio does not read these variables itself, so the system shall resolve them explicitly. The precedence between the Settings proxy and the environment variables is Q12. | S | D/A |
+| FR-CON-09 | The system shall honour app proxy settings and `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` for outbound remote connections. Dio does not read these variables itself, so the system shall resolve them explicitly. **Precedence:** when the Settings proxy is on, it wins and `NO_PROXY` is still honoured; when Settings proxy is off, use the environment variables. `127.0.0.1` / `localhost` always bypass the proxy (local servers and the OAuth callback). | S | D/A |
 | FR-CON-10 | The system shall offer **Fetch Lists One Page at a Time** vs auto-aggregating paginated lists, with a *Load next page* control. | S | D |
 | FR-CON-11 | Deep links into MCP Lab (`serverUrl`, `transport`, `autoConnect`) restricted to `http:`/`https:` and confirmed by the user before connect. | C | D/A |
 
@@ -425,7 +432,7 @@ Whether `code` should move up into the core `Failure` for every module is open q
 
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
-| FR-AUT-01 | The system shall support OAuth for remote servers. Registration is tried in this order: **Client ID Metadata Document (CIMD)** → pre-registered (static) client → **Dynamic Client Registration** as a fallback. DCR is Deprecated (PR #2858) and kept only for authorization servers without CIMD. CIMD needs a hosted https metadata document (Q13). | M | D |
+| FR-AUT-01 | The system shall support OAuth for remote servers. Registration is tried in this order: **Client ID Metadata Document (CIMD)** → pre-registered (static) client → **Dynamic Client Registration** as a fallback. DCR is Deprecated (PR #2858) and kept only for authorization servers without CIMD. CIMD needs a hosted https metadata document; draft JSON is in Appendix D. **Waiting for owner (Q13):** a stable domain or GitHub Pages URL they control. | M | D |
 | FR-AUT-02 | The system shall use a **loopback-only** OAuth callback (default `http://127.0.0.1:<port>/oauth/callback`) and reject non-loopback hosts. This flow is separate from Test Point's Supabase GitHub sign-in deep link. | M | D/A |
 | FR-AUT-03 | The system shall support scopes, refresh-token requests, token revocation on clear, and authorization/token URL overrides. | S | D |
 | FR-AUT-04 | The system shall handle `403 insufficient_scope` by step-up re-authorization or surfacing the error (configurable). | S | D |
@@ -474,7 +481,7 @@ Whether `code` should move up into the core `Failure` for every module is open q
 |---|---|---|---|
 | FR-SEC-01 | Connecting a **stdio** server shall require an explicit user action and show the command that will be spawned. | M | P/A |
 | FR-SEC-02 | Secrets (OAuth tokens, client secrets, stdio `env` values) shall not appear in catalog exports or transcript defaults. | M | D/A |
-| FR-SEC-03 | Credential-bearing custom headers shall be warn-flagged until moved into the secret store (see NFR-SEC-10). | S | P |
+| FR-SEC-03 | Credential-bearing custom headers shall be auto-marked secret (NFR-SEC-10). The user may unmark a header; unmarked credential-looking headers still show a warning. | S | P |
 | FR-SEC-04 | **Per-device stdio trust:** before a stdio server first runs on a device, the user approves a hash of (command, args, cwd, env keys). Any change, including one that arrives through a synced or shared catalog, requires approval again. Trust records stay local and are never synced. | M | P |
 | FR-SEC-05 | Server-supplied text (tool, prompt and resource descriptions, server `instructions`) shall be shown as plain text. Zero-width / bidi Unicode and ANSI escapes are made visible, and HTML or Markdown is never rendered as live content. | S | P |
 
@@ -529,12 +536,12 @@ Whether `code` should move up into the core `Failure` for every module is open q
 | NFR-SEC-02 | There is **no** network-exposed process-spawning HTTP API in MCP Lab v1 (eliminates the Inspector web-proxy RCE class by architecture). | M | A |
 | NFR-SEC-03 | OAuth callback listeners bind **loopback only**; non-loopback hosts are rejected with no override. | M | D/A |
 | NFR-SEC-04 | Secrets shall be stored in the **OS secure store** on the device only. Supabase rows and catalog exports hold a placeholder in place of each secret value (§6.4). | M | D/A |
-| NFR-SEC-05 | When secure storage is unavailable, the fallback shall warn loudly in the UI; prefer fail-closed or encrypted-at-rest over silent plaintext. | M | D/A |
+| NFR-SEC-05 | When secure storage is unavailable, **fail closed**: secrets cannot be saved, a clear warning is shown (NFR-USE-05 / NFR-OBS-02), and non-secret fields still save. No silent plaintext. Matches the environments module (`StorageFailure`). An encrypted-file-with-passphrase fallback may be added later if users ask. | M | D/A |
 | NFR-SEC-06 | The secret store shall not overwrite undecryptable data; misconfiguration fails visibly. | M | D |
 | NFR-SEC-07 | stdio servers shall receive only an **allow-listed environment** plus their configured `env`. POSIX: `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM`, `USER`. Windows: `PATH`, `PATHEXT`, `SystemRoot`, `SystemDrive`, `ComSpec`, `APPDATA`, `LOCALAPPDATA`, `USERPROFILE`, `TEMP`, `TMP`, `USERNAME`. Without these, `node`/`npx` fail on Windows. | M | D/A |
 | NFR-SEC-08 | Deep-link auto-connect shall require explicit user confirmation (CSRF / drive-by gate). | S | D/A |
 | NFR-SEC-09 | Redact query-string secrets in URLs shown in errors; mask secrets in the Network view. | S | D |
-| NFR-SEC-10 | `headers` are **not** treated as secrets by default today; product should move credential-bearing headers to the secret store or clearly warn. | S | P |
+| NFR-SEC-10 | Header names matching `Authorization`, `Proxy-Authorization`, `Cookie`, `X-Api-Key`, or ending in `-Token` / `-Key` / `-Secret` (case-insensitive) are **marked secret automatically**. The user can unmark one. Secret header values follow the device-only rule (§6.4). | S | P |
 | NFR-SEC-11 | A threat model for MCP Lab shall be documented: spawn, secrets, OAuth, import of untrusted config, synced catalogs (FR-SEC-04), malicious server text (FR-SEC-05), URL-mode elicitation and remote icons. | S | P/A |
 | NFR-SEC-12 | Secrets shall never be truncated by a platform size limit. `flutter_secure_storage` 11.x on Windows already writes values to an AES-GCM encrypted file and keeps only the key in Credential Manager, so the about 2.5 KB entry limit does not apply. | M | A |
 | NFR-SEC-13 | stdio commands shall be launched **without a shell** when possible. Where a shell is needed (Windows `.cmd` shims), arguments are quoted for that shell and the exact command line is shown before approval (FR-SEC-01/04). | M | A |
@@ -543,9 +550,9 @@ Whether `code` should move up into the core `Failure` for every module is open q
 
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
-| NFR-PRF-01 | Default client-side request timeouts shall be configurable per server (align with Settings request timeout where sensible). | S | D/A |
+| NFR-PRF-01 | Default client-side request timeout is the **Settings request timeout**, overridable per server. Progress notifications reset the timeout (FR-CON-08, S3). | S | D/A |
 | NFR-PRF-02 | Opening MCP Lab from a warm app session shall be interactive in **≤ 2 s** (feature surface, not full process cold start). | S | P/A |
-| NFR-PRF-03 | Protocol and Network views shall stay responsive with **≥ 10,000** captured entries: lazy lists, a bounded ring buffer (oldest entries dropped, with a counter), bodies over a size limit (for example 256 KB) truncated with *Load full*, and JSON parsing off the UI isolate (in line with the PRD's 5 MB rule). | S | P/A |
+| NFR-PRF-03 | Protocol and Network views shall keep a bounded ring buffer of **10,000** entries (oldest dropped, with a counter); bodies over **256 KB** are truncated with *Load full*; JSON is parsed off the UI isolate (PRD 5 MB rule). | S | P/A |
 | NFR-PRF-04 | Fast operations (list/read/get) shall not be blocked by a slow in-flight tool call. | S | P |
 | NFR-PRF-05 | Proxy agent / HTTP client setup shall avoid cost when proxy is off (reuse Settings behaviour). | C | D/A |
 
@@ -579,10 +586,10 @@ Whether `code` should move up into the core `Failure` for every module is open q
 |---|---|---|---|
 | NFR-CMP-01 | MCP Lab shall run on **Flutter stable** desktop: Windows, macOS, Linux. | M | A |
 | NFR-CMP-02 | The system shall support stdio, SSE, and Streamable HTTP transports through the same services used by UI and tests. | M | D/A |
-| NFR-CMP-03 | The system shall support both **legacy** and **2026-07-28** protocol eras, selectable per server. | M | D |
-| NFR-CMP-04 | The system shall run on hosts without a keychain with a defined, warned fallback. | M | D |
+| NFR-CMP-03 | The system shall support both **legacy** and **2026-07-28** protocol eras, selectable per server. Legacy support continues until the MCP spec removes it (at least 12 months after 2026-07-28); review in 2027. | M | D |
+| NFR-CMP-04 | The system shall run on hosts without a keychain. Secrets **fail closed** there (NFR-SEC-05): they cannot be saved, a warning is shown, and everything else keeps working. | M | D |
 | NFR-CMP-05 | stdio launch shall work with each platform's path and quoting rules on Windows and POSIX, including resolving Windows `.cmd`/`.bat` shims (`npx`, `uvx`) through `PATHEXT` (see NFR-SEC-13). | M | A |
-| NFR-CMP-06 | The **macOS** build shall define its sandbox and entitlements. The App Sandbox blocks spawning arbitrary binaries, and the OAuth loopback listener needs `com.apple.security.network.server`. If the sandboxed build cannot support stdio, it shall say so in the UI instead of failing silently. | M | A |
+| NFR-CMP-06 | **macOS distribution (resolved Q16):** ship a **notarized build outside the App Store, without the App Sandbox**, so stdio servers can launch. Entitlements still include what OAuth needs (`com.apple.security.network.server` for the loopback listener). An App Store / sandboxed variant is out of scope for v1; if one is added later, the UI must say stdio is unavailable instead of failing silently. | M | A |
 | NFR-CMP-07 | GUI-launched apps do not inherit the login-shell `PATH` (macOS, Linux desktop launchers). The system shall resolve `PATH` from the user's login shell, or accept absolute paths, and show the resolved binary path before launch. | M | A |
 
 ### 8.6 Interoperability & spec conformance (NFR-INT)
@@ -600,7 +607,7 @@ Whether `code` should move up into the core `Failure` for every module is open q
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
 | NFR-MNT-01 | UI and tests shall share one Dart protocol core so behaviour cannot drift. | M | D/A |
-| NFR-MNT-02 | Ship **composable fixtures** / local test servers so protocol features are reproducible over real transports where practical; mock only at repository boundaries for unit tests (`mocktail`). | M | D/A |
+| NFR-MNT-02 | Ship **Dart composable fixtures** built on the `mcp_dart` server side (stdio executable + Streamable HTTP on `127.0.0.1`, both eras) so protocol features are reproducible over real transports; mock only at repository boundaries for unit tests (`mocktail`). No Node in CI. | M | D/A |
 | NFR-MNT-03 | Follow modular monolith rules: public API file only; no circular module deps. | M | A |
 | NFR-MNT-04 | Prefer freezed models + `json_serializable`; no new packages without justification. | S | A |
 | NFR-MNT-05 | Core services/repositories aim for strong automated coverage; widget tests for key Lab screens. | S | P/A |
@@ -654,8 +661,8 @@ Whether `code` should move up into the core `Failure` for every module is open q
 | ID | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
 | R-1 | User launches untrusted stdio command | Med | **Critical** | Explicit confirm + show full command (FR-SEC-01, NFR-SEC-01) |
-| R-2 | Silent plaintext secret storage on keychain-less hosts | High | High | Loud warnings, fail-closed/encrypt options (NFR-SEC-04/05) |
-| R-3 | Credentials in `headers` committed to VCS via export | Med | High | Warn or move to secret store (NFR-SEC-10) |
+| R-2 | Silent plaintext secret storage on keychain-less hosts | High | High | Fail closed with loud warning (NFR-SEC-04/05); no plaintext fallback |
+| R-3 | Credentials in `headers` committed to VCS via export | Med | High | Auto-mark credential headers as secrets (NFR-SEC-10); exports omit secret values |
 | R-4 | Behaviour drift between UI and tests | Low | Med | Shared Dart core (NFR-MNT-01) |
 | R-5 | Spec churn breaks users mid-migration | Med | Med | Protocol eras; legacy default |
 | R-6 | CI flakiness from interactive OAuth | Med | Med | Stored-auth-only; fail-fast headless (FR-AUT-05/06) |
@@ -663,7 +670,7 @@ Whether `code` should move up into the core `Failure` for every module is open q
 | R-8 | Synced catalog leaks secrets or is missing them on a new device | Med | High | Placeholder rule (§6.4); "Not set on this device" state; never send a placeholder as a real value |
 | R-9 | Windows process quoting / PATH differences for stdio | Med | Med | Platform-specific launch tests (NFR-CMP-05, NFR-SEC-13) |
 | R-10 | A shared or synced catalog makes another member's device run a command | Med | **Critical** | Per-device trust on first use of the command hash; trust is never synced (FR-SEC-04) |
-| R-11 | macOS sandbox or missing GUI `PATH` stops stdio servers from launching | High | High | NFR-CMP-06/07; clear "runtime not found" errors |
+| R-11 | macOS sandbox or missing GUI `PATH` stops stdio servers from launching | High | High | Notarized unsandboxed macOS build (NFR-CMP-06); login-shell PATH (NFR-CMP-07); clear "runtime not found" errors |
 | R-12 | Orphaned stdio processes (Windows tree, app crash) | Med | Med | Tree kill + crash cleanup (NFR-REL-06/07) |
 | R-13 | Malicious server text misleads the user (hidden Unicode, URL elicitation, remote icons) | Med | High | FR-SEC-05, FR-INT-06, FR-PRO-11 |
 | R-14 | `mcp_dart` hides raw frames or handles MRTR automatically | Med | High | Wrap its transport behind a repository contract that records every frame; fall back to a thin in-repo transport for one transport if needed |
@@ -687,22 +694,22 @@ Whether `code` should move up into the core `Failure` for every module is open q
 | # | Question | Owner | Impact |
 |---|---|---|---|
 | Q-DATA-1 | ~~Where is the server catalog stored?~~ **Resolved:** Supabase, scoped to the workspace; secret values stay on the device. | Product / Eng | FR-CFG, migrations |
-| Q1 | Should credential-bearing `headers` be stored as secrets by default? | Product / Security | NFR-SEC-10 |
-| Q2 | Should secure-storage fallback require a key (fail closed) rather than plaintext? | Security | NFR-SEC-05 |
-| Q3 | What are the target SLOs (Lab open time, transcript buffer size)? | Product | NFR-PRF-02/03 |
+| Q1 | ~~Should credential-bearing `headers` be stored as secrets by default?~~ **Resolved:** yes. Names matching `Authorization`, `Proxy-Authorization`, `Cookie`, `X-Api-Key`, or ending in `-Token` / `-Key` / `-Secret` (case-insensitive) are marked secret automatically; the user can unmark one (NFR-SEC-10, FR-SEC-03). | Product / Security | NFR-SEC-10 |
+| Q2 | ~~Should secure-storage fallback require a key (fail closed) rather than plaintext?~~ **Resolved:** fail closed — secrets cannot be saved, warn loudly, non-secret fields still save. Matches environments. Encrypted-file-with-passphrase later if users ask (NFR-SEC-05). | Security | NFR-SEC-05 |
+| Q3 | ~~What are the target SLOs (Lab open time, transcript buffer size)?~~ **Resolved:** Lab interactive ≤ 2 s from a warm app; Protocol/Network buffers keep 10,000 entries (drop oldest + counter); bodies over 256 KB truncated with *Load full*; JSON off the UI isolate (NFR-PRF-02/03). | Product | NFR-PRF-02/03 |
 | Q4 | ~~Which Dart MCP library?~~ **Resolved:** `mcp_dart`. | Eng | Dependencies, R-14 |
-| Q5 | ~~MVP slice?~~ *Proposed answer in §4.1 (release slices); needs product sign-off.* | Product | Prioritisation |
-| Q6 | Which default timeout is authoritative for MCP calls vs HTTP Settings timeout? | Eng | NFR-PRF-01 |
-| Q7 | Support horizon for the legacy era? | Product | NFR-CMP-03 |
-| Q8 | Is MCP Apps preview planned for GA of MCP Lab? | Product | FR-APP |
-| Q9 | Elicitation/Sampling: dedicated tabs vs pending-request dialogs only? | Design | FR-INT |
-| Q10 | Nav rail IA: top-level **MCP Lab** vs nested under a future Protocols section? | Design | Shell |
+| Q5 | ~~MVP / release slices?~~ **Resolved:** S1–S4 + Later approved as in §4.1; S1 also ships the core of FR-CFG-01/03/04. | Product | Prioritisation |
+| Q6 | ~~Which default timeout is authoritative for MCP calls vs HTTP Settings timeout?~~ **Resolved:** Settings request timeout is the default; overridable per server (NFR-PRF-01). | Eng | NFR-PRF-01 |
+| Q7 | ~~Support horizon for the legacy era?~~ **Resolved:** support until the MCP spec removes it (at least 12 months after 2026-07-28); review in 2027 (NFR-CMP-03). | Product | NFR-CMP-03 |
+| Q8 | ~~Is MCP Apps preview planned for GA of MCP Lab?~~ **Resolved:** no — after S4; stays Could (FR-APP-*). | Product | FR-APP |
+| Q9 | ~~Elicitation/Sampling: dedicated tabs vs pending-request dialogs only?~~ **Resolved:** dialogs only, as in Stitch #18 (FR-INT-*). | Design | FR-INT |
+| Q10 | ~~Nav rail IA: top-level **MCP Lab** vs nested under a future Protocols section?~~ **Resolved:** top-level, as in Stitch #14–#22. | Design | Shell |
 | Q11 | ~~One secrets rule for the whole app?~~ **Resolved:** secret values stay on the device; Supabase stores a placeholder (§6.4). Implemented in the environments module. | Product / Security | NFR-SEC-04, environments |
-| Q12 | Proxy precedence: does the Settings proxy override `HTTPS_PROXY`/`NO_PROXY`, or the other way round? | Eng | FR-CON-09 |
-| Q13 | Who hosts Test Point's public **CIMD** client metadata document (https URL), and what redirect URIs does it list? | Eng / Ops | FR-AUT-01 |
-| Q14 | CI fixture runtime: reuse the Inspector's Node composable test servers (MIT, needs Node in CI), or write Dart fixtures? | Eng | NFR-MNT-02, NFR-DOC-02 |
-| Q15 | Should `code` move up into the core `Failure` for every module, or stay module-local in `McpFailure` (§6.6)? | Eng | Failure model |
-| Q16 | macOS distribution: a sandboxed build (App Store) without stdio, or an unsandboxed notarized build? | Product / Eng | NFR-CMP-06 |
+| Q12 | ~~Proxy precedence: does the Settings proxy override `HTTPS_PROXY`/`NO_PROXY`, or the other way round?~~ **Resolved:** Settings proxy on → it wins and `NO_PROXY` is honoured; Settings proxy off → use env vars. `127.0.0.1` / `localhost` always bypass (FR-CON-09). | Eng | FR-CON-09 |
+| Q13 | Who hosts Test Point's public **CIMD** client metadata document (https URL), and what redirect URIs does it list? **Recommendation:** host static JSON on the project site or GitHub Pages (e.g. `https://<domain>/oauth/client.json`); draft in Appendix D. **Waiting for owner:** a domain or GitHub Pages site they control. | Eng / Ops | FR-AUT-01 |
+| Q14 | ~~CI fixture runtime: Node Inspector servers or Dart fixtures?~~ **Resolved:** Dart fixtures on the `mcp_dart` server side — no Node in CI, same library as the app, both eras (NFR-MNT-02, NFR-DOC-02). | Eng | NFR-MNT-02, NFR-DOC-02 |
+| Q15 | ~~Should `code` move up into core `Failure`, or stay module-local?~~ **Resolved:** module-local `McpFailure` with `code`; promote to core only when a second module needs codes (§6.6). | Eng | Failure model |
+| Q16 | ~~macOS distribution: sandboxed App Store or unsandboxed notarized?~~ **Resolved:** notarized build outside the App Store, without the App Sandbox, so stdio works. App Store / sandboxed variant out of scope for v1 (NFR-CMP-06). | Product / Eng | NFR-CMP-06 |
 
 ---
 
@@ -721,7 +728,7 @@ Whether `code` should move up into the core `Failure` for every module is open q
 - Review — [gap-review.md](gap-review.md)
 - Test Point — [ARCHITECTURE.md](../../ARCHITECTURE.md), [PRD.md](../../PRD.md), [AGENTS.md](../../../AGENTS.md)
 
-> Items marked **Proposed** / **Adapted** are recommendations for Test Point, not guarantees of the upstream Inspector. Section 12 lists decisions still needed before implementation.
+> Items marked **Proposed** / **Adapted** are recommendations for Test Point, not guarantees of the upstream Inspector. Section 12 is resolved except Q13 (owner domain for CIMD).
 
 ---
 
@@ -802,15 +809,16 @@ void main() {
 | MCP Apps sandbox | Deferred (Could) | WebView-based if pursued; no separate sandbox ports by default |
 | Catalog | Supabase, workspace-scoped | Secrets as placeholders (§6.4) |
 | Secrets | OS secure storage | Not in exported `mcpServers` JSON |
-| Proxy | Settings module + env proxy vars | Reuse existing proxy off/custom behaviour |
+| Proxy | Settings module + env proxy vars | Settings on wins + `NO_PROXY`; Settings off → env vars; localhost always bypass (FR-CON-09) |
 | Logging | Opt-in Lab debug flag | No secrets in logs |
+| macOS build | Notarized, outside App Store, no App Sandbox | stdio works (NFR-CMP-06) |
 
 | Variable / setting | Purpose |
 |---|---|
-| Settings → request timeout | Default MCP request timeout unless overridden per server |
-| Settings → proxy | Outbound remote MCP transports |
-| Secure store backend | Platform keychain / credential store |
-| `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` | Outbound proxy routing for remote servers |
+| Settings → request timeout | Default MCP request timeout unless overridden per server (NFR-PRF-01) |
+| Settings → proxy | Outbound remote MCP transports when on (FR-CON-09) |
+| Secure store backend | Platform keychain / credential store; fail closed if unavailable |
+| `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` | Used when Settings proxy is off; `NO_PROXY` always honoured when Settings proxy is on |
 
 Upstream Inspector ports (`6274`–`6278`) and `MCP_INSPECTOR_API_TOKEN` / `DANGEROUSLY_*` flags **do not apply** to MCP Lab.
 
@@ -827,6 +835,29 @@ Upstream Inspector ports (`6274`–`6278`) and `MCP_INSPECTOR_API_TOKEN` / `DANG
 | `~/.mcp-inspector/mcp.json` catalog | Supabase workspace catalog |
 | OS keychain / `secrets.json` | `flutter_secure_storage` (or equivalent) + UI warnings |
 | Docker image / `/healthz` | Desktop app distribution only |
-| Sandboxed iframe on extra ports | Optional desktop WebView (Could) |
+| Sandboxed iframe on extra ports | Optional desktop WebView (Could; after S4) |
 | Storybook presentational components | Flutter widgets + widget tests |
 | Node 22.19+ | Flutter stable desktop |
+
+---
+
+## Appendix D — Draft CIMD client metadata (Q13)
+
+**Waiting for owner:** a stable https origin (project website or GitHub Pages). Until then the `client_id` URL below is a placeholder.
+
+Redirect is loopback only (FR-AUT-02). The app listens on a free ephemeral port chosen at sign-in time, so the document lists the loopback URI **without a port**: RFC 8252 §7.3 requires authorization servers to accept any port for loopback IP redirect URIs. Fixed ports are avoided because they can already be in use. **Draft:** confirm in S2 against real authorization servers; if one rejects port-less matching, add a fallback list of fixed ports then.
+
+```json
+{
+  "client_id": "https://<domain>/oauth/client.json",
+  "client_name": "Test Point",
+  "client_uri": "https://<domain>/",
+  "redirect_uris": ["http://127.0.0.1/oauth/callback"],
+  "token_endpoint_auth_method": "none",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "application_type": "native"
+}
+```
+
+Host as a static file at the `client_id` URL with `Content-Type: application/json`. No secrets in this document.
