@@ -19,9 +19,12 @@ abstract class Environment with _$Environment {
       _$EnvironmentFromJson(json);
 
   /// `key -> value` of the enabled variables. A later row wins over an
-  /// earlier one with the same key.
+  /// earlier one with the same key. Secrets that are not set on this device
+  /// are left out, so `{{key}}` stays unresolved instead of sending the
+  /// placeholder.
   Map<String, String> get values => {
     for (final v in variables)
-      if (v.enabled && v.key.trim().isNotEmpty) v.key.trim(): v.value,
+      if (v.enabled && !v.missingOnDevice && v.key.trim().isNotEmpty)
+        v.key.trim(): v.value,
   };
 }

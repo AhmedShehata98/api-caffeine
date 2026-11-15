@@ -165,6 +165,7 @@ The packages are chosen to support the MVP screens in [docs/design/stitch-mvp-pr
 | Window      | `window_manager`                                   | Desktop minimum window size and title                                                                            |
 | Import      | `file_picker`                                      | Choose a Postman v2.1 collection file in the Import dialog                                                       |
 | Preferences | `shared_preferences`                               | Theme mode, layout and proxy settings                                                                            |
+| Secrets     | `flutter_secure_storage`                           | Secret values (environment secrets, later MCP Lab tokens) stay on the device in the OS keychain / credential store; Supabase only gets a placeholder. Linux builds need `libsecret-1-dev` and a keyring at runtime |
 | Tests       | `mocktail` (dev)                                   | Mock repositories and services in unit tests                                                                     |
 
 Use Flutter built-ins instead of packages for these:

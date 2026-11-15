@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:mocktail/mocktail.dart';
 import 'package:test_point/core/error/failure.dart';
 import 'package:test_point/core/error/result.dart';
+import 'package:test_point/core/secrets/secret_store.dart';
 import 'package:test_point/modules/auth/auth.dart';
 import 'package:test_point/modules/collections/collections.dart';
 import 'package:test_point/modules/environments/environments.dart';
@@ -54,6 +55,12 @@ class FakeStore {
   final List<Collection> collections;
   final List<SavedRequest> requests;
   final List<Environment> environments;
+
+  /// What [FakeSecretStore] keeps "on this device".
+  final Map<String, String> secrets = {};
+
+  /// When set, every [FakeSecretStore] call fails with it.
+  Failure? secretFailure;
 
   /// When set, every repository call fails with it.
   Failure? failure;
@@ -249,13 +256,52 @@ class FakeEnvironmentRepository implements EnvironmentRepository {
   Future<Result<Environment>> saveVariables(
     String id,
     List<EnvironmentVariable> variables,
-  ) => _update(id, (e) => e.copyWith(variables: variables));
+  ) => _update(
+    id,
+    // Round-trip through JSON like the real column, so device-only fields
+    // are dropped exactly as they would be in Supabase.
+    (e) => e.copyWith(
+      variables: [
+        for (final v in variables) EnvironmentVariable.fromJson(v.toJson()),
+      ],
+    ),
+  );
 
   @override
   Future<Result<void>> delete(String id) async {
     final failed = _failed<void>();
     if (failed != null) return failed;
     store.environments.removeWhere((e) => e.id == id);
+    return const Result.success(null);
+  }
+}
+
+/// In-memory [SecretStore] over [FakeStore.secrets].
+class FakeSecretStore implements SecretStore {
+  FakeSecretStore(this.store);
+
+  final FakeStore store;
+
+  Result<T>? _failed<T>() =>
+      store.secretFailure == null ? null : Result.failure(store.secretFailure!);
+
+  @override
+  Future<Result<String?>> read(String key) async =>
+      _failed() ?? Result.success(store.secrets[key]);
+
+  @override
+  Future<Result<void>> write(String key, String value) async {
+    final failed = _failed<void>();
+    if (failed != null) return failed;
+    store.secrets[key] = value;
+    return const Result.success(null);
+  }
+
+  @override
+  Future<Result<void>> delete(String key) async {
+    final failed = _failed<void>();
+    if (failed != null) return failed;
+    store.secrets.remove(key);
     return const Result.success(null);
   }
 }
@@ -426,6 +472,7 @@ List<Override> fakeBackend({
     environmentRepositoryProvider.overrideWithValue(
       FakeEnvironmentRepository(data),
     ),
+    secretStoreProvider.overrideWithValue(FakeSecretStore(data)),
     settingsRepositoryProvider.overrideWithValue(
       settings ?? FakeSettingsRepository(),
     ),

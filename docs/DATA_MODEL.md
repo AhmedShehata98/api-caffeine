@@ -95,6 +95,7 @@ Profile row for every `auth.users` entry, created by the `on_auth_user_created` 
 - `workspace_id`: UUID, Foreign Key -> `workspaces(id)`
 - `name`: VARCHAR(255)
 - `variables`: JSONB, `[{ "key", "value", "secret", "enabled" }]`, default `[]`
+  - For rows with `"secret": true`, `value` is always the placeholder `""`. The real value is stored only on the device, in OS secure storage under `environment-secrets:<environment id>` (a JSON map `{ key: value }`). A device without that value shows the row as "Not set on this device". Secrets that older app versions synced as plain text are moved to the device the first time they are loaded, and then replaced by the placeholder in this column.
 
 ### collections
 

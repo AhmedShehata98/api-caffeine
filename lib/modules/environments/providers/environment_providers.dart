@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_point/core/database/supabase_client_provider.dart';
 import 'package:test_point/core/error/result.dart';
+import 'package:test_point/core/secrets/secret_store.dart';
 import 'package:test_point/modules/environments/models/environment.dart';
 import 'package:test_point/modules/environments/models/environment_variable.dart';
 import 'package:test_point/modules/environments/repositories/environment_repository.dart';
@@ -14,7 +15,10 @@ final environmentRepositoryProvider = Provider<EnvironmentRepository>(
 );
 
 final environmentServiceProvider = Provider<EnvironmentService>(
-  (ref) => EnvironmentService(ref.watch(environmentRepositoryProvider)),
+  (ref) => EnvironmentService(
+    ref.watch(environmentRepositoryProvider),
+    ref.watch(secretStoreProvider),
+  ),
 );
 
 /// Environments of the current workspace. Errors carry a `Failure`.
