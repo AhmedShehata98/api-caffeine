@@ -57,6 +57,30 @@ Shape: cards 12–16px, dialogs 28px, pill buttons, tags 6px, inputs 12px. Spaci
 | — | Fallback generation of #5 (sent 2026-11-10) | — | Never appeared. If a second "Response — Error & Loading states" shows up later, delete it and keep `a8e02c1a…` |
 | L1 | Response Success (Light), early variant | `19efbd895bee44e4bcc073fc8c6bd39b` | Made too early; regenerate after the dark screens are fixed |
 
+## MCP Lab screens (Phase 8, started 2026-11-15)
+Spec: [../features/mcp-lab/feature-specification.md](../features/mcp-lab/feature-specification.md). Dark design system `assets/1955584032106423519`.
+
+**MCP Lab shell additions** (on top of the SHELL STANDARD below):
+- Nav rail gets a 4th item **MCP Lab** (hub icon) between Environments and Settings.
+- Sidebar is **"MCP SERVERS"** + count + Import; filter "Filter servers" (`Ctrl+K`); full-width "+ Add server"; rows = status dot (green connected / gray idle / amber auth needed) + name + fixed 52px transport tag (`STDIO` / `HTTP` / `SSE`); footer "N servers".
+- Top-bar tabs are open servers (status dot + name); environment dropdown unchanged.
+- Status bar left: "Connected · <server> · <transport> · <era> era".
+- Server main area has a tab strip: Settings, Tools, Resources, Prompts, Protocol, Console (Network instead of Console for HTTP servers).
+
+| # | Screen | Screen ID | Status |
+|---|---|---|---|
+| 14 | MCP Lab — Servers & Server settings | `84e7bc3a7ec34fa5b625994bf52ddbbb` | ✅ Landed in ~4 min (2026-11-15). Shell, MCP Lab rail item, transport tags, deprecated SSE/Roots labels, secret footer and status bar all correct. Nits: amber row badge says "Auth" (want "Auth needed"); sidebar footer has a stray layout icon |
+| 15 | MCP Lab — Tool call + pinned Protocol monitor | `0fe876c6afa84874b5735c89cf4b43a4` | Landed 2026-11-15; structure correct (tools list, schema form, result + "Matches outputSchema", Protocol monitor with paired frames and `_meta.progressToken`). Wrapping/clipping in the center column ("Call tool", "Copy as JSON", "days (integer, 1–7)", "idempotent", result JSON) and "+ + Add server". Fix edit landed **in place** in ~5 min: single-column form, "Call tool" + `Ctrl+Enter` and "Copy as JSON" on one line, single "+". Accepted with nits (fix in Flutter, not Stitch): "Add server" now wraps; render is wider than the frame so the right edge (Development pill, Export, monitor edge) is cut; "idempotent" chip and "Structured" tab missing/clipped; result JSON lines clipped |
+| 16 | MCP Lab — Monitors (Protocol / Network) | `0575a546cf6142569af193e77bfc7c4a` | ✅ Landed in ~4 min (2026-11-15). Content correct: negotiated-era badge, filter chips + `Ctrl+F`, `server/discover` 200, `tools/list` complete · ttl 60 s, MRTR conversation group (2 rounds), typed `-32602` / `-32022` (+ supported versions) error rows, headers pane with highlighted `Mcp-Method`/`Mcp-Name`, `Mcp-Param-Repo`, masked `Authorization`, `_meta` section. Nit: right edge cut off (Development pill, Disconnect, `_meta` values). Cause: prompts for #15/#16 said 1440px but project frames are 1280px; use 1280px from #17 |
+| 17 | MCP Lab — Resources & Prompts | `7e50576a4835412e833885331c63edd5` | ✅ Landed in ~4 min (2026-11-15); 1280px prompt fixed the overflow. Resources (5) / Templates (2) toggle, mime tags, "Load next page · Page 1 of 2", Subscriptions with Unsubscribe, resource viewer with Subscribe / Copy, template field with `completion/complete` suggestions and Read. Nits: "1.2 KB" tag wraps; Environments rail icon is sliders (others use globe); template card title hidden by the dropdown. **Gap:** no Prompts view was drawn (title only); design it later or build from spec FR-PRM |
+| 18 | MCP Lab — Dialogs (stdio approval, pending request, destructive confirm) | `b7b2dc79f685445ca617dbab0156f50a` | ✅ Returned directly (no timeout), 2026-11-15. stdio approval (resolved `npx.cmd`, args, directory, env keys, amber "Changed since last approval: args"), pending request (`input_required`, Round tag, schema form, "1 more pending · sampling" queue, Decline / Cancel / Accept), URL-mode "Open in browser?" with bold domain, destructive confirm (red, "hints, not guarantees", Don't ask again). Nits: "Round 1 of 2" tag clipped by dialog 3; sheet footer wraps |
+
+**MCP Lab next steps**
+1. Design the **Prompts** view (missing from #17): prompt list with arguments, argument form with completion, rendered messages (spec FR-PRM-01…03).
+2. Optional polish pass (Flutter can fix instead): #15 overflow + "Add server" wrap, #16 right-edge cut, #17 "1.2 KB" wrap and rail icon, #14 "Auth needed" badge.
+3. Still undesigned: Tasks view, Logs view, Add-server dialog (stdio / HTTP / import), OAuth sign-in state for HTTP servers, light variants.
+4. Lesson: ask for a **1280px-wide** frame (project frame width); 1440px prompts overflow.
+
 ## Known issues found in review
 - **Text wrapping and clipping** in the Stitch renders, for example "Form-/data", "SECRE/T", "PINNE/D", "Active/Environment", a squashed filter field ("Fil"), names cut short ("List p…"), and status-bar text split over two lines.
 - **Inconsistent shell across screens:** the logo (TP circle / bolt / "TEST POINT" / "TP v1.0"), the rail-bottom items (+, avatar, help), the top-bar icons (code, eye, gear, cookies), the sidebar title (EXPLORER vs COLLECTIONS), ⌘/^ vs Ctrl, DEL vs DELETE, pill vs plain method tags, and the status-bar contents (Console, Zoom, UTF-8).
