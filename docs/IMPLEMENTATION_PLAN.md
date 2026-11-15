@@ -1,6 +1,6 @@
 # Test Point — Implementation Plan (MVP)
 
-_Status: Draft · Last updated: 2026-11-12_
+_Status: Draft · Last updated: 2026-11-15_
 
 Related docs:
 - Product scope: [PRD.md](PRD.md)
@@ -8,6 +8,7 @@ Related docs:
 - Data model: [data_model.md](data_model.md)
 - Design progress (Stitch): [design/stitch-mvp-progress.md](design/stitch-mvp-progress.md)
 - Agent / coding rules and Core Stack: [../agents.md](../agents.md)
+- MCP Lab spec and gap review: [features/mcp-lab/](features/mcp-lab/feature-specification.md)
 
 ---
 
@@ -33,11 +34,13 @@ Related docs:
 | D2 | **`modules/projects` is renamed to `modules/workspaces`** | Matches the `workspaces` table. |
 | D3 | **`lib/common/` is renamed to `lib/core/`** | Matches `agents.md` and `ARCHITECTURE.md`. Resolves PRD Q4. |
 | D4 | First sign-in creates a personal organization and a default workspace | Done by a Postgres trigger on `auth.users`, so RLS always has an organization to scope to. |
-| D5 | Secret variables are stored in Supabase (RLS-protected) and masked in the UI | Default for the MVP; revisit PRD Q3 later. |
+| D5 | ~~Secret variables are stored in Supabase~~ **Superseded (2026-11-15):** secret values stay on the device in OS secure storage (`core/secrets/`); Supabase stores the row with an empty placeholder value | Resolves PRD Q3. Plain-text secrets from older versions move to the device on first load. Done in `EnvironmentService`. |
 | D6 | Online-only for the MVP | No local cache; revisit PRD Q2 later. |
 | D7 | **Continue with GitHub first links the identity to the guest user in place** | `auth.linkIdentity(OAuthProvider.github)` adds GitHub to the same anonymous user, so the user id, organization, workspace and data are kept. Needs manual identity linking enabled in Supabase. |
 | D8 | **If that GitHub account already exists, warn, then sign in and discard the guest data** | Linking fails with `identity_already_exists`. If the guest has any collections, requests or environments, a confirm dialog says they will not be carried over; on confirm, `auth.signInWithOAuth(OAuthProvider.github)` loads that account's workspace. Merging is post-MVP. |
 | D9 | **Desktop OAuth returns through a custom URL scheme** | The browser opens GitHub's consent page and redirects to `testpoint://auth-callback`, which the app registers on Windows, macOS and Linux. The redirect URL is added to Supabase's allowed redirect list. |
+| D10 | **MCP Lab uses `mcp_dart`** behind an `mcp_lab` repository contract | The wrapper records every raw frame for the transcript and drives multi-round tool calls manually. Spec Q4. |
+| D11 | **The MCP Lab server catalog is stored in Supabase, per workspace** | Secret fields follow D5 (placeholders). Starting a stdio server needs per-device approval of the command (spec FR-SEC-04). Spec Q-DATA-1. |
 
 ---
 
@@ -55,6 +58,7 @@ All cross-module calls go through each module's public API file
 | `settings` | Theme mode, timeout, follow redirects, proxy (stored on device) | — |
 | `requests` | Request builder, send / cancel, response viewer, open tabs, saved requests | `collections`, `environments`, `settings` |
 | `import` | cURL parser, Postman v2.1 importer, import dialog | `collections`, `requests` |
+| `mcp_lab` (Phase 8) | MCP server catalog, connections (stdio / Streamable HTTP), tools / resources / prompts, transcript, OAuth | `workspaces`, `environments`, `settings` (via `core/network`); `core/secrets` |
 
 The workspace shell (nav rail, top bar, status bar, Welcome screen) lives in
 `lib/app/` and `lib/core/ui/`, and composes module widgets through their public APIs
@@ -85,6 +89,9 @@ written as Supabase migrations in `supabase/migrations/`. Update
 | all tables | Enable RLS; policies allow access only to members of the row's organization | Security (PRD §7) |
 | `auth.users` | Trigger `on_auth_user_created`: insert `users`, a personal `organizations` row, `organization_members` (role `owner`) and a default `workspaces` row | D4 |
 | `auth.users` | Trigger `on_auth_user_updated`: copy the new email into `users.email` when a guest connects GitHub | D7 |
+| `environments` | `variables[].value` is `""` for secret rows (no migration; the app moves old values to the device) | D5 |
+| `mcp_servers` (Phase 8) | New: `workspace_id`, `name`, `transport`, `command`, `args`, `cwd`, `url`, `env` (secret values as placeholders), `headers`, `settings jsonb` (era, timeouts, roots, OAuth non-secret fields), `position`; RLS by organization | D11 |
+| `mcp_saved_calls` (Phase 8, slice S4) | New: saved tool calls, prompt gets and resource reads (`server_id`, `method`, `params jsonb`); or a `kind` column on `requests`, decided in S4 | Spec FR-TPI-02 |
 
 Auth settings in `supabase/config.toml` (and the same in the hosted project):
 - `[auth] enable_anonymous_sign_ins = true`
@@ -381,6 +388,34 @@ fixed (or a recorded decision), goldens exist for each screen in both themes,
 and `flutter analyze` and `flutter test` pass. This also closes the Part B
 "light-theme comparison" item.
 
+### Phase 8 — MCP Lab (M7)
+
+Full requirements and priorities: [features/mcp-lab/feature-specification.md](features/mcp-lab/feature-specification.md)
+(release slices in its §4.1). Open items: [gap-review.md](features/mcp-lab/gap-review.md).
+
+**Before S1**
+- Stitch designs: Lab shell, server list and settings, tool call, transcript / Network / Console, pending-request dialog.
+- Acceptance criteria (Given/When/Then) for the S1 requirements.
+- Decide macOS distribution (sandbox blocks stdio, spec Q16) and CIMD hosting (Q13, needed for S2).
+
+**S1 — Core lab**
+- Add `mcp_dart` to `pubspec.yaml` and the Core Stack table.
+- `modules/mcp_lab`: connection repository contract wrapping `mcp_dart` with frame recording; stdio launcher (login-shell `PATH`, Windows `.cmd` shims, env allow-list, process-tree kill, shutdown sequence); Streamable HTTP via the shared proxy settings.
+- `mcp_servers` migration + RLS + `DATA_MODEL.md`; catalog repository; per-device command approval stored locally.
+- Module-local `McpFailure` codes (spec §6.6).
+- Screens: nav-rail entry, server list, connect, tools (schema form + raw JSON), resources, prompts, Protocol / Network / Console.
+- Both eras (`legacy` default, `modern`).
+
+**S2 — Remote auth:** OAuth (CIMD → pre-registered → DCR), `iss` validation, issuer-keyed credentials, tokens in `core/secrets`, stored-auth-only mode for tests.
+
+**S3 — Interactions:** subscriptions, `listChanged`, progress, elicitation (form and URL), sampling, roots, MRTR, tasks, logs.
+
+**S4 — Test Point integration:** `{{variables}}`, tabs and status bar, saved MCP calls in collections, import/export of client configs.
+
+**Tests** unit tests for the transport wrapper, launcher and services with a mocked `mcp_dart`; integration tests against fixture servers (runtime decided in spec Q14); widget tests for the tool form and transcript; launch tests on Windows, macOS and Linux.
+
+**Done when** each slice's requirements in spec §4.1 pass their acceptance criteria, and a new user can connect a stdio and an HTTP server and call a tool (spec NFR-USE-01).
+
 ---
 
 ## 6. Dependencies on Design Work
@@ -395,6 +430,7 @@ From the "Next steps" in [design/stitch-mvp-progress.md](design/stitch-mvp-progr
 | Avatar at the bottom of the nav rail (shell standard update) | Phase 1 |
 | New screen #13 "Account — Continue with GitHub" (being updated in Stitch from the email / password version) | Phase 6, Part A |
 | Light variants | Phase 6, Part B |
+| MCP Lab screens (shell, server list, tool call, monitors, pending-request dialog) | Phase 8 |
 
 The token values already in the design doc are enough to start Phase 1; the
 other design tasks can run in parallel with development.
@@ -429,6 +465,9 @@ large JSON) go in `test/fixtures/`.
 | Large responses | UI freezes | Background isolate parsing; virtualized editor (`re_editor`); test with 5 MB fixture |
 | Stitch designs still changing | Rework in UI | Build shell and shared widgets from the shell standard first; keep screens thin |
 | RLS mistakes | Data leaks between organizations | Policies written in Phase 1 and checked with two test users locally |
+| Secret values only on one device (D5) | A second computer sees "Not set on this device" | Accepted; the UI says so clearly and the variable stays unresolved |
+| Shared MCP catalog runs a command on another member's device (D11) | Remote code execution | Per-device approval of each command; re-approval on change |
+| `mcp_dart` hides raw frames or protocol steps (D10) | Transcript and MRTR UI not possible | Wrap the transport first in S1; fall back to an in-repo transport for one transport if needed |
 
 ---
 

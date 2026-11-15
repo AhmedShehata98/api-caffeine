@@ -1,6 +1,6 @@
 # Test Point — Product Requirements Document (MVP)
 
-_Status: Draft · Last updated: 2026-11-10_
+_Status: Draft · Last updated: 2026-11-15_
 
 Related docs:
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
@@ -8,6 +8,7 @@ Related docs:
 - Design progress (Stitch): [design/stitch-mvp-progress.md](design/stitch-mvp-progress.md)
 - Agent / coding rules: [../agents.md](../agents.md)
 - Implementation plan: [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)
+- MCP Lab spec: [features/mcp-lab/feature-specification.md](features/mcp-lab/feature-specification.md)
 
 ---
 
@@ -33,6 +34,7 @@ request/response loop tight, and shows only what matters.
 | Backend developer | Quickly hit local and staging endpoints, switch environments, inspect JSON responses |
 | Frontend / mobile developer | Explore an API, check payloads and status codes, import existing Postman collections or cURL commands |
 | QA engineer | Organize requests into collections and re-run them against different environments |
+| MCP server developer | Connect to an MCP server, call its tools, read its resources and prompts, and see the raw JSON-RPC traffic |
 
 ## 4. Goals and Non-Goals
 
@@ -42,6 +44,7 @@ request/response loop tight, and shows only what matters.
 3. Reuse values across requests with environments and `{{variables}}`.
 4. Bring existing work in by importing cURL commands and Postman v2.1 collections.
 5. Feel fast and polished on desktop, in dark and light themes.
+6. Test and debug MCP (Model Context Protocol) servers in the same app (MCP Lab, §5.9; delivered after the HTTP MVP).
 
 ### Non-Goals (future iterations)
 Request history, pre-request / test scripts, collection runner, mock servers,
@@ -115,6 +118,17 @@ Each feature maps to a module under `lib/modules/`.
 - Errors (sign-in cancelled, GitHub access denied, provider unavailable, network) show clear messages.
 - Merging guest data into an existing account is post-MVP.
 
+### 5.9 MCP Lab (`modules/mcp_lab`) — post-MVP milestone M7
+Full requirements: [features/mcp-lab/feature-specification.md](features/mcp-lab/feature-specification.md).
+- Connect to MCP servers over stdio (a local command) or Streamable HTTP (a URL); SSE as a deprecated legacy option.
+- Both protocol eras: `legacy` (default, `initialize`) and `modern` (2026-07-28, `server/discover`).
+- Tools (schema form + raw JSON args), resources (read, subscribe), prompts (render messages).
+- Protocol transcript, Network view (HTTP) and Console view (server stderr).
+- Server catalog stored in Supabase per workspace; secret values stay on the device.
+- OAuth for remote servers; server-initiated requests (elicitation, sampling, roots), tasks and multi-round tool calls.
+- Reuses environments (`{{variables}}`), tabs, status bar and collections.
+- Built on the `mcp_dart` package. Starting a local server always needs the user's approval on each device.
+
 ---
 
 ## 6. User Stories
@@ -131,6 +145,8 @@ Each feature maps to a module under `lib/modules/`.
 | US-8 | developer | mark variables as secret | tokens are not shown on screen |
 | US-9 | guest user | continue with GitHub from the avatar | I keep the work I did as a guest |
 | US-10 | registered user | continue with GitHub on another computer | I see the same collections and environments |
+| US-11 | MCP server developer | connect to my server and call a tool from a form | I can test it without an LLM host |
+| US-12 | MCP server developer | see every JSON-RPC message and the server's stderr | I can find protocol errors quickly |
 
 ---
 
@@ -142,7 +158,7 @@ Each feature maps to a module under `lib/modules/`.
 | Performance | Cold start under 2 s; UI stays at 60 fps; a 5 MB JSON response opens without freezing the UI (parse off the main isolate) |
 | Reliability | Requests can be cancelled; timeouts are configurable; no crash on malformed responses |
 | Errors | Infrastructure errors never reach the UI raw; they are mapped to `Failure` types with clear messages |
-| Security | Supabase Row Level Security on every table; only the anon key ships in the app; secret variables are masked in the UI |
+| Security | Supabase Row Level Security on every table; only the anon key ships in the app; secret values stay on the device (OS secure storage) and are masked in the UI |
 | Accessibility | Keyboard navigation for all main actions; text contrast meets WCAG AA in both themes |
 | UI consistency | Follows the shell standard in the design doc: `Ctrl` in all hints, no text wrapping, fixed method-pill width |
 
@@ -186,6 +202,7 @@ Each feature maps to a module under `lib/modules/`.
 | M4 | Environments | Environments manager, variable resolution and autocomplete |
 | M5 | Import & Settings | cURL and Postman import, settings screen |
 | M6 | Account & Polish | Continue with GitHub account flow (§5.8), light theme, keyboard shortcuts, performance pass, tests |
+| M7 | MCP Lab | MCP Lab (§5.9) in four slices: core lab, remote auth, interactions, Test Point integration |
 
 ## 12. Success Metrics
 

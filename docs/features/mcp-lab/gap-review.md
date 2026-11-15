@@ -112,7 +112,7 @@ Spec v1.2 resolves every item marked **→ v1.2**. Items marked **→ follow-up*
 2. ~~**Change the environments module** to follow the placeholder rule.~~ **Done** (`EnvironmentService` + `lib/core/secrets/`).
 3. Add **`mcp_dart`** to the Core Stack table in `agents.md`. Build the transport wrapper first: frame recording, manual MRTR, and Windows stdio (`.cmd` + tree kill).
 4. Decide on **macOS sandboxing and entitlements**, and **hosting the CIMD metadata document**.
-5. Add MCP Lab to the **PRD** (§4 Goals, §5 Scope, §11 Milestones) and to **`IMPLEMENTATION_PLAN.md`**.
+5. ~~Add MCP Lab to the **PRD** and **`IMPLEMENTATION_PLAN.md`**.~~ **Done** (PRD §5.9 / M7; plan Phase 8, D10–D11, `mcp_servers` table sketch).
 6. Create **Stitch designs** for the MCP Lab screens.
 7. Write **acceptance criteria** for the Slice 1 requirements.
 8. ~~Justify `flutter_secure_storage` in the **Core Stack** table.~~ **Done** (`agents.md`).
