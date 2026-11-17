@@ -6,6 +6,7 @@ Refresh the captures:
 `flutter test test/app/design_audit --dart-define=DESIGN_AUDIT=true --update-goldens`
 
 **Method notes**
+- Color descriptions below record the original Stitch audit. For current app colors, use `lib/core/ui/theme/` and the [current color tokens](stitch-mvp-progress.md#current-color-tokens); these take precedence over Stitch references.
 - Several Stitch screenshots are broken (screen #1 shows an empty nav rail and sidebar), so the shell standard text and the HTML of #1 were used as the source of truth when they disagree.
 - Only the HTML of #1 was read. For other screens, HTML is pulled only when a screenshot detail is unclear.
 - Out-of-scope Stitch items are ignored (Tests/Scripts tabs, Cookies tab, Share, Run collection, Sync, Console/Zoom/UTF-8, `⌘` hints, breadcrumbs, Description column).

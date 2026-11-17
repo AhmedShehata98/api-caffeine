@@ -131,8 +131,9 @@ with a Phase 0 added for housekeeping.
 - `core/error/`: `Failure` types (`NetworkFailure`, `StorageFailure`,
   `ValidationFailure`, `AuthFailure`, `UnexpectedFailure`) and a `Result<T>` type.
 - `core/ui/theme/`:
-  - `ColorScheme` seeded from `#0F9D8A`, dark (primary) and light, using the
-    tokens in the design doc.
+  - `ColorScheme` seeded from orange `#FF6A00`, dark (primary) and light.
+    `app_theme.dart` is the source of truth; the design doc mirrors its
+    [current color tokens](design/stitch-mvp-progress.md#current-color-tokens).
   - `ThemeExtension` for HTTP method colors and status colors.
   - Bundled fonts: Google Sans Flex, Inter, JetBrains Mono (`pubspec.yaml` assets).
   - Shape and spacing constants (radius 6/12/16/28; spacing 4/8/12/16/24/32).

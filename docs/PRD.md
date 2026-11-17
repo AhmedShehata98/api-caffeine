@@ -166,9 +166,10 @@ Full requirements: [features/mcp-lab/feature-specification.md](features/mcp-lab/
 
 ## 8. Design
 
-- Material 3 Expressive, teal brand seed `#0F9D8A`, dark theme first, light theme second.
+- Material 3 Expressive, orange brand seed `#FF6A00`, dark theme first, light theme second. Primary is `#FF6A00` in dark mode and `#B84D00` in light mode.
 - Fonts: Google Sans Flex (headlines), Inter (UI), JetBrains Mono (URLs and code), bundled as assets.
 - Method and status colors defined as a `ThemeExtension` in `lib/core/ui/theme/`.
+- `lib/core/ui/theme/` is the source of truth for colors and takes precedence over Stitch references; see the [current color tokens](design/stitch-mvp-progress.md#current-color-tokens).
 - 12 MVP screens designed in Stitch; see the screen inventory in
   [design/stitch-mvp-progress.md](design/stitch-mvp-progress.md).
 

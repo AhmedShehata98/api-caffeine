@@ -55,7 +55,7 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Design reference
 
 Use Stitch project **3561297165959721299**, screens **#14–#22** and light variant **15L**.
-Follow [the design handoff](../../design/stitch-mvp-progress.md): retain existing teal themes and bundled fonts, fix documented clipping/double-plus nits, keep labels on one line and keyboard hints as `Ctrl`. The initial server-management screen is implemented; primitive and monitor views are pending.
+Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-tokens): use the current orange-seeded themes in `lib/core/ui/theme/` and bundled fonts, fix documented clipping/double-plus nits, keep labels on one line and keyboard hints as `Ctrl`. Historical implementation notes below describe the theme at the time; the current app theme takes precedence. The initial server-management screen is implemented; primitive and monitor views are pending.
 
 ## Next implementation order
 

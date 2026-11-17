@@ -253,7 +253,7 @@ Shared HTTP proxy settings from `modules/settings` should be reused for remote t
 ### 6.3 Shell integration
 
 - Add **MCP Lab** as a **top-level** nav rail section (alongside Collections, Environments, Settings) — resolved Q10.
-- Use existing theme (`ColorScheme` teal `#0F9D8A`), `multi_split_view` for resizable panes, `re_editor` / `re_highlight` for JSON bodies and transcripts.
+- Use the existing theme in `lib/core/ui/theme/` (`ColorScheme` seeded from orange `#FF6A00`, with dark primary `#FF6A00` and light primary `#B84D00`), `multi_split_view` for resizable panes, `re_editor` / `re_highlight` for JSON bodies and transcripts. App theme colors take precedence over Stitch references.
 - Keyboard hints always say `Ctrl` (never `⌘` / `^`).
 - Labels/chips stay on one line with ellipsis.
 

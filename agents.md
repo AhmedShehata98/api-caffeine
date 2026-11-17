@@ -181,7 +181,8 @@ Use Flutter built-ins instead of packages for these:
 
 ### UI rules
 
-- Theme lives in `lib/core/ui/theme/`: a `ColorScheme` seeded from teal `#0F9D8A`, plus a `ThemeExtension` for HTTP method colors and status colors (2xx green, 3xx blue, 4xx amber, 5xx red).
+- Theme lives in `lib/core/ui/theme/`: a `ColorScheme` seeded from orange `#FF6A00`, with dark primary `#FF6A00` and light primary `#B84D00`, plus a `ThemeExtension` for HTTP method colors and status colors (2xx green, 3xx blue, 4xx amber, 5xx red).
+- When project theme colors conflict with Stitch designs, use the values in `lib/core/ui/theme/`.
 - Dark theme is the primary theme; light theme must also work.
 - Fonts are bundled as assets (no runtime download): Google Sans Flex for headlines, Inter for UI text, JetBrains Mono for URLs and code.
 - Keyboard hints always say `Ctrl`, never `⌘` or `^`.
