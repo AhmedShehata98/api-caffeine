@@ -13,13 +13,13 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 repositories (§3.3) | Catalog/trust, native stdio and base Streamable HTTP implemented; modern HTTP parameter mirroring implemented | Stdio platform gaps, HTTP legacy resumption/optional GET and deprecated HTTP+SSE, remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans and diagnostic buffers implemented | Rich result rendering, output-schema diagnostics, remaining protocol gates |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection and draft/result state implemented | Preferences, monitor UI integration, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, Tools/schema forms and initial Prompts/messages implemented | Resources/templates, rich content, monitors, full desktop review |
+| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages and Resources browsing/text reads implemented | Template expansion, binary save/images, other rich content, monitors, full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
 | S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
 
-Server management, Tools and Prompts are accessible through the MCP Lab navigation item; Resources and monitor views are still pending. No completion percentage is assigned:
+Server management, Tools, Prompts and Resources are accessible through the MCP Lab navigation item; monitor views are still pending. No completion percentage is assigned:
 the remaining live-session and UI work is substantially larger than the completed scaffolding.
 
 ## Implemented
@@ -517,3 +517,44 @@ real Supabase RLS and full S1 acceptance are not certified by this run.
 Next: Resources/templates and read results, followed by protocol/network/console
 monitor UI. Rich content, preferences and existing native/protocol/database exit
 gates remain open. S1 is not complete.
+
+## Initial Resources UI follow-up
+
+Added a capability-gated Resources view, including resource-only servers. Opening
+the view loads the first resources/templates pages independently. Their toggle
+shows loaded counts, name/title, URI/template, description and MIME type. Lists
+use bounded scroll areas and lazy rows. Load next page appends only on request
+and disappears after the last page. Refresh starts the active list again. Page
+failures retain existing rows and the cursor for explicit retry; repeated cursors,
+1,000-page/10,000-item limits and stale session responses are guarded in providers.
+
+Selecting a row fills the editable resource URI. Read resource and Ctrl+Enter
+invoke the existing session-owned read action; selecting, typing and paging do
+not read automatically. URI drafts survive reopening the view, clear alongside
+results on account/workspace boundaries, and remain separate from submitted
+URIs. A selected template is shown verbatim for manual replacement with a resolved
+URI; unresolved braces and invalid absolute URIs fail validation without a request.
+Automatic template expansion and completion remain pending.
+
+Read results show submitted URI, duration, application failures and clear. Each
+content part retains its own URI/MIME metadata. Text is shown read-only; JSON MIME
+types (including +json) are pretty-printed off the UI isolate. Malformed JSON falls
+back to the original text with a notice. Content previews stop at 256 KiB with an
+explicit Load full content action; Copy resource text preserves the original
+source. The existing full result JSON viewer retains the complete parsed response.
+Binary base64 decoding runs off-isolate for decoded byte size; malformed data is
+explicit. Binary Save and inline images remain pending, so AC-RES-02.2 is not met.
+No data is automatically persisted and no new dependency was introduced.
+
+Applied frontend-design and ui-ux-pro-max, inspected Stitch screen 17 and reviewed
+dark/light renders (.dart_tool/mcp_resources_dark.png and mcp_resources_light.png).
+All 220 selected tests pass (214 MCP and six desktop shutdown tests), followed by
+the nine affected resource widget tests after a final list-spacing adjustment.
+Static analysis is clean. Seventeen added cases cover pagination/retry/cursors,
+stale responses, isolated previews, explicit invocation, template validation,
+draft restoration, scope cleanup, failures, binary metadata, large text and
+resource-only navigation. Existing native-hook harness, native desktop/keychain,
+database/RLS and protocol-size/platform limitations remain unchanged.
+
+Next: resource binary Save/inline images and template expansion, then monitor UI.
+S1 remains incomplete; this completes the resource browsing/text-read slice only.

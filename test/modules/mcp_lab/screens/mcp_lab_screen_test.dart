@@ -381,6 +381,57 @@ void main() {
     },
   );
 
+  testWidgets(
+    'resource-only server lists resources only after opening the tab',
+    (tester) async {
+      final session = _LiveSession();
+      when(() => session.status).thenAnswer(
+        (_) => Stream.value(
+          const ConnectionStatus.connected(
+            era: NegotiatedEra.legacy,
+            serverInfo: {},
+          ),
+        ),
+      );
+      when(() => session.close())
+          .thenAnswer((_) async => const Result.success(null));
+      when(() => session.request('resources/list', any()))
+          .thenAnswer((_) async => const Result.success({'resources': []}));
+      when(() => session.request('resources/templates/list', any())).thenAnswer(
+        (_) async => const Result.success({'resourceTemplates': []}),
+      );
+      await tester.runAsync(
+        () => owner.run(
+          's',
+          (_) async => Result.success(
+            McpConnected(
+              session,
+              McpNegotiation(
+                era: NegotiatedEra.legacy,
+                version: '2025-11-25',
+                discovery: {
+                  'capabilities': {'resources': {}},
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await pump(tester);
+      await tester.tap(find.text('Weather server'));
+      await tester.pumpAndSettle();
+      verifyNever(() => session.request('resources/list', any()));
+      await tester.tap(find.text('Resources'));
+      await tester.pumpAndSettle();
+      verify(() => session.request('resources/list', any())).called(1);
+      verify(() => session.request('resources/templates/list', any()))
+          .called(1);
+      expect(find.text('Resources (0)'), findsOneWidget);
+      expect(find.text('Templates (0)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('HTTP summary hides credential query values', (tester) async {
     rows = [
       server.copyWith(

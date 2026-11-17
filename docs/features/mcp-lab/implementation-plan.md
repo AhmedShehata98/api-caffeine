@@ -460,3 +460,20 @@ Resources/templates and monitor UI are next. Rich media/binary save, prompt
 completion, output-schema diagnostics, destructive-confirmation preferences and
 native/database/protocol S1 exit gates remain pending. See the progress tracker
 for exact behavior and validation limits.
+
+### Initial Resources UI progress
+
+Added capability-gated resource-only navigation and independent Resources/Templates
+lists with explicit next-page loading, refresh/retry, retained rows on failure,
+pagination bounds and stale-response rejection. Selection fills a session-owned
+URI draft; Read/Ctrl+Enter explicitly requests content. Text/JSON previews are
+read-only, prepared off-isolate and bounded with Load full; raw text copy, result
+JSON, duration, failure and clear controls are available. Binary metadata reports
+decoded size and malformed base64. Template expressions require manual resolution
+and are blocked from reads until replaced.
+
+All 220 selected regression tests and analysis pass, with nine resource widget
+checks rerun after final spacing adjustment. Reviewed Stitch screen 17 and both
+theme renders using frontend-design and ui-ux-pro-max. Binary Save/inline images,
+automatic URI-template expansion/completion and monitor UI remain next. This is
+the initial Resources browsing/text-read slice; full S1 acceptance remains open.

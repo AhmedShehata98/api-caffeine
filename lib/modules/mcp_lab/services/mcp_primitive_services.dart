@@ -261,10 +261,13 @@ class McpResourceService {
       );
   Future<Result<List<ResourceContents>>> read(String uri) async {
     final parsed = Uri.tryParse(uri);
-    if (parsed == null || !parsed.hasScheme) {
+    if (parsed == null ||
+        !parsed.hasScheme ||
+        uri.contains('{') ||
+        uri.contains('}')) {
       return const Result.failure(
         McpValidationFailure(
-          'Provide an absolute resource URI.',
+          'Provide an absolute resource URI with no unresolved template expressions.',
           code: McpErrorCode.invalidParams,
         ),
       );

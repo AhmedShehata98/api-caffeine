@@ -19,6 +19,7 @@ import '../providers/mcp_connection_status_provider.dart';
 import '../providers/mcp_primitive_providers.dart';
 import '../widgets/mcp_tools_view.dart';
 import '../widgets/mcp_prompts_view.dart';
+import '../widgets/mcp_resources_view.dart';
 import '../services/mcp_connect_service.dart';
 import '../services/mcp_approval_summary.dart';
 import '../widgets/mcp_approval_dialog.dart';
@@ -332,7 +333,9 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
   Widget _details(McpServer server) {
     final services = ref.watch(mcpPrimitiveServicesProvider(server.id));
     if (services == null ||
-        (!services.supports('tools') && !services.supports('prompts'))) {
+        (!services.supports('tools') &&
+            !services.supports('prompts') &&
+            !services.supports('resources'))) {
       return _settingsDetails(server);
     }
     final view = _view == 'settings' || services.supports(_view)
@@ -372,6 +375,11 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
                           value: 'prompts',
                           label: Text('Prompts'),
                         ),
+                      if (services.supports('resources'))
+                        const ButtonSegment(
+                          value: 'resources',
+                          label: Text('Resources'),
+                        ),
                     ],
                     selected: {view},
                     onSelectionChanged: (selection) =>
@@ -397,6 +405,10 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
               serverId: server.id,
             ),
             'prompts' => McpPromptsView(
+              key: ObjectKey(services),
+              serverId: server.id,
+            ),
+            'resources' => McpResourcesView(
               key: ObjectKey(services),
               serverId: server.id,
             ),
