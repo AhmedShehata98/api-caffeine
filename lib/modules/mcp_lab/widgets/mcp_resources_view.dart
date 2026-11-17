@@ -5,6 +5,9 @@ import 'package:test_point/core/error/result.dart';
 
 import '../providers/mcp_resources_provider.dart';
 import '../providers/mcp_work_providers.dart';
+import '../services/mcp_uri_template.dart';
+import '../services/mcp_session_work.dart';
+import 'mcp_uri_template_form.dart';
 import 'mcp_json_result.dart';
 import 'mcp_resource_content_view.dart';
 
@@ -26,10 +29,62 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
         '',
   );
   bool _templates = false;
+  McpUriTemplate? _template;
+  Map<String, String> _templateValues = {};
+  String? _templateError;
   @override
   void initState() {
     super.initState();
+    final draft = ref
+        .read(mcpSessionWorkProvider(widget.serverId))
+        ?.resourceTemplate
+        .state
+        .draft;
+    if (draft?.template case final source?) {
+      _templates = true;
+      _selectTemplate(source, values: draft!.values);
+    }
     _uri.addListener(_persist);
+  }
+
+  void _selectTemplate(String source, {Map<String, String> values = const {}}) {
+    final parsed = McpUriTemplate.parse(source);
+    _template = parsed.valueOrNull;
+    _templateError = parsed.failureOrNull?.message;
+    _templateValues = Map.of(values);
+    if (_template == null) {
+      _uri.text = source;
+      ref
+          .read(mcpSessionWorkProvider(widget.serverId))
+          ?.resourceTemplate
+          .setDraft(McpResourceTemplateDraft());
+    } else {
+      _expand(values);
+    }
+  }
+
+  void _expand(Map<String, String> values) {
+    _templateValues = Map.of(values);
+    ref
+        .read(mcpSessionWorkProvider(widget.serverId))
+        ?.resourceTemplate
+        .setDraft(
+          McpResourceTemplateDraft(template: _template!.source, values: values),
+        );
+    final expanded = _template!.expand(values);
+    _templateError = expanded.failureOrNull?.message;
+    _uri.text = expanded.valueOrNull ?? '';
+    _persist();
+  }
+
+  void _manualUri() {
+    _template = null;
+    _templateValues = {};
+    _templateError = null;
+    ref
+        .read(mcpSessionWorkProvider(widget.serverId))
+        ?.resourceTemplate
+        .setDraft(McpResourceTemplateDraft());
   }
 
   void _persist() => ref
@@ -37,6 +92,7 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
       ?.resources
       .setDraft(_uri.text);
   Future<void> _read() async {
+    if (_templateError != null) return;
     _persist();
     await ref.read(mcpWorkActionsProvider(widget.serverId))?.readResource();
   }
@@ -57,7 +113,14 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
     final running = work?.running ?? false;
     final active = ref.watch(mcpSessionWorkProvider(widget.serverId)) != null;
     ref.listen(mcpSessionWorkProvider(widget.serverId), (_, next) {
-      if (next == null) _uri.clear();
+      if (next == null) {
+        setState(() {
+          _uri.clear();
+          _template = null;
+          _templateValues = {};
+          _templateError = null;
+        });
+      }
     });
     return CallbackShortcuts(
       bindings: {
@@ -157,7 +220,14 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
                       ),
                       onTap: running
                           ? null
-                          : () => setState(() => _uri.text = item.uri),
+                          : () => setState(() {
+                              if (_templates) {
+                                _selectTemplate(item.uri);
+                              } else {
+                                _manualUri();
+                                _uri.text = item.uri;
+                              }
+                            }),
                     );
                   },
                 ),
@@ -190,19 +260,34 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
                 ),
               ),
             const SizedBox(height: 24),
+            if (_template case final template?)
+              McpUriTemplateForm(
+                template: template,
+                values: _templateValues,
+                enabled: active && !running,
+                onChanged: (values) => setState(() => _expand(values)),
+              ),
+            if (_templateError case final error?)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(error),
+              ),
             TextField(
               controller: _uri,
               enabled: active && !running,
+              onChanged: (_) => setState(_manualUri),
               decoration: const InputDecoration(
                 labelText: 'Resource URI',
-                helperText: 'For templates, replace expressions with a resolved URI before reading.',
+                helperText: 'Review before reading. Editing this URI switches to manual input.',
               ),
             ),
             const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton.icon(
-                onPressed: !active || running ? null : _read,
+                onPressed: !active || running || _templateError != null
+                    ? null
+                    : _read,
                 icon: const Icon(Icons.visibility_outlined),
                 label: const Text('Read resource · Ctrl+Enter', maxLines: 1),
               ),

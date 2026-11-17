@@ -493,3 +493,18 @@ analysis pass, with native exports mocked; actual desktop save dialogs, platform
 image support and the existing transport-size/S1 exit gates remain unvalidated.
 Automatic URI-template expansion and monitor UI remain next. See the progress
 tracker for precise lifecycle semantics and validation limits.
+
+### Scalar URI-template expansion progress
+
+Added session-owned template selection/string arguments, Include controls,
+automatic resolved-URI preview, explicit reads and manual-URI fallback. The bounded
+pure expander covers scalar RFC 6570 operators and modifiers with Unicode-safe
+encoding, valid percent-triplet preservation for reserved expansion, and explicit
+undefined/empty semantics. Malformed/over-budget input returns application failures;
+no new dependency or automatic request is added.
+
+All 248 selected regression tests and analysis pass; the 29 affected cases were
+rerun after final UTF-8 budget refinements. Both theme renders were reviewed using
+frontend-design and ui-ux-pro-max. Composite list/map editors, completion and active
+environment integration remain follow-ups. Protocol/network/console monitor UI is
+next, with the existing native/database/protocol S1 exit gates still open.

@@ -24,6 +24,7 @@ class _Session implements McpSession {
   bool fail = false;
   String binaryMime = 'application/octet-stream';
   String blob = 'AID/AA==';
+  String uriTemplate = 'weather://{city}';
   @override
   Future<Result<Map<String, dynamic>>> request(
     String method,
@@ -58,11 +59,11 @@ class _Session implements McpSession {
       );
     }
     if (method == 'resources/templates/list') {
-      return const Result.success({
+      return Result.success({
         'resourceTemplates': [
           {
             'name': 'City template',
-            'uriTemplate': 'weather://{city}',
+            'uriTemplate': uriTemplate,
             'mimeType': 'application/json',
           },
         ],
@@ -198,6 +199,7 @@ void main() {
   }
 
   Future<void> read(WidgetTester tester) async {
+    await tester.pump();
     await tester.ensureVisible(find.text('Read resource · Ctrl+Enter'));
     await tester.tap(find.text('Read resource · Ctrl+Enter'));
     await finish(tester);
@@ -244,24 +246,154 @@ void main() {
     },
   );
   testWidgets(
-    'templates require a resolved URI and invalid input never sends',
+    'template arguments expand without reading and manual editing overrides expansion',
     (tester) async {
       await pump(tester);
       await tester.tap(find.text('Templates (1)'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('City template'));
       await tester.pump();
-      await read(tester);
-      expect(
-        find.textContaining('no unresolved template expressions'),
-        findsOneWidget,
+      await tester.tap(find.text('Include city'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'city'),
+        'Lisbon 😀',
       );
+      await tester.pump();
       expect(session.calls.where((c) => c.$1 == 'resources/read'), isEmpty);
-      await tester.enterText(find.byType(TextField).first, 'weather://lisbon');
+      expect(
+        tester
+            .widget<TextField>(find.widgetWithText(TextField, 'Resource URI'))
+            .controller!
+            .text,
+        'weather://Lisbon%20%F0%9F%98%80',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Resource URI'),
+        'weather://lisbon',
+      );
       await read(tester);
       expect(session.calls.last.$2, {'uri': 'weather://lisbon'});
+      expect(find.text('Template arguments'), findsNothing);
     },
   );
+  testWidgets(
+    'template draft restores and scope changes remove its arguments',
+    (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('Templates (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('City template'));
+      await tester.pump();
+      await tester.tap(find.text('Include city'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'city'),
+        'private city',
+      );
+      await tester.pumpWidget(const SizedBox());
+      await pump(tester);
+      expect(find.text('Template arguments'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.widgetWithText(TextFormField, 'city'))
+            .initialValue,
+        'private city',
+      );
+      final work = owner.workFor('s')!;
+      expect(work.resourceTemplate.state.draft!.values['city'], 'private city');
+      await tester.runAsync(() => owner.switchScope('other', 'w'));
+      await tester.pumpAndSettle();
+      expect(find.text('Template arguments'), findsNothing);
+      expect(work.resourceTemplate.state.draft, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'omitted and empty query values expand differently and only Read sends',
+    (tester) async {
+      session.uriTemplate = 'weather://city{?q}';
+      await pump(tester);
+      await tester.tap(find.text('Templates (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('City template'));
+      await tester.pump();
+      final uri = find.widgetWithText(TextField, 'Resource URI');
+      expect(tester.widget<TextField>(uri).controller!.text, 'weather://city');
+      await tester.tap(find.text('Include q'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(uri).controller!.text,
+        'weather://city?q=',
+      );
+      await tester.enterText(find.widgetWithText(TextFormField, 'q'), 'a&b+c');
+      await tester.pump();
+      expect(session.calls.where((c) => c.$1 == 'resources/read'), isEmpty);
+      await read(tester);
+      expect(session.calls.last.$2, {'uri': 'weather://city?q=a%26b%2Bc'});
+    },
+  );
+  testWidgets(
+    'invalid template offers manual URI fallback and cannot send unresolved syntax',
+    (tester) async {
+      session.uriTemplate = 'weather://{city:0}';
+      await pump(tester);
+      await tester.tap(find.text('Templates (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('City template'));
+      await tester.pump();
+      expect(
+        find.textContaining('Enter a resolved URI instead.'),
+        findsOneWidget,
+      );
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Read resource · Ctrl+Enter'),
+      );
+      expect(button.onPressed, isNull);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Resource URI'),
+        'weather://resolved',
+      );
+      await read(tester);
+      expect(session.calls.last.$2, {'uri': 'weather://resolved'});
+    },
+  );
+  for (final light in [false, true]) {
+    testWidgets(
+      '${light ? 'light' : 'dark'} template form renders without overflow',
+      (tester) async {
+        session.uriTemplate = 'weather://city/{city}{?units}';
+        await pump(tester, light: light);
+        await tester.tap(find.text('Templates (1)'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('City template'));
+        await tester.pump();
+        await tester.tap(find.text('Include city'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'city'),
+          'Lisbon',
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        if (const bool.fromEnvironment('MCP_UI_SCREENSHOTS')) {
+          await tester.runAsync(() async {
+            final rendered =
+                await (boundary.currentContext!.findRenderObject()
+                        as RenderRepaintBoundary)
+                    .toImage();
+            final bytes = await rendered.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            await File(
+              '.dart_tool/mcp_template_${light ? 'light' : 'dark'}.png',
+            ).writeAsBytes(bytes!.buffer.asUint8List());
+            rendered.dispose();
+          });
+        }
+      },
+    );
+  }
   testWidgets(
     'draft restores on remount and account change clears the URI and result',
     (tester) async {

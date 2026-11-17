@@ -13,7 +13,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 repositories (§3.3) | Catalog/trust, native stdio and base Streamable HTTP implemented; modern HTTP parameter mirroring implemented | Stdio platform gaps, HTTP legacy resumption/optional GET and deprecated HTTP+SSE, remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans and diagnostic buffers implemented | Rich result rendering, output-schema diagnostics, remaining protocol gates |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection and draft/result state implemented | Preferences, monitor UI integration, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages, Resources browsing/text reads, binary Save and raster image previews implemented | Template expansion, other rich content, monitors, native save-dialog/full desktop review |
+| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages, Resources browsing/text reads, binary Save/raster previews and scalar URI-template expansion implemented | Composite template inputs/completion, other rich content, monitors, native save-dialog/full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
@@ -597,3 +597,39 @@ image support or 20 MiB transport acceptance. Full AC-RES-02.2 platform acceptan
 and the existing native/database/protocol gates remain open.
 
 Next: automatic URI-template expansion, then monitor UI. S1 is not complete.
+
+## Scalar URI-template expansion follow-up
+
+Selecting a resource template now exposes string-variable controls and a resolved
+URI preview. Include checkboxes distinguish undefined variables from explicitly
+empty strings. Values update the URI locally without requesting content. Read and
+Ctrl+Enter retain explicit invocation; editing the resolved URI switches to manual
+input. Invalid/over-budget templates explain the manual fallback and cannot send
+unresolved expressions. Template selection/values are session-owned, restore when
+the view reopens and clear on scope boundaries alongside the read draft/results.
+
+Added a bounded pure expander for scalar variables using the operators in
+[RFC 6570](https://www.rfc-editor.org/rfc/rfc6570.html): simple, reserved, fragment,
+label, path, matrix and query/continuation, plus scalar prefix/explode modifiers.
+Unicode is UTF-8 encoded, prefixes count code points, and reserved expansions
+preserve valid percent triplets. The existing SDK expander walks UTF-16 code units
+in its encoder; this service avoids splitting supplementary Unicode characters.
+No new dependency or external lookup is introduced. Composite list/map values,
+completion requests and environment-variable integration remain pending.
+
+Limits are 16 KiB UTF-8 templates, 128 expressions, 64 distinct variables, 4 KiB
+UTF-8 per value and 64 KiB expanded URI. Expansion checks intermediate growth,
+including repeated variable references. Invalid syntax and over-budget input
+return application failures without partial expansion or network activity.
+
+Applied frontend-design and ui-ux-pro-max and reviewed both theme renders at
+.dart_tool/mcp_template_dark.png and mcp_template_light.png. All 248 selected
+regression tests pass (242 MCP plus six desktop shutdown cases), followed by the
+29 affected template/resource cases after tightening UTF-8 budgets. Analysis is
+clean. Thirteen new cases cover scalar operator examples, encoding, Unicode,
+omission/empty semantics, malformed/bounded inputs, explicit reads, manual fallback,
+draft restoration, cleanup and both themes. Existing unit-only/native, database,
+transport-size and platform validation limits still apply; S1 remains incomplete.
+
+Next: protocol/network/console monitor UI. Composite template editors and completion
+remain later follow-ups; the completed slice is automatic scalar expansion.

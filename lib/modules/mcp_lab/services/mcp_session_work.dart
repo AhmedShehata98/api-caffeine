@@ -27,6 +27,15 @@ class McpPromptDraft {
   final Map<String, String> arguments;
 }
 
+class McpResourceTemplateDraft {
+  McpResourceTemplateDraft({
+    this.template,
+    Map<String, String> values = const {},
+  }) : values = Map.unmodifiable(values);
+  final String? template;
+  final Map<String, String> values;
+}
+
 /// Memory-only UI state. Submitted input remains distinct from later edits.
 class McpOperationState<D, T> {
   const McpOperationState({
@@ -146,15 +155,24 @@ class McpSessionWork {
         isAuthorized: isAuthorized,
       ),
       resources = McpOperationController('', isAuthorized: isAuthorized),
+      resourceTemplate = McpOperationController(
+        McpResourceTemplateDraft(),
+        isAuthorized: isAuthorized,
+      ),
       prompts = McpOperationController(
         McpPromptDraft(),
         isAuthorized: isAuthorized,
       );
   final McpOperationController<McpToolDraft, McpToolCall> tools;
   final McpOperationController<String, List<ResourceContents>> resources;
+  final McpOperationController<McpResourceTemplateDraft, void> resourceTemplate;
   final McpOperationController<McpPromptDraft, McpPromptResult> prompts;
-  Future<void> dispose() =>
-      Future.wait([tools.dispose(), resources.dispose(), prompts.dispose()]);
+  Future<void> dispose() => Future.wait([
+    tools.dispose(),
+    resources.dispose(),
+    resourceTemplate.dispose(),
+    prompts.dispose(),
+  ]);
 }
 
 class McpWorkActions {
