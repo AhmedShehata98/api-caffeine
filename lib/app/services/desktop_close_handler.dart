@@ -38,7 +38,7 @@ void installDesktopCloseHandler(ProviderContainer container) {
     reportFailure: (failure) => FlutterError.reportError(
       FlutterErrorDetails(
         exception: failure,
-        library: 'Test Point desktop shutdown',
+        library: 'API Caffeine desktop shutdown',
       ),
     ),
   );

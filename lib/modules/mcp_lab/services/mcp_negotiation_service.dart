@@ -74,7 +74,7 @@ class McpNegotiationService {
     final initialized = await session.request('initialize', {
       'protocolVersion': latestInitializationProtocolVersion,
       'capabilities': <String, dynamic>{},
-      'clientInfo': {'name': 'Test Point', 'version': clientVersion},
+      'clientInfo': {'name': 'API Caffeine', 'version': clientVersion},
     });
     if (initialized case Err(:final failure)) return Result.failure(failure);
     final value = initialized.valueOrNull!;

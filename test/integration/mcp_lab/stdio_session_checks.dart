@@ -82,7 +82,7 @@ Future<void> runChecks({String? dart}) async {
           : {
               'protocolVersion': '2025-11-25',
               'capabilities': {},
-              'clientInfo': {'name': 'Test Point', 'version': '1'},
+              'clientInfo': {'name': 'API Caffeine', 'version': '1'},
             },
     );
     check(result.isSuccess, 'Fixture negotiation failed');
@@ -204,7 +204,7 @@ Future<void> runChecks({String? dart}) async {
     );
     check(
       result['observedMeta']['io.modelcontextprotocol/clientInfo']['name'] ==
-          'Test Point',
+          'API Caffeine',
       'Client metadata absent',
     );
   } finally {

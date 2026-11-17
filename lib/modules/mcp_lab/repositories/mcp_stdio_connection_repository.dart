@@ -329,7 +329,7 @@ class _StdioSession implements McpSession {
           ...Map<String, dynamic>.from(params['_meta'] as Map),
         McpMetaKey.protocolVersion: _version ?? stableProtocolVersion,
         McpMetaKey.clientCapabilities: <String, dynamic>{},
-        McpMetaKey.clientInfo: {'name': 'Test Point', 'version': clientVersion},
+        McpMetaKey.clientInfo: {'name': 'API Caffeine', 'version': clientVersion},
       },
     };
   }

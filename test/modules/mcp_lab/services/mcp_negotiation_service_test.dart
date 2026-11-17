@@ -75,7 +75,7 @@ void main() {
     ]);
     expect(session.params.single['capabilities'], isEmpty);
     expect(session.params.single['clientInfo'], {
-      'name': 'Test Point',
+      'name': 'API Caffeine',
       'version': '1.2.3',
     });
   });

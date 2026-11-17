@@ -35,7 +35,7 @@ Future<void> main() async {
 void _configureWindow() {
   final window = WindowManager.instance.getCurrent();
   if (window == null) return;
-  window.title = 'Test Point';
+  window.title = 'API Caffeine';
   window.minimumSize = const Size(1024, 640).toNative();
   window.setSize(const Size(1280, 800).toNative(), false);
   window.center();

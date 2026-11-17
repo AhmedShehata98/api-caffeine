@@ -162,7 +162,7 @@ void main() {
 
   void pair() {
     session.frame(
-      '{"id":1,"method":"tools/call","_meta":{"clientInfo":{"name":"Test Point"}}}',
+      '{"id":1,"method":"tools/call","_meta":{"clientInfo":{"name":"API Caffeine"}}}',
     );
     session.frame(
       '{"id":1,"result":{"_meta":{"serverInfo":{"name":"Fixture"}},"token":"secret-canary"}}',

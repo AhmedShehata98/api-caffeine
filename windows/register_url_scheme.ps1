@@ -11,7 +11,7 @@ $exe = (Resolve-Path $Exe).Path
 $root = 'HKCU:\Software\Classes\testpoint'
 
 New-Item -Path $root -Force | Out-Null
-Set-ItemProperty -Path $root -Name '(Default)' -Value 'URL:Test Point'
+Set-ItemProperty -Path $root -Name '(Default)' -Value 'URL:API Caffeine'
 Set-ItemProperty -Path $root -Name 'URL Protocol' -Value ''
 New-Item -Path "$root\shell\open\command" -Force | Out-Null
 Set-ItemProperty -Path "$root\shell\open\command" -Name '(Default)' -Value "`"$exe`" `"%1`""

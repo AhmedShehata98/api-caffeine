@@ -316,7 +316,7 @@ class FakeAuthRepository implements AuthRepository {
   AuthUser? _user;
   final _changes = StreamController<AuthUser?>.broadcast();
 
-  /// When true the GitHub account already has a Test Point account, so linking
+  /// When true the GitHub account already has an API Caffeine account, so linking
   /// fails and signing in switches to that account.
   bool githubAccountExists = false;
 

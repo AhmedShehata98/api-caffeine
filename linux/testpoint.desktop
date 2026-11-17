@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Test Point
+Name=API Caffeine
 Comment=API integration and testing
 Exec=test_point %u
 Terminal=false

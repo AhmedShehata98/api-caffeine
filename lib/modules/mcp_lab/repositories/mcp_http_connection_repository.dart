@@ -329,7 +329,7 @@ class _HttpSession implements McpSession {
             McpMetaKey.protocolVersion: _version ?? stableProtocolVersion,
             McpMetaKey.clientCapabilities: <String, dynamic>{},
             McpMetaKey.clientInfo: {
-              'name': 'Test Point',
+              'name': 'API Caffeine',
               'version': clientVersion,
             },
           },

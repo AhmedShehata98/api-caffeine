@@ -21,7 +21,7 @@ class WelcomeScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Welcome to Test Point',
+            'Welcome to API Caffeine',
             style: theme.textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),

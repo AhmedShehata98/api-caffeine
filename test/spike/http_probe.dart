@@ -157,7 +157,7 @@ Future<void> main() async {
     const meta = {
       McpMetaKey.protocolVersion: '2026-07-28',
       McpMetaKey.clientCapabilities: <String, dynamic>{},
-      McpMetaKey.clientInfo: {'name': 'Test Point', 'version': '1.0.0'},
+      McpMetaKey.clientInfo: {'name': 'API Caffeine', 'version': '1.0.0'},
     };
     final discover = Completer<Map<String, dynamic>>();
     responses[201] = discover;

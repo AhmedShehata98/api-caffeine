@@ -12,7 +12,7 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(mcpLifecycleProvider);
     return MaterialApp.router(
-      title: 'Test Point',
+      title: 'API Caffeine',
       debugShowCheckedModeBanner: false,
       themeMode: ref.watch(themeModeProvider),
       theme: AppTheme.light,

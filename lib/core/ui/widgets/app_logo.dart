@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The Test Point logo. The 256 px image keeps it sharp at sizes up to 128.
+/// The API Caffeine logo. The 256 px image keeps it sharp at sizes up to 128.
 class AppLogo extends StatelessWidget {
   const AppLogo({this.size = 40, super.key});
 
@@ -13,7 +13,7 @@ class AppLogo extends StatelessWidget {
       width: size,
       height: size,
       filterQuality: FilterQuality.medium,
-      semanticLabel: 'Test Point',
+      semanticLabel: 'API Caffeine',
     );
   }
 }

@@ -138,7 +138,7 @@ class _GuestDialogState extends ConsumerState<_GuestDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'You are using Test Point as a guest.',
+          'You are using API Caffeine as a guest.',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: scheme.onSurfaceVariant),

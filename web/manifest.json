@@ -1,6 +1,6 @@
 {
-    "name": "test_point",
-    "short_name": "test_point",
+    "name": "API Caffeine",
+    "short_name": "API Caffeine",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

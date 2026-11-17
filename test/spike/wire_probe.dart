@@ -45,7 +45,7 @@ Future<void> main() async {
         '_meta': {
           McpMetaKey.protocolVersion: '2026-07-28',
           McpMetaKey.clientCapabilities: <String, dynamic>{},
-          McpMetaKey.clientInfo: {'name': 'Test Point', 'version': '1.0.0'},
+          McpMetaKey.clientInfo: {'name': 'API Caffeine', 'version': '1.0.0'},
         },
       },
     });

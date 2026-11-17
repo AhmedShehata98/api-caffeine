@@ -38,7 +38,7 @@ void main() {
       expect(find.byIcon(Icons.person_outline), findsOneWidget);
 
       await _openAccount(tester);
-      expect(find.text('You are using Test Point as a guest.'), findsOneWidget);
+      expect(find.text('You are using API Caffeine as a guest.'), findsOneWidget);
       expect(_github, findsOneWidget);
       expect(
         find.text('Signing in with GitHub keeps your guest workspace.'),
