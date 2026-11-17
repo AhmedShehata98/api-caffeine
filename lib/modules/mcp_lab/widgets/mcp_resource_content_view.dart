@@ -9,15 +9,22 @@ import 'package:test_point/core/ui/widgets/code_view.dart';
 import '../models/mcp_protocol_models.dart';
 import '../services/mcp_resource_preview.dart';
 import '../providers/mcp_resource_export_provider.dart';
+import '../services/mcp_content_presentation.dart';
 
 class McpResourceContentView extends ConsumerStatefulWidget {
   const McpResourceContentView({
     required this.contents,
     required this.serverId,
+    this.origin = McpContentOrigin.resource,
+    this.block,
+    this.label,
     super.key,
   });
   final ResourceContents contents;
   final String serverId;
+  final McpContentOrigin origin;
+  final ContentBlock? block;
+  final String? label;
   @override
   ConsumerState<McpResourceContentView> createState() =>
       _McpResourceContentViewState();
@@ -94,7 +101,11 @@ class _McpResourceContentViewState
       _saving = true;
       _saveMessage = null;
     });
-    final result = await exporter.save(widget.contents);
+    final result = await exporter.save(
+      widget.contents,
+      origin: widget.origin,
+      block: widget.block,
+    );
     if (!mounted || revision != _revision) return;
     setState(() {
       _saving = false;
@@ -113,7 +124,7 @@ class _McpResourceContentViewState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          widget.contents.uri,
+          widget.label ?? widget.contents.uri,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleSmall,

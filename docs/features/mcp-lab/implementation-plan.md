@@ -527,3 +527,19 @@ body storage, richer error presentation and native throughput/screenshot accepta
 remain pending. Rich tool/prompt content and output-schema diagnostics are next,
 with existing database/platform/transport S1 exit gates still open. See the progress
 tracker for exact filtering, truncation and lifecycle semantics.
+
+### Rich tool/prompt content and output-schema progress
+
+Added shared result rendering for bounded text, images, audio Save, embedded
+resources and clickable resource links. Media saves prove current result/block
+ownership; links seed Resources without reading automatically. Structured tool
+content has a dedicated JSON viewer. Off-isolate output-schema diagnostics use the
+existing supported subset without coercion and preserve successful/tool-error
+outcomes. Unsupported schemas are explicitly unchecked.
+
+All 291 selected regression tests and static analysis pass, followed by 30 affected
+widget checks after final label layout changes. The current orange dark/light
+themes were reviewed using frontend-design and ui-ux-pro-max. See
+[the rich-content progress note](rich-content-progress.md) for behavior, lifecycle
+semantics and remaining native/20 MiB/S1 acceptance limits. Next: audit and address
+the remaining S1 acceptance gaps.

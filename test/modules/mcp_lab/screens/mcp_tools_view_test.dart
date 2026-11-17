@@ -18,6 +18,8 @@ import '../../../support/load_bundled_test_fonts.dart';
 
 class _Session implements McpSession {
   final calls = <(String, Map<String, dynamic>)>[];
+  bool includeStructured = false;
+  Object? structured;
   final tools = <Map<String, dynamic>>[
     {
       'name': 'add',
@@ -66,6 +68,7 @@ class _Session implements McpSession {
         },
       ],
       'isError': params['name'] == 'fail',
+      if (includeStructured) 'structuredContent': structured,
     });
   }
 
@@ -150,6 +153,52 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(find.text('Could not format this result.'), findsNothing);
     expect(find.text('Copy result JSON'), findsOneWidget);
+  }
+
+  for (final valid in [true, false]) {
+    testWidgets(
+      '${valid ? 'valid' : 'invalid'} output schema is diagnostic and leaves the call successful',
+      (tester) async {
+        session.tools.first['outputSchema'] = {
+          'type': 'object',
+          'required': ['n'],
+          'properties': {
+            'n': {'type': 'integer'},
+          },
+        };
+        session.includeStructured = true;
+        session.structured = {'n': valid ? 5 : 'five'};
+        await pump(tester);
+        tester.view.physicalSize = const Size(800, 1800);
+        await select(tester, 'Add numbers');
+        await call(tester);
+        for (var index = 0; index < 100; index++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+          await tester.pump();
+          if (find.text('Checking output schema…').evaluate().isEmpty &&
+              find.byType(LinearProgressIndicator).evaluate().isEmpty &&
+              find.text('Copy structured content').evaluate().isNotEmpty) {
+            break;
+          }
+        }
+        expect(
+          find.text(
+            valid
+                ? 'Output schema: valid within the supported subset.'
+                : 'Output schema diagnostic: structuredContent does not match.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Success'), findsOneWidget);
+        expect(owner.workFor('s')!.tools.state.outcome!.isSuccess, isTrue);
+        expect(find.text('Copy structured content'), findsOneWidget);
+        await tester.tap(find.text('Clear result'));
+        await tester.pump();
+        expect(find.text('Structured content'), findsNothing);
+      },
+    );
   }
 
   testWidgets(

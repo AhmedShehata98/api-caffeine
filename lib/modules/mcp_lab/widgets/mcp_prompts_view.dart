@@ -9,10 +9,17 @@ import '../providers/mcp_prompts_provider.dart';
 import '../providers/mcp_work_providers.dart';
 import '../services/mcp_session_work.dart';
 import 'mcp_json_result.dart';
+import 'mcp_content_block_view.dart';
+import '../services/mcp_content_presentation.dart';
 
 class McpPromptsView extends ConsumerStatefulWidget {
-  const McpPromptsView({required this.serverId, super.key});
+  const McpPromptsView({
+    required this.serverId,
+    this.onOpenResources,
+    super.key,
+  });
   final String serverId;
+  final VoidCallback? onOpenResources;
   @override
   ConsumerState<McpPromptsView> createState() => _McpPromptsViewState();
 }
@@ -245,16 +252,13 @@ class _McpPromptsViewState extends ConsumerState<McpPromptsView> {
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                           const SizedBox(height: 8),
-                          if (message.content case TextBlock(:final text))
-                            SelectableText(
-                              text.length <= 4096
-                                  ? text
-                                  : '${text.substring(0, 4096)}…',
-                            )
-                          else
-                            Text(
-                              'Content: ${message.content.toJson()['type']}. View the complete JSON below.',
-                            ),
+                          McpContentBlockView(
+                            key: ValueKey((outcome, index)),
+                            serverId: widget.serverId,
+                            origin: McpContentOrigin.prompt,
+                            block: message.content,
+                            onOpenResources: widget.onOpenResources,
+                          ),
                         ],
                       ),
                     ),

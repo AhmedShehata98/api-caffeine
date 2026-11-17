@@ -13,8 +13,13 @@ Future<String> _formatResultJson(Object? value) =>
 
 /// Formatting an explicitly viewed operation result stays off the UI isolate.
 class McpJsonResult extends StatefulWidget {
-  const McpJsonResult({required this.value, super.key});
+  const McpJsonResult({
+    required this.value,
+    this.copyLabel = 'Copy result JSON',
+    super.key,
+  });
   final Object? value;
+  final String copyLabel;
   @override
   State<McpJsonResult> createState() => _McpJsonResultState();
 }
@@ -85,7 +90,7 @@ class _McpJsonResultState extends State<McpJsonResult> {
             TextButton.icon(
               onPressed: () => Clipboard.setData(ClipboardData(text: _full!)),
               icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy result JSON'),
+              label: Text(widget.copyLabel),
             ),
             if (!_expanded && _full!.length > _editor.text.length)
               TextButton(

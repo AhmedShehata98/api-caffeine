@@ -18,10 +18,14 @@ import '../services/schema_form_builder.dart';
 import '../services/schema_form_values.dart';
 import 'mcp_schema_form.dart';
 import 'mcp_json_result.dart';
+import 'mcp_content_block_view.dart';
+import 'mcp_output_schema_notice.dart';
+import '../services/mcp_content_presentation.dart';
 
 class McpToolsView extends ConsumerStatefulWidget {
-  const McpToolsView({required this.serverId, super.key});
+  const McpToolsView({required this.serverId, this.onOpenResources, super.key});
   final String serverId;
+  final VoidCallback? onOpenResources;
   @override
   ConsumerState<McpToolsView> createState() => _McpToolsViewState();
 }
@@ -409,6 +413,8 @@ class _McpToolsViewState extends ConsumerState<McpToolsView> {
                   Expanded(
                     child: Text(
                       'Result · ${work?.submitted?.tool?.name ?? ''}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
@@ -440,13 +446,31 @@ class _McpToolsViewState extends ConsumerState<McpToolsView> {
                         : Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                for (final content in call.result.content)
-                  if (content is TextBlock)
-                    SelectableText(
-                      content.text.length > 4096
-                          ? '${content.text.substring(0, 4096)}…'
-                          : content.text,
+                if (work.submitted?.tool case final tool?
+                    when tool.outputSchema != null)
+                  McpOutputSchemaNotice(tool: tool, call: call),
+                for (final (index, content) in call.result.content.indexed)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: McpContentBlockView(
+                      key: ValueKey((call, index)),
+                      serverId: widget.serverId,
+                      origin: McpContentOrigin.tool,
+                      block: content,
+                      onOpenResources: widget.onOpenResources,
                     ),
+                  ),
+                if (call.raw.containsKey('structuredContent')) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Structured content',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  McpJsonResult(
+                    value: call.result.structuredContent,
+                    copyLabel: 'Copy structured content',
+                  ),
+                ],
                 McpJsonResult(value: call.raw),
               ],
             ],

@@ -428,10 +428,12 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
             'tools' => McpToolsView(
               key: ObjectKey(services),
               serverId: server.id,
+              onOpenResources: () => setState(() => _view = 'resources'),
             ),
             'prompts' => McpPromptsView(
               key: ObjectKey(services),
               serverId: server.id,
+              onOpenResources: () => setState(() => _view = 'resources'),
             ),
             'resources' => McpResourcesView(
               key: ObjectKey(services),

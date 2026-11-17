@@ -23,6 +23,10 @@ class McpResourceExportService {
       'image/webp' => 'webp',
       'image/bmp' => 'bmp',
       'application/pdf' => 'pdf',
+      'audio/wav' || 'audio/x-wav' => 'wav',
+      'audio/mpeg' => 'mp3',
+      'audio/ogg' => 'ogg',
+      'audio/flac' => 'flac',
       _ => 'bin',
     };
     return 'resource.$extension';

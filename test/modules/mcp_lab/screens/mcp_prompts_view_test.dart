@@ -160,7 +160,7 @@ void main() {
     expect(find.text('1. user'), findsOneWidget);
     expect(find.text('2. assistant'), findsOneWidget);
     expect(find.text('3. user'), findsOneWidget);
-    expect(find.textContaining('Content: resource_link.'), findsOneWidget);
+      expect(find.text('weather://lisbon'), findsOneWidget);
     expect(find.text('Copy result JSON'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
