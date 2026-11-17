@@ -204,12 +204,50 @@ class McpDiagnosticSanitizer {
   Map<String, List<String>> headers(Map<String, List<String>> values) {
     _ensureActive();
     _rememberHeaders(values);
+    // Learn credentials from decoded headers before sanitizing any header, so
+    // an earlier echo cannot reveal a value declared by a later sentinel.
+    for (final entry in values.entries) {
+      for (final value in entry.value) {
+        if (!value.startsWith('=?base64?') || !value.endsWith('?=')) continue;
+        try {
+          final decoded = utf8.decode(
+            base64Decode(value.substring(9, value.length - 2)),
+          );
+          _rememberHeaders({
+            entry.key: [decoded],
+          });
+          try {
+            _rememberJsonHeaders(jsonDecode(decoded));
+          } on FormatException {
+            continue; // Plain string sentinels are valid too.
+          }
+        } on FormatException {
+          continue; // Malformed sentinels retain the normal text sanitizer.
+        }
+      }
+    }
     return Map.unmodifiable({
       for (final entry in values.entries)
         text(entry.key): List<String>.unmodifiable(
-          _credential(entry.key) ? [_marker] : entry.value.map(text),
+          _credential(entry.key) ? [_marker] : entry.value.map(_headerValue),
         ),
     });
+  }
+
+  String _headerValue(String value) {
+    if (value.startsWith('=?base64?') && value.endsWith('?=')) {
+      try {
+        final decoded = utf8.decode(
+          base64Decode(value.substring(9, value.length - 2)),
+        );
+        // Sanitize the decoded representation before it can be displayed.
+        final clean = frame(decoded).text;
+        return '=?base64?${base64Encode(utf8.encode(clean))}?=';
+      } on FormatException {
+        return text(value);
+      }
+    }
+    return text(value);
   }
 
   void dispose() {

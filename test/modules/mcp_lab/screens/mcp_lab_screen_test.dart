@@ -432,6 +432,83 @@ void main() {
     },
   );
 
+  for (final transport in [McpTransport.stdio, McpTransport.http]) {
+    testWidgets(
+      '${transport.name} exposes Protocol and its transport monitor with no primitive capabilities',
+      (tester) async {
+        await tester.runAsync(() async {
+          await owner.dispose();
+          owner = McpSessionOwner(createDiagnostics: McpSessionDiagnostics.new);
+          await owner.switchScope('u', 'w');
+        });
+        if (transport == McpTransport.http) {
+          rows = [
+            server.copyWith(
+              draft: const McpServerDraft(
+                name: 'Weather server',
+                transport: McpTransport.http,
+                url: 'https://example.test/mcp',
+              ),
+            ),
+          ];
+        }
+        when(() => catalog.list(owner.context!))
+            .thenAnswer((_) async => Result.success(List.of(rows)));
+        final session = _LiveSession();
+        when(() => session.frames).thenAnswer((_) => const Stream.empty());
+        when(() => session.network).thenAnswer((_) => const Stream.empty());
+        when(() => session.console).thenAnswer((_) => const Stream.empty());
+        when(() => session.status).thenAnswer(
+          (_) => Stream.value(
+            const ConnectionStatus.connected(
+              era: NegotiatedEra.modern,
+              serverInfo: {},
+            ),
+          ),
+        );
+        when(() => session.close())
+            .thenAnswer((_) async => const Result.success(null));
+        await tester.runAsync(
+          () => owner.run('s', (context) async {
+            owner.trackOpening(context, 's', session);
+            return Result.success(
+              McpConnected(
+                session,
+                McpNegotiation(
+                  era: NegotiatedEra.modern,
+                  version: '2026-07-28',
+                  discovery: {'capabilities': {}},
+                ),
+              ),
+            );
+          }),
+        );
+        await pump(tester);
+        await tester.tap(find.text('Weather server'));
+        await tester.pumpAndSettle();
+        final tabs = find.byType(SegmentedButton<String>);
+        expect(
+          find.descendant(of: tabs, matching: find.text('Protocol')),
+          findsOneWidget,
+        );
+        final label = transport == McpTransport.stdio ? 'Console' : 'Network';
+        final monitorTab = find.descendant(
+          of: tabs,
+          matching: find.text(label),
+        );
+        expect(monitorTab, findsOneWidget);
+        expect(
+          find.text(transport == McpTransport.stdio ? 'Network' : 'Console'),
+          findsNothing,
+        );
+        await tester.tap(monitorTab);
+        await tester.pumpAndSettle();
+        expect(find.text('Filter captures'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('HTTP summary hides credential query values', (tester) async {
     rows = [
       server.copyWith(

@@ -20,6 +20,8 @@ import '../providers/mcp_primitive_providers.dart';
 import '../widgets/mcp_tools_view.dart';
 import '../widgets/mcp_prompts_view.dart';
 import '../widgets/mcp_resources_view.dart';
+import '../widgets/mcp_monitor_view.dart';
+import '../services/mcp_diagnostic_buffer.dart';
 import '../services/mcp_connect_service.dart';
 import '../services/mcp_approval_summary.dart';
 import '../widgets/mcp_approval_dialog.dart';
@@ -332,13 +334,24 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
 
   Widget _details(McpServer server) {
     final services = ref.watch(mcpPrimitiveServicesProvider(server.id));
-    if (services == null ||
-        (!services.supports('tools') &&
-            !services.supports('prompts') &&
-            !services.supports('resources'))) {
+    final monitor = ref
+        .watch(mcpSessionsProvider)
+        .value
+        ?.diagnostics[server.id];
+    if (monitor == null &&
+        (services == null ||
+            (!services.supports('tools') &&
+                !services.supports('prompts') &&
+                !services.supports('resources')))) {
       return _settingsDetails(server);
     }
-    final view = _view == 'settings' || services.supports(_view)
+    final transportView = server.draft.transport == McpTransport.stdio
+        ? 'console'
+        : 'network';
+    final view =
+        _view == 'settings' ||
+            (services?.supports(_view) ?? false) ||
+            (monitor != null && (_view == 'protocol' || _view == transportView))
         ? _view
         : 'settings';
     return Column(
@@ -365,21 +378,33 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
                         value: 'settings',
                         label: Text('Settings'),
                       ),
-                      if (services.supports('tools'))
+                      if (services?.supports('tools') ?? false)
                         const ButtonSegment(
                           value: 'tools',
                           label: Text('Tools'),
                         ),
-                      if (services.supports('prompts'))
+                      if (services?.supports('prompts') ?? false)
                         const ButtonSegment(
                           value: 'prompts',
                           label: Text('Prompts'),
                         ),
-                      if (services.supports('resources'))
+                      if (services?.supports('resources') ?? false)
                         const ButtonSegment(
                           value: 'resources',
                           label: Text('Resources'),
                         ),
+                      if (monitor != null) ...[
+                        const ButtonSegment(
+                          value: 'protocol',
+                          label: Text('Protocol'),
+                        ),
+                        ButtonSegment(
+                          value: transportView,
+                          label: Text(
+                            transportView == 'console' ? 'Console' : 'Network',
+                          ),
+                        ),
+                      ],
                     ],
                     selected: {view},
                     onSelectionChanged: (selection) =>
@@ -411,6 +436,15 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
             'resources' => McpResourcesView(
               key: ObjectKey(services),
               serverId: server.id,
+            ),
+            'protocol' || 'network' || 'console' => McpMonitorView(
+              key: ValueKey((monitor, view)),
+              serverId: server.id,
+              kind: view == 'protocol'
+                  ? McpMonitorKind.protocol
+                  : view == 'network'
+                  ? McpMonitorKind.network
+                  : McpMonitorKind.console,
             ),
             _ => _settingsDetails(server),
           },

@@ -508,3 +508,22 @@ rerun after final UTF-8 budget refinements. Both theme renders were reviewed usi
 frontend-design and ui-ux-pro-max. Composite list/map editors, completion and active
 environment integration remain follow-ups. Protocol/network/console monitor UI is
 next, with the existing native/database/protocol S1 exit gates still open.
+
+### Initial monitor UI progress
+
+Added Protocol plus Network/Console transport tabs independent of primitive
+capabilities. Ordered lazy lists show IDs, direction/time, pairing/duration and
+drop/error counts; filtering, selected details, sanitized Copy, active-buffer clear
+and explicit off-isolate Load full are wired through providers. Network headers
+highlight Mcp-* fields and display decoded sentinels only after sanitization.
+Partial bodies and stdout warnings are explicit. Session identity gates and empty
+shutdown snapshots prevent prior-session payloads resurfacing; paused listeners
+cannot delay monitor cleanup.
+
+All 268 selected tests, six real loopback HTTP scenario groups and static analysis
+pass. Both theme renders were reviewed against Stitch screen 16 using
+frontend-design and ui-ux-pro-max. Monitor pin/export, separate HTTP request/response
+body storage, richer error presentation and native throughput/screenshot acceptance
+remain pending. Rich tool/prompt content and output-schema diagnostics are next,
+with existing database/platform/transport S1 exit gates still open. See the progress
+tracker for exact filtering, truncation and lifecycle semantics.

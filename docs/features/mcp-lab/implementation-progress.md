@@ -12,14 +12,14 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 models (§3.2) | Implemented; unit-tested | Extend as connection implementation requires |
 | S1 repositories (§3.3) | Catalog/trust, native stdio and base Streamable HTTP implemented; modern HTTP parameter mirroring implemented | Stdio platform gaps, HTTP legacy resumption/optional GET and deprecated HTTP+SSE, remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans and diagnostic buffers implemented | Rich result rendering, output-schema diagnostics, remaining protocol gates |
-| S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection and draft/result state implemented | Preferences, monitor UI integration, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages, Resources browsing/text reads, binary Save/raster previews and scalar URI-template expansion implemented | Composite template inputs/completion, other rich content, monitors, native save-dialog/full desktop review |
+| S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
+| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages, Resources reads/Save/raster previews, scalar templates and initial Protocol/Network/Console monitors implemented | Composite template inputs/completion, other rich content, monitor pin/export/body distinctions, native save-dialog/full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
 | S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
 
-Server management, Tools, Prompts and Resources are accessible through the MCP Lab navigation item; monitor views are still pending. No completion percentage is assigned:
+Server management, Tools, Prompts, Resources and diagnostic monitors are accessible through the MCP Lab navigation item. No completion percentage is assigned:
 the remaining live-session and UI work is substantially larger than the completed scaffolding.
 
 ## Implemented
@@ -633,3 +633,57 @@ transport-size and platform validation limits still apply; S1 remains incomplete
 
 Next: protocol/network/console monitor UI. Composite template editors and completion
 remain later follow-ups; the completed slice is automatic scalar expansion.
+
+## Protocol, Network and Console monitor UI follow-up
+
+Added Protocol plus the transport-specific Network (HTTP) or Console (stdio) tabs.
+They require a retained diagnostic session rather than primitive capabilities, so
+servers with no tools/resources/prompts can still be inspected. Capture starts at
+transport opening through the existing session monitor, including handshake frames.
+Both layouts retain the app themes and use the documented Stitch monitor reference.
+
+Monitors show ordered entries, typed IDs, direction, timestamps where captured,
+kind/status, pairing/duration, dropped-entry and stream-error counts. A lazy fixed-
+extent list builds visible rows only. Ctrl+F focuses the metadata/console filter;
+Protocol also filters direction and frame kind. Filtering searches a bounded title
+prefix (1,024 characters), not every payload body. The code viewer's own find control
+can inspect the selected preview or explicitly loaded body. Clear affects the
+active buffer, and request/response pair controls open the partner frame.
+
+Selected details show the sanitized retained payload read-only, metadata and Copy.
+Truncated previews explain their retained size and offer explicit Load full; JSON
+and captured SSE-frame lists parse/format off-isolate. Console/warning full loads
+retain plain text. Partial transport bodies have a distinct notice, no Load full,
+and Copy retained body wording. Copy always reads the retained sanitized body rather
+than an operation result or raw transport source. Non-JSON stdout warnings remain
+visible with an amber theme colour and do not disconnect the session.
+
+Network details expose status/duration, the retained body and request/response
+headers. Mcp-* header names use the theme accent. Sentinels are decoded for display
+only after repository sanitization of their decoded representation. A pre-scan
+learns credentials from every encoded header before cleaning any, including
+earlier echoes of credentials declared by a later header. Values are bounded to
+4,096 displayed characters per header. No reveal/raw-copy path is added. Separate
+request/response body retention and header-copy/full-value controls remain pending;
+outgoing protocol payloads are available in Protocol.
+
+Monitor disposal now emits an empty snapshot before closing without awaiting
+paused UI listeners. A current-session identity gate rejects StreamProvider's
+previous-session values while streams reattach. Clear/eviction/scope changes reject
+late full-body completions and remove selected detail controllers. No diagnostic
+export or temporary payload file is introduced.
+
+Applied frontend-design and ui-ux-pro-max; reviewed Stitch screen 16 and both theme
+renders (.dart_tool/mcp_monitor_dark.png and mcp_monitor_light.png). All 268 selected
+tests pass (262 MCP and six desktop shutdown cases), and analysis is clean. Twenty
+new cases cover filters/typed IDs, safe sentinel decoding, full-copy/load behavior,
+clear/paused-listener/scope cleanup, pairing, live console, warnings, partial bodies,
+10,001-frame eviction/lazy rows, themes and transport-specific navigation. All six
+real loopback HTTP scenario groups also pass after the redaction refinement.
+
+This validates the initial monitor slice through the existing unit-only harness;
+native scroll/render throughput, complete S1 screenshot acceptance, pinned layouts,
+diagnostic export, richer protocol-error presentation and separate Network bodies
+remain open. Existing database, native plugin/platform and transport-size gates
+still apply. Next: rich tool/prompt content and output-schema diagnostics, followed
+by remaining S1 acceptance gaps. S1 is not complete.

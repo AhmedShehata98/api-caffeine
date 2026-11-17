@@ -53,6 +53,18 @@ class McpSessionDiagnostics {
     _publish();
   }
 
+  void clearBuffer(McpMonitorKind kind) {
+    switch (kind) {
+      case McpMonitorKind.protocol:
+        protocol.clear();
+      case McpMonitorKind.network:
+        network.clear();
+      case McpMonitorKind.console:
+        console.clear();
+    }
+    _publish();
+  }
+
   Future<void> dispose() {
     if (_closing != null) return _closing!;
     _disposed = true;
@@ -61,8 +73,12 @@ class McpSessionDiagnostics {
     protocol.dispose();
     network.dispose();
     console.dispose();
+    // Replace any retained StreamProvider snapshot before closing. A paused
+    // monitor listener must not delay account/workspace shutdown.
+    _changes.add(null);
+    unawaited(_changes.close());
     return _closing = Future.wait(
       _subscriptions.map((subscription) => subscription.cancel()),
-    ).then((_) => _changes.close());
+    ).then((_) {});
   }
 }

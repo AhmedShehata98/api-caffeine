@@ -6,6 +6,8 @@ import 'package:test_point/core/error/result.dart';
 import '../models/mcp_diagnostics.dart';
 import '../models/mcp_failure.dart';
 
+enum McpMonitorKind { protocol, network, console }
+
 class McpMonitorEntry {
   const McpMonitorEntry({
     required this.sequence,
