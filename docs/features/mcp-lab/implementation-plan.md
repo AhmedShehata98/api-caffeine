@@ -477,3 +477,19 @@ checks rerun after final spacing adjustment. Reviewed Stitch screen 17 and both
 theme renders using frontend-design and ui-ux-pro-max. Binary Save/inline images,
 automatic URI-template expansion/completion and monitor UI remain next. This is
 the initial Resources browsing/text-read slice; full S1 acceptance remains open.
+
+### Binary resource Save and image preview progress
+
+Added explicit native Save through a repository/service/provider boundary using
+the existing file_picker package. Original bytes decode off-isolate; cancellation,
+safe suggested names, failure/retry and current-result ownership guards are handled.
+The native API owns the write once its dialog opens and cannot revoke that explicit
+export on a later scope change; stale UI completion is suppressed.
+
+Supported raster image previews are capped at 8 MiB encoded and fit within 1024 by
+1024 decoded dimensions. Loading/error fallbacks, unsupported-type notices and
+cache eviction accompany the Save control. All 235 selected regression tests and
+analysis pass, with native exports mocked; actual desktop save dialogs, platform
+image support and the existing transport-size/S1 exit gates remain unvalidated.
+Automatic URI-template expansion and monitor UI remain next. See the progress
+tracker for precise lifecycle semantics and validation limits.

@@ -16,3 +16,4 @@ export 'providers/mcp_connection_status_provider.dart';
 export 'providers/mcp_tools_provider.dart';
 export 'providers/mcp_prompts_provider.dart';
 export 'providers/mcp_resources_provider.dart';
+export 'providers/mcp_resource_export_provider.dart';

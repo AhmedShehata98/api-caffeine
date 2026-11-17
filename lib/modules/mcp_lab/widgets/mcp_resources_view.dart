@@ -121,7 +121,7 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
               ),
             if (listing.items.isNotEmpty)
               SizedBox(
-            height: (listing.items.length * 112.0).clamp(0, 240),
+                height: (listing.items.length * 112.0).clamp(0, 240),
                 child: ListView.builder(
                   itemCount: listing.items.length,
                   itemBuilder: (context, index) {
@@ -248,6 +248,7 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
                     child: McpResourceContentView(
                       key: ValueKey((outcome, index)),
                       contents: contents,
+                      serverId: widget.serverId,
                     ),
                   ),
                 McpJsonResult(

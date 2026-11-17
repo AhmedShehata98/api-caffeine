@@ -13,7 +13,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 repositories (§3.3) | Catalog/trust, native stdio and base Streamable HTTP implemented; modern HTTP parameter mirroring implemented | Stdio platform gaps, HTTP legacy resumption/optional GET and deprecated HTTP+SSE, remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans and diagnostic buffers implemented | Rich result rendering, output-schema diagnostics, remaining protocol gates |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection and draft/result state implemented | Preferences, monitor UI integration, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages and Resources browsing/text reads implemented | Template expansion, binary save/images, other rich content, monitors, full desktop review |
+| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages, Resources browsing/text reads, binary Save and raster image previews implemented | Template expansion, other rich content, monitors, native save-dialog/full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
@@ -558,3 +558,42 @@ database/RLS and protocol-size/platform limitations remain unchanged.
 
 Next: resource binary Save/inline images and template expansion, then monitor UI.
 S1 remains incomplete; this completes the resource browsing/text-read slice only.
+
+## Binary resource Save and image previews follow-up
+
+Binary results now offer an explicit Save resource action using the existing
+file_picker dependency. A repository owns native export and converts platform
+exceptions into application failures; the service decodes the original bytes
+off-isolate and chooses a safe MIME-based suggested filename independent of the
+server URI. Native cancellation stays silent, failures permit retry, and saving
+disables duplicate clicks. No automatic file write is added.
+
+Export actions capture the owning session work/result and require the selected
+content to belong to that exact result. Ownership is rechecked after decoding and
+before opening the native dialog, and stale completions cannot produce a current
+success. The file_picker 13 API combines destination selection and writing: once
+an explicit export is handed to the native dialog it may finish after a view or
+account change. This operation cannot be revoked through that API; it is distinct
+from automatic persistence. Native-dialog behavior still requires desktop checks.
+
+Supported binary raster MIME types (PNG, JPEG, GIF, WebP and BMP) have inline
+previews. Preview bytes are retained only up to 8 MiB and decoded image dimensions
+are bounded to fit 1024 by 1024, preserving aspect ratio. Larger or unsupported
+image types explain that the original can be saved. Decode errors show a fallback
+while preserving Save. Image loading has a visible state and a semantic label.
+Disposing/replacing a preview evicts its image-cache entry; the session-owned
+original remains separate from this widget-local preview.
+
+Applied frontend-design and ui-ux-pro-max to the existing Resources layout. All
+235 selected regression tests pass (229 MCP plus six desktop shutdown cases), and
+static analysis is clean. Fifteen new cases cover export bytes/names, cancellation,
+failures, ownership checks before/during decoding and after native handoff, image
+size bounds, malformed binary/image data, UI exports, scope cleanup and cache
+eviction. The image widget checks also run in both themes; screenshot artifacts
+are .dart_tool/mcp_resource_image_dark.png and mcp_resource_image_light.png.
+These use the existing unit-only hook-bypass harness and mocked native export.
+They do not certify real file permissions, native save dialogs, cross-platform
+image support or 20 MiB transport acceptance. Full AC-RES-02.2 platform acceptance
+and the existing native/database/protocol gates remain open.
+
+Next: automatic URI-template expansion, then monitor UI. S1 is not complete.

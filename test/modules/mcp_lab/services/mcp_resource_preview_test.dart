@@ -6,6 +6,43 @@ import 'package:test_point/modules/mcp_lab/services/mcp_resource_preview.dart';
 
 void main() {
   test(
+    'supported image MIME retains preview bytes and other binaries do not',
+    () async {
+      final image = await prepareMcpResourcePreview(
+        const ResourceContents(
+          uri: 'fixture://image',
+          mimeType: 'image/png',
+          blob: 'AID/AA==',
+        ),
+      );
+      expect(image.imageBytes, [0, 128, 255, 0]);
+      final other = await prepareMcpResourcePreview(
+        const ResourceContents(
+          uri: 'fixture://file',
+          mimeType: 'application/octet-stream',
+          blob: 'AID/AA==',
+        ),
+      );
+      expect(other.imageBytes, isNull);
+      expect(other.byteLength, 4);
+    },
+  );
+  test(
+    'large images retain size but require save instead of inline preview',
+    () async {
+      final image = await prepareMcpResourcePreview(
+        ResourceContents(
+          uri: 'fixture://large',
+          mimeType: 'image/png',
+          blob: base64Encode(List<int>.filled(8 * 1024 * 1024 + 1, 0)),
+        ),
+      );
+      expect(image.byteLength, 8 * 1024 * 1024 + 1);
+      expect(image.imageBytes, isNull);
+      expect(image.notice, contains('Save the resource'));
+    },
+  );
+  test(
     'JSON MIME content is formatted without changing the original',
     () async {
       const content = ResourceContents(

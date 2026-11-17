@@ -1,24 +1,38 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:test_point/core/ui/widgets/code_view.dart';
 
 import '../models/mcp_protocol_models.dart';
 import '../services/mcp_resource_preview.dart';
+import '../providers/mcp_resource_export_provider.dart';
 
-class McpResourceContentView extends StatefulWidget {
-  const McpResourceContentView({required this.contents, super.key});
+class McpResourceContentView extends ConsumerStatefulWidget {
+  const McpResourceContentView({
+    required this.contents,
+    required this.serverId,
+    super.key,
+  });
   final ResourceContents contents;
+  final String serverId;
   @override
-  State<McpResourceContentView> createState() => _McpResourceContentViewState();
+  ConsumerState<McpResourceContentView> createState() =>
+      _McpResourceContentViewState();
 }
 
-class _McpResourceContentViewState extends State<McpResourceContentView> {
+class _McpResourceContentViewState
+    extends ConsumerState<McpResourceContentView> {
   final _editor = CodeLineEditingController();
   McpResourcePreview? _preview;
   bool _failed = false;
   bool _expanded = false;
   int _revision = 0;
+  ImageProvider? _image;
+  bool _saving = false;
+  String? _saveMessage;
   @override
   void initState() {
     super.initState();
@@ -36,9 +50,22 @@ class _McpResourceContentViewState extends State<McpResourceContentView> {
     _preview = null;
     _failed = false;
     _expanded = false;
+    _saveMessage = null;
+    _saving = false;
+    final oldImage = _image;
+    _image = null;
+    if (oldImage != null) unawaited(oldImage.evict());
     try {
       final preview = await prepareMcpResourcePreview(widget.contents);
       if (!mounted || revision != _revision) return;
+      if (preview.imageBytes case final bytes?) {
+        _image = ResizeImage(
+          MemoryImage(bytes),
+          width: 1024,
+          height: 1024,
+          policy: ResizeImagePolicy.fit,
+        );
+      }
       final text = preview.text ?? '';
       var end = text.length.clamp(0, 256 * 1024);
       if (end > 0 &&
@@ -57,11 +84,30 @@ class _McpResourceContentViewState extends State<McpResourceContentView> {
   @override
   void dispose() {
     _editor.dispose();
+    if (_image case final image?) unawaited(image.evict());
     super.dispose();
+  }
+
+  Future<void> _save(McpResourceExportActions exporter) async {
+    final revision = _revision;
+    setState(() {
+      _saving = true;
+      _saveMessage = null;
+    });
+    final result = await exporter.save(widget.contents);
+    if (!mounted || revision != _revision) return;
+    setState(() {
+      _saving = false;
+      _saveMessage = result.when(
+        success: (saved) => saved ? 'Resource saved.' : null,
+        failure: (failure) => failure.message,
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final exporter = ref.watch(mcpResourceExportProvider(widget.serverId));
     final preview = _preview;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -86,6 +132,37 @@ class _McpResourceContentViewState extends State<McpResourceContentView> {
           if (preview.notice != null) Text(preview.notice!),
           if (preview.byteLength != null)
             Text('Binary resource · ${preview.byteLength} bytes', maxLines: 1),
+          if (preview.byteLength != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _saving ? null : () => _save(exporter),
+                icon: const Icon(Icons.save_alt),
+                label: Text(
+                  _saving ? 'Saving resource…' : 'Save resource',
+                  maxLines: 1,
+                ),
+              ),
+            ),
+          if (_saveMessage case final message?) Text(message),
+          if (_image case final image?)
+            SizedBox(
+              height: 240,
+              child: Image(
+                image: image,
+                fit: BoxFit.contain,
+                semanticLabel: 'Image resource preview',
+                frameBuilder: (context, child, frame, synchronous) =>
+                    synchronous || frame != null
+                    ? child
+                    : const Center(child: CircularProgressIndicator()),
+                errorBuilder: (_, _, _) => const Center(
+                  child: Text(
+                    'Could not display this image. You can still save the original resource.',
+                  ),
+                ),
+              ),
+            ),
           if (preview.text != null) ...[
             Wrap(
               spacing: 8,

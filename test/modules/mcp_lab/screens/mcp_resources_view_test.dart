@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -12,6 +14,7 @@ import 'package:test_point/core/ui/theme/app_theme.dart';
 import 'package:test_point/core/ui/widgets/code_view.dart';
 import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
 import 'package:test_point/modules/mcp_lab/widgets/mcp_resources_view.dart';
+import 'package:test_point/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
 
 import '../../../support/load_bundled_test_fonts.dart';
 
@@ -19,6 +22,8 @@ class _Session implements McpSession {
   final calls = <(String, Map<String, dynamic>)>[];
   String text = '{"city":"Lisbon","temperature":19}';
   bool fail = false;
+  String binaryMime = 'application/octet-stream';
+  String blob = 'AID/AA==';
   @override
   Future<Result<Map<String, dynamic>>> request(
     String method,
@@ -71,11 +76,7 @@ class _Session implements McpSession {
     return Result.success({
       'contents': [
         if (params['uri'] == 'weather://bytes')
-          {
-            'uri': 'weather://bytes',
-            'mimeType': 'application/octet-stream',
-            'blob': 'AID/AA==',
-          }
+          {'uri': 'weather://bytes', 'mimeType': binaryMime, 'blob': blob}
         else
           {'uri': params['uri'], 'mimeType': 'application/json', 'text': text},
       ],
@@ -88,13 +89,51 @@ class _Session implements McpSession {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _ExportRepository implements McpResourceExportRepository {
+  final calls = <(Uint8List, String, String)>[];
+  Future<Result<bool>> Function()? respond;
+  @override
+  Future<Result<bool>> save(Uint8List bytes, String name, String mime) async {
+    calls.add((bytes, name, mime));
+    return respond == null ? const Result.success(true) : respond!();
+  }
+}
+
 void main() {
-  setUpAll(loadBundledTestFonts);
+  late String imageBlob;
+  setUpAll(() async {
+    await loadBundledTestFonts();
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.drawRect(
+      const Rect.fromLTWH(0, 0, 240, 120),
+      Paint()..color = const Color(0xffdff5f1),
+    );
+    for (var index = 0; index < 6; index++) {
+      canvas.drawRect(
+        Rect.fromLTWH(
+          20 + index * 35,
+          100 - (index + 1) * 12,
+          20,
+          (index + 1) * 12,
+        ),
+        Paint()..color = const Color(0xff0f9d8a),
+      );
+    }
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(240, 120);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    imageBlob = base64Encode(bytes!.buffer.asUint8List());
+    image.dispose();
+    picture.dispose();
+  });
   late McpSessionOwner owner;
   late _Session session;
+  late _ExportRepository exports;
   final boundary = GlobalKey();
   setUp(() async {
     session = _Session();
+    exports = _ExportRepository();
     owner = McpSessionOwner();
     await owner.switchScope('u', 'w');
     await owner.run(
@@ -120,7 +159,10 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [mcpSessionOwnerProvider.overrideWithValue(owner)],
+        overrides: [
+          mcpSessionOwnerProvider.overrideWithValue(owner),
+          mcpResourceExportRepositoryProvider.overrideWithValue(exports),
+        ],
         child: MaterialApp(
           theme: (light ? AppTheme.light : AppTheme.dark).copyWith(
             splashFactory: InkRipple.splashFactory,
@@ -140,7 +182,9 @@ void main() {
     for (
       var i = 0;
       i < 100 &&
-          (i < 3 || find.byType(LinearProgressIndicator).evaluate().isNotEmpty);
+          (i < 3 ||
+              find.byType(LinearProgressIndicator).evaluate().isNotEmpty ||
+              find.byType(CircularProgressIndicator).evaluate().isNotEmpty);
       i++
     ) {
       await tester.runAsync(
@@ -263,6 +307,146 @@ void main() {
     expect(find.text('Binary resource · 4 bytes'), findsOneWidget);
     expect(find.text('application/octet-stream'), findsOneWidget);
   });
+  testWidgets('Save exports exact binary bytes only on explicit action', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.enterText(find.byType(TextField).first, 'weather://bytes');
+    await read(tester);
+    expect(exports.calls, isEmpty);
+    await tester.tap(find.text('Save resource'));
+    await finish(tester);
+    expect(exports.calls.single.$1, [0, 128, 255, 0]);
+    expect(exports.calls.single.$2, 'resource.bin');
+    expect(find.text('Resource saved.'), findsOneWidget);
+  });
+  testWidgets('cancel is silent and storage failure allows retry', (
+    tester,
+  ) async {
+    exports.respond = () async => const Result.success(false);
+    await pump(tester);
+    await tester.enterText(find.byType(TextField).first, 'weather://bytes');
+    await read(tester);
+    await tester.tap(find.text('Save resource'));
+    await finish(tester);
+    expect(find.text('Resource saved.'), findsNothing);
+    exports.respond = () async =>
+        const Result.failure(StorageFailure('Choose another location.'));
+    await tester.tap(find.text('Save resource'));
+    await finish(tester);
+    expect(find.text('Choose another location.'), findsOneWidget);
+    expect(find.text('Save resource'), findsOneWidget);
+  });
+  testWidgets(
+    'scope change removes a pending export and ignores late completion',
+    (tester) async {
+      final pending = Completer<Result<bool>>();
+      exports.respond = () => pending.future;
+      await pump(tester);
+      await tester.enterText(find.byType(TextField).first, 'weather://bytes');
+      await read(tester);
+      await tester.tap(find.text('Save resource'));
+      for (var i = 0; i < 100 && exports.calls.isEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+      }
+      expect(exports.calls.length, 1);
+      expect(find.text('Saving resource…'), findsOneWidget);
+      await tester.runAsync(() => owner.switchScope('other', 'w'));
+      pending.complete(const Result.success(true));
+      await finish(tester);
+      expect(find.text('Resource saved.'), findsNothing);
+      expect(find.text('Save resource'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('malformed base64 cannot expose a Save action', (tester) async {
+    session.blob = '***';
+    await pump(tester);
+    await tester.enterText(find.byType(TextField).first, 'weather://bytes');
+    await read(tester);
+    expect(find.textContaining('invalid base64'), findsOneWidget);
+    expect(find.text('Save resource'), findsNothing);
+    expect(exports.calls, isEmpty);
+  });
+  testWidgets('invalid image shows fallback while keeping Save available', (
+    tester,
+  ) async {
+    session.binaryMime = 'image/png';
+    await pump(tester);
+    await tester.enterText(find.byType(TextField).first, 'weather://bytes');
+    await read(tester);
+    expect(
+      find.textContaining('Could not display this image.'),
+      findsOneWidget,
+    );
+    expect(find.text('Save resource'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  for (final light in [false, true]) {
+    testWidgets(
+      '${light ? 'light' : 'dark'} inline image renders and leaves no cached preview on disposal',
+      (tester) async {
+        session.binaryMime = 'image/png';
+        session.blob = imageBlob;
+        await pump(tester, light: light);
+        await tester.enterText(find.byType(TextField).first, 'weather://bytes');
+        await read(tester);
+        expect(
+          find.textContaining('Could not display this image.'),
+          findsNothing,
+        );
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        final image = tester.widget<Image>(find.byType(Image));
+        expect(image.semanticLabel, 'Image resource preview');
+        expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNotNull);
+        final decoded = tester.widget<RawImage>(find.byType(RawImage)).image!;
+        await tester.runAsync(() async {
+          final pixels = await decoded.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          final sample =
+              ((decoded.height ~/ 2) * decoded.width +
+                  (decoded.width * 0.875).floor()) *
+              4;
+          expect(pixels!.buffer.asUint8List().sublist(sample, sample + 3), [
+            15,
+            157,
+            138,
+          ]);
+        });
+        // Let the raster thread finish the decoded frame before capturing it.
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        boundary.currentContext!.findRenderObject()!.markNeedsPaint();
+        await tester.pump();
+        if (const bool.fromEnvironment('MCP_UI_SCREENSHOTS')) {
+          await tester.runAsync(() async {
+            final rendered =
+                await (boundary.currentContext!.findRenderObject()
+                        as RenderRepaintBoundary)
+                    .toImage();
+            final bytes = await rendered.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            await File(
+              '.dart_tool/mcp_resource_image_${light ? 'light' : 'dark'}.png',
+            ).writeAsBytes(bytes!.buffer.asUint8List());
+            rendered.dispose();
+          });
+        }
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+        final key = await image.image.obtainKey(ImageConfiguration.empty);
+        expect(PaintingBinding.instance.imageCache.containsKey(key), isFalse);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets('large text is bounded until Load full content is clicked', (
     tester,
   ) async {
