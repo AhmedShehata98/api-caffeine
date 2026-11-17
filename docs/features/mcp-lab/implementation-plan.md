@@ -543,3 +543,20 @@ themes were reviewed using frontend-design and ui-ux-pro-max. See
 [the rich-content progress note](rich-content-progress.md) for behavior, lifecycle
 semantics and remaining native/20 MiB/S1 acceptance limits. Next: audit and address
 the remaining S1 acceptance gaps.
+
+### Local catalog database acceptance progress
+
+Restarted the existing local Docker/Supabase stack, confirmed auth HTTP 200 and
+applied the sole pending additive migration, 20261116000000_mcp_servers.sql, with
+supabase migration up --local. No database reset or remote deployment was performed.
+The expanded three-case integration suite passes against the real local database:
+constraints, workspace/anonymous RLS, workspace-transfer denial, timestamp trigger,
+repository CRUD and marked-secret placeholder behavior. Non-loopback endpoints
+are skipped before client creation. Metadata confirms RLS/index/trigger presence
+and MCP test-row cleanup. All 291 selected regressions and analysis also pass.
+
+Applied supabase-postgres-best-practices. This completes the local catalog database
+verification slice; isolated fresh-migration replay, broader security fixtures and
+remaining native/protocol S1 gates stay open. Next: separate Network request and
+response body capture/presentation. See the progress tracker for test-state and
+guest-account cleanup limits.

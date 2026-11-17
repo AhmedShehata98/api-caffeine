@@ -8,12 +8,12 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | Phase | Status | Remaining work |
 |---|---|---|
 | Step 0 — transport feasibility | Complete | Production transports still belong to S1 |
-| S1 database (§3.1) | Written; database validation blocked | Apply locally, run constraints/RLS checks |
+| S1 database (§3.1) | Local migration applied; catalog constraints/RLS and repository checks pass | Fresh full migration replay, broader organization fixtures and remote deployment |
 | S1 models (§3.2) | Implemented; unit-tested | Extend as connection implementation requires |
 | S1 repositories (§3.3) | Catalog/trust, native stdio and base Streamable HTTP implemented; modern HTTP parameter mirroring implemented | Stdio platform gaps, HTTP legacy resumption/optional GET and deprecated HTTP+SSE, remaining lifecycle guarantees |
-| S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans and diagnostic buffers implemented | Rich result rendering, output-schema diagnostics, remaining protocol gates |
+| S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, Tools/schema forms, initial Prompts/messages, Resources reads/Save/raster previews, scalar templates and initial Protocol/Network/Console monitors implemented | Composite template inputs/completion, other rich content, monitor pin/export/body distinctions, native save-dialog/full desktop review |
+| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, scalar templates and initial Protocol/Network/Console monitors implemented | Composite template inputs/completion, monitor pin/export/body distinctions, native save-dialog/full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
@@ -26,7 +26,7 @@ the remaining live-session and UI work is substantially larger than the complete
 
 - Dependencies: `mcp_dart 2.4.4`, direct `crypto 3.0.8`.
 - Four standalone transport probes: SDK stdio and HTTP, raw stdio, Dio raw HTTP/SSE. Local transport boundaries selected for faithful diagnostics and manual control.
-- `mcp_servers` migration, workspace RLS policy, constraints/index/trigger, data-model documentation and opt-in schema tests. No local or remote migration applied.
+- `mcp_servers` migration, workspace RLS policy, constraints/index/trigger, data-model documentation and opt-in schema tests. The local migration is now applied and three real catalog/RLS checks pass; remote deployment has not been performed.
 - Immutable catalog/settings, protocol/content/result, resource/prompt, diagnostic and connection-state models; MCP camelCase codecs; coded failures retaining core kinds.
 - Catalog repository CRUD, workspace filters, stable ordering, explicit row mapping and secret placeholders.
 - Launch trust: immutable resolved snapshots, per-field HMACs, per-user secure keys, digest-only preferences, authorization rechecks and changed-field reporting.
@@ -40,14 +40,14 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- All **176** model, repository, trust, validator, catalog-service, transport-foundation, launcher and HTTP/parser unit tests pass.
+- The latest selected regression run passes **291** tests (285 MCP and six desktop shutdown cases). Three additional real local Supabase catalog/RLS tests pass separately. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **five loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, and stale-account rejection. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - Static analysis of the MCP module and tests is clean. The empty URL user-info marker case (`https://@host`) is rejected against the original URL before URI normalization can hide it.
 - Redaction tests cover nested values, credential headers, bearer/cookie echoes, query names/values, mixed-case percent encoding, malformed JSON/stderr, wire-format preservation and disposal. This does not certify unwritten transport/cache/UI paths.
 - Unit tests use a temporary `.dart_tool/mcp_unit_runner.dart` invoking Flutter's test command without native-plugin builds or asset bundling. This validates model/REST/mocked-storage behavior, not native plugins.
 - The normal Flutter test command stalls in the existing `cnativeapi` hook.
-- Docker Desktop Linux daemon is unavailable, so real Supabase migration/RLS verification remains pending.
+- Docker Desktop's Linux engine and the existing local Supabase stack have been restarted. The pending additive MCP migration applied without a reset; catalog constraints, isolation and repository integration now pass. A fresh full migration replay and wider database acceptance are still pending.
 - Stdio remains partial: Windows `.cmd`/`.bat` launch is explicitly rejected until quoting is implemented/tested; macOS process-group launch is not implemented (POSIX currently requires `/usr/bin/setsid`); Windows descendant cleanup after an early parent exit still needs work. Linux group/GUI-PATH behavior and platform shutdown guarantees remain unverified. No shell fallback weakens these gates.
 - HTTP remains partial: legacy stream resumption/optional GET and deprecated HTTP+SSE transport remain pending. Redirects are not followed; TLS proxy endpoints are explicitly rejected (an HTTP proxy can still tunnel an HTTPS MCP target). OAuth remains S2. No automatic call replay or modern Last-Event-ID resumption is introduced.
 - Q13's CIMD hosting URL is needed for S2, not for continuing S1.
@@ -55,14 +55,14 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Design reference
 
 Use Stitch project **3561297165959721299**, screens **#14–#22** and light variant **15L**.
-Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-tokens): use the current orange-seeded themes in `lib/core/ui/theme/` and bundled fonts, fix documented clipping/double-plus nits, keep labels on one line and keyboard hints as `Ctrl`. Historical implementation notes below describe the theme at the time; the current app theme takes precedence. The initial server-management screen is implemented; primitive and monitor views are pending.
+Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-tokens): use the current orange-seeded themes in `lib/core/ui/theme/` and bundled fonts, fix documented clipping/double-plus nits, keep labels on one line and keyboard hints as `Ctrl`. Historical implementation notes below describe the theme at the time; the current app theme takes precedence. Server management, primitive/rich result views and initial monitors are implemented; full native acceptance remains open.
 
 ## Next implementation order
 
-1. Close stdio platform/lifecycle and HTTP legacy resumption/deprecated-SSE gaps, then add transport dispatch for the connect service.
-2. Add connect/negotiation and primitive services, schema forms and transcript buffering.
-3. Wire Riverpod state and awaited account/workspace/app-exit shutdown.
-4. Build and review Stitch-based UI, then complete integration/platform checks and the S1 exit criteria.
+1. Complete remaining Network request/response body distinctions and other required S1 acceptance gaps.
+2. Close stdio platform/lifecycle, HTTP legacy resumption/deprecated-SSE and large-payload transport gaps.
+3. Validate a fresh full migration replay in an isolated environment and broaden organization/security cases.
+4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
 5. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
 
 ## Protocol negotiation follow-up
@@ -687,3 +687,39 @@ diagnostic export, richer protocol-error presentation and separate Network bodie
 remain open. Existing database, native plugin/platform and transport-size gates
 still apply. Next: rich tool/prompt content and output-schema diagnostics, followed
 by remaining S1 acceptance gaps. S1 is not complete.
+
+## Local catalog database acceptance follow-up
+
+The local database gate is now exercised against real Supabase. Docker Desktop's
+Linux engine had stopped; it and the existing project were restarted. Auth health
+returned HTTP 200, but the first database run found public.mcp_servers missing.
+Local migration history showed only 20261116000000 pending. Applied that reviewed
+additive migration with supabase migration up --local, without a database reset or
+remote deployment. All three local migration versions are now recorded as applied.
+
+Expanded the opt-in catalog integration suite to three cases. It verifies direct
+constraint failures (targets, credentials in URL user-info, JSON containers/value
+types, empty names and required values), stdio/HTTP round trips, timestamp-trigger
+behavior, cross-organization select/insert/update/delete denial and rejection of
+workspace reassignment into an outsider's organization. Real repository CRUD also
+checks stdio args/cwd/settings/ordering, HTTP/SSE target updates, marked-secret
+placeholder stripping and missing-on-device state. An unauthenticated client cannot
+read or insert another guest's catalog. Test clients use only the local anon key.
+
+The suite refuses non-loopback URLs; a verification run with a non-local dummy URL
+skipped all three cases before client creation. The local launch/test defines are
+refreshed under ignored .dart_tool/local_supabase_defines.json; no key was added to
+version control or printed. Test-owned MCP rows are removed. Guest auth/bootstrap
+records created by signInAnonymously may remain, following the integration suite's
+existing convention; no administrator account deletion or broad cleanup was added.
+
+Results: all three real database cases pass, all 291 selected MCP/desktop regression
+tests pass, and static analysis is clean. Read-only database metadata confirms RLS
+enabled, the workspace index and timestamp trigger present, and zero retained
+catalog rows after the checks. No migration SQL change was needed.
+
+This closes the previously blocked local catalog/RLS verification slice, not every
+database or S1 exit criterion. Fresh full migration replay on an isolated instance,
+broader organization/security fixtures, remote deployment and native/platform/large-
+payload acceptance remain open. Next: separate HTTP request/response body capture
+and presentation in Network, then the remaining S1 transport and platform gates.
