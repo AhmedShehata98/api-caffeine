@@ -37,6 +37,9 @@ abstract class NetworkEntry with _$NetworkEntry {
     int? status,
     @Default({}) Map<String, List<String>> requestHeaders,
     @Default({}) Map<String, List<String>> responseHeaders,
+    String? requestBody,
+    @Default(false) bool requestTruncated,
+    // Existing body/truncated fields describe the response for codec compatibility.
     String? body,
     @Default(false) bool truncated,
     required Duration duration,

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Bounded response data-frame capture. Input must already be sanitized.
+/// Bounded request or response data-frame capture. Input must be sanitized.
 /// Full bodies are retained here; the monitor applies its own 256 KiB preview.
 class McpHttpDiagnosticBody {
   McpHttpDiagnosticBody({this.limitBytes = 16 * 1024 * 1024}) {

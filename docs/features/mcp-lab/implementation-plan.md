@@ -560,3 +560,20 @@ verification slice; isolated fresh-migration replay, broader security fixtures a
 remaining native/protocol S1 gates stay open. Next: separate Network request and
 response body capture/presentation. See the progress tracker for test-state and
 guest-account cleanup limits.
+
+### Separate Network body capture and presentation progress
+
+Added bounded sanitized request capture for outgoing POSTs alongside response
+capture, preserving existing response codec fields. Network body previews, full
+loads, partial flags and Copy now operate independently for request and response.
+Both bodies share the retention budget and are released together on eviction,
+clear or scope disposal. Per-body UI state prevents a late full load from
+overwriting the other tab. Discarded nonempty notification/client-reply response
+bodies are marked partial. Headers remain separately accessible.
+
+All 299 selected regression tests, six real JSON/SSE loopback HTTP scenario groups
+and static analysis pass. Dark/light Network renders were reviewed using
+frontend-design and ui-ux-pro-max. See the progress tracker for exact byte limits
+and compatibility behavior. This slice is complete; large-payload transport,
+Windows descendant cleanup and remaining S1 protocol/native/database gates remain
+open. No new dependencies, database changes or remote deployment were required.

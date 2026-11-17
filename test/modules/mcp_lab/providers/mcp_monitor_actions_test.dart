@@ -82,6 +82,75 @@ void main() {
       );
     },
   );
+  test('network actions choose the body and reject both after clear or scope replacement', () async {
+    const network = NetworkEntry(
+      method: 'POST',
+      url: 'https://example.test',
+      requestBody: '{"request":true}',
+      body: '{"response":true}',
+      duration: Duration.zero,
+    );
+    session.networkController.add(network);
+    await publish();
+    final entry = container
+        .read(mcpCurrentDiagnosticsProvider('s'))!
+        .network
+        .single;
+    final actions = container.read(mcpMonitorActionsProvider('s'));
+    expect(
+      actions
+          .copy(
+            McpMonitorKind.network,
+            entry.sequence,
+            side: McpNetworkBodySide.request,
+          )
+          .valueOrNull,
+      network.requestBody,
+    );
+    expect(
+      (await actions.loadFull(
+        McpMonitorKind.network,
+        entry,
+        side: McpNetworkBodySide.request,
+      )).valueOrNull,
+      contains('"request": true'),
+    );
+    expect(
+      actions.copy(McpMonitorKind.network, entry.sequence).valueOrNull,
+      network.body,
+    );
+    final pending = actions.loadFull(
+      McpMonitorKind.network,
+      entry,
+      side: McpNetworkBodySide.request,
+    );
+    actions.clear(McpMonitorKind.network);
+    expect((await pending).isSuccess, isFalse);
+    expect(
+      actions
+          .copy(
+            McpMonitorKind.network,
+            entry.sequence,
+            side: McpNetworkBodySide.request,
+          )
+          .isSuccess,
+      isFalse,
+    );
+    session.networkController.add(network);
+    await publish();
+    await owner.switchScope('other', 'w');
+    expect(
+      actions
+          .copy(
+            McpMonitorKind.network,
+            entry.sequence + 1,
+            side: McpNetworkBodySide.request,
+          )
+          .isSuccess,
+      isFalse,
+    );
+  });
+
   test('clear affects one buffer and invalidates pending full loads', () async {
     session.framesController.add(frame('{"ok":true}'));
     session.consoleController.add(

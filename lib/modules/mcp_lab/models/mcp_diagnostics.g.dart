@@ -62,6 +62,8 @@ _NetworkEntry _$NetworkEntryFromJson(
             MapEntry(k, (e as List<dynamic>).map((e) => e as String).toList()),
       ) ??
       const {},
+  requestBody: json['request_body'] as String?,
+  requestTruncated: json['request_truncated'] as bool? ?? false,
   body: json['body'] as String?,
   truncated: json['truncated'] as bool? ?? false,
   duration: Duration(microseconds: (json['duration'] as num).toInt()),
@@ -74,6 +76,8 @@ Map<String, dynamic> _$NetworkEntryToJson(_NetworkEntry instance) =>
       'status': instance.status,
       'request_headers': instance.requestHeaders,
       'response_headers': instance.responseHeaders,
+      'request_body': instance.requestBody,
+      'request_truncated': instance.requestTruncated,
       'body': instance.body,
       'truncated': instance.truncated,
       'duration': instance.duration.inMicroseconds,

@@ -13,7 +13,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 repositories (§3.3) | Catalog/trust, native stdio and base Streamable HTTP implemented; modern HTTP parameter mirroring implemented | Stdio platform gaps, HTTP legacy resumption/optional GET and deprecated HTTP+SSE, remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, scalar templates and initial Protocol/Network/Console monitors implemented | Composite template inputs/completion, monitor pin/export/body distinctions, native save-dialog/full desktop review |
+| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, scalar templates and Protocol/Network/Console monitors with separate HTTP bodies implemented | Composite template inputs/completion, monitor pin/export, native save-dialog/full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
@@ -40,9 +40,9 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected regression run passes **291** tests (285 MCP and six desktop shutdown cases). Three additional real local Supabase catalog/RLS tests pass separately. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected regression run passes **299** tests (293 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
-- `dart test/integration/mcp_lab/http_session_checks.dart` passes **five loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, and stale-account rejection. The stdio scenarios were rerun after sharing diagnostic code and still pass.
+- `dart test/integration/mcp_lab/http_session_checks.dart` passes **six loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, and large sanitized request/response captures over JSON/SSE. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - Static analysis of the MCP module and tests is clean. The empty URL user-info marker case (`https://@host`) is rejected against the original URL before URI normalization can hide it.
 - Redaction tests cover nested values, credential headers, bearer/cookie echoes, query names/values, mixed-case percent encoding, malformed JSON/stderr, wire-format preservation and disposal. This does not certify unwritten transport/cache/UI paths.
 - Unit tests use a temporary `.dart_tool/mcp_unit_runner.dart` invoking Flutter's test command without native-plugin builds or asset bundling. This validates model/REST/mocked-storage behavior, not native plugins.
@@ -59,7 +59,7 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Complete remaining Network request/response body distinctions and other required S1 acceptance gaps.
+1. Address the remaining large-payload transport acceptance gap and Windows descendant-cleanup guarantees.
 2. Close stdio platform/lifecycle, HTTP legacy resumption/deprecated-SSE and large-payload transport gaps.
 3. Validate a fresh full migration replay in an isolated environment and broaden organization/security cases.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
@@ -723,3 +723,37 @@ database or S1 exit criterion. Fresh full migration replay on an isolated instan
 broader organization/security fixtures, remote deployment and native/platform/large-
 payload acceptance remain open. Next: separate HTTP request/response body capture
 and presentation in Network, then the remaining S1 transport and platform gates.
+
+## Separate Network request and response bodies
+
+Network captures now retain a sanitized request body alongside the existing
+response body. The response keeps its existing `body`/`truncated` codec fields;
+`requestBody`/`requestTruncated` are additive. Normal POSTs, initialized
+notifications and unsupported client-method replies capture their outgoing JSON.
+DELETE has no request body. Mirrored credential headers are learned before
+outgoing diagnostics, and request capture is sanitized again after response
+credentials have been learned. Operation payloads remain unchanged.
+
+Each side has an independent UTF-8-safe 256 KiB preview, partial-transport flag,
+off-isolate JSON Load full and sanitized Copy. Requests use JSON parsing even
+when the response is SSE. Transport captures remain bounded at 16 MiB per body;
+both bodies count toward the monitor's shared 64 MiB budget and startup stream
+budget. Eviction, clear and scope disposal release both sides together. Nonempty
+notification/client-reply responses deliberately discarded by the transport are
+marked partial instead of appearing as complete empty bodies.
+
+The detail view exposes Request body, Response body and both header tabs. Copy
+names the active body; partial captures explicitly copy only retained text.
+Loading/full/error state belongs to each side, so switching tabs during an isolate
+load cannot overwrite the other body's editor. Empty captures are explicit.
+
+All 299 selected tests pass, including body budget/eviction, independent partial
+flags, request redaction, notification/DELETE, scope invalidation, tab-switch
+loads and dark/light Network rendering. Six real loopback HTTP scenario groups
+pass, now exercising large request and response bodies over both JSON and SSE;
+`dart analyze lib test` is clean. Frontend-design and ui-ux-pro-max were applied,
+and both theme renders were reviewed. The existing unit-only harness still omits
+native plugins; this does not close normal Flutter/native or S1 exit acceptance.
+
+Next: address the large-payload transport acceptance gap and Windows descendant
+cleanup, followed by remaining legacy HTTP, database replay and platform gates.

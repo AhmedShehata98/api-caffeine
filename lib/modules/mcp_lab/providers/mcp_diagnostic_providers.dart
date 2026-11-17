@@ -120,8 +120,12 @@ class McpMonitorActions {
     McpMonitorKind.network => monitor?.network,
     McpMonitorKind.console => monitor?.console,
   };
-  Result<String> copy(McpMonitorKind kind, int sequence) => isCurrent()
-      ? _buffer(kind)!.copyText(sequence)
+  Result<String> copy(
+    McpMonitorKind kind,
+    int sequence, {
+    McpNetworkBodySide side = McpNetworkBodySide.response,
+  }) => isCurrent()
+      ? _buffer(kind)!.copyText(sequence, side: side)
       : const Result.failure(_stale);
   void clear(McpMonitorKind kind) {
     if (isCurrent()) monitor!.clearBuffer(kind);
@@ -129,8 +133,9 @@ class McpMonitorActions {
 
   Future<Result<String>> loadFull(
     McpMonitorKind kind,
-    McpMonitorEntry entry,
-  ) async {
+    McpMonitorEntry entry, {
+    McpNetworkBodySide side = McpNetworkBodySide.response,
+  }) async {
     final buffer = _buffer(kind);
     if (!isCurrent() || buffer == null) return const Result.failure(_stale);
     if (kind == McpMonitorKind.console ||
@@ -138,7 +143,7 @@ class McpMonitorActions {
       return buffer.copyText(entry.sequence);
     }
     try {
-      final parsed = await buffer.loadFullJson(entry.sequence);
+      final parsed = await buffer.loadFullJson(entry.sequence, side: side);
       if (!parsed.isSuccess) return Result.failure(parsed.failureOrNull!);
       final formatted = await _formatDiagnostic(parsed.valueOrNull);
       if (!isCurrent() || !buffer.copyText(entry.sequence).isSuccess) {

@@ -315,7 +315,7 @@ as bool,
 /// @nodoc
 mixin _$NetworkEntry {
 
- String get method; String get url; int? get status; Map<String, List<String>> get requestHeaders; Map<String, List<String>> get responseHeaders; String? get body; bool get truncated; Duration get duration;
+ String get method; String get url; int? get status; Map<String, List<String>> get requestHeaders; Map<String, List<String>> get responseHeaders; String? get requestBody; bool get requestTruncated; String? get body; bool get truncated; Duration get duration;
 /// Create a copy of NetworkEntry
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -329,20 +329,20 @@ $NetworkEntryCopyWith<NetworkEntry> get copyWith => _$NetworkEntryCopyWithImpl<N
 @override
 bool operator ==(Object other) {
   final _this = this as NetworkEntry;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkEntry&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.status, _this.status) || other.status == _this.status)&&const DeepCollectionEquality().equals(other.requestHeaders, _this.requestHeaders)&&const DeepCollectionEquality().equals(other.responseHeaders, _this.responseHeaders)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.truncated, _this.truncated) || other.truncated == _this.truncated)&&(identical(other.duration, _this.duration) || other.duration == _this.duration));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkEntry&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.status, _this.status) || other.status == _this.status)&&const DeepCollectionEquality().equals(other.requestHeaders, _this.requestHeaders)&&const DeepCollectionEquality().equals(other.responseHeaders, _this.responseHeaders)&&(identical(other.requestBody, _this.requestBody) || other.requestBody == _this.requestBody)&&(identical(other.requestTruncated, _this.requestTruncated) || other.requestTruncated == _this.requestTruncated)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.truncated, _this.truncated) || other.truncated == _this.truncated)&&(identical(other.duration, _this.duration) || other.duration == _this.duration));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as NetworkEntry;
-  return Object.hash(runtimeType,_this.method,_this.url,_this.status,const DeepCollectionEquality().hash(_this.requestHeaders),const DeepCollectionEquality().hash(_this.responseHeaders),_this.body,_this.truncated,_this.duration);
+  return Object.hash(runtimeType,_this.method,_this.url,_this.status,const DeepCollectionEquality().hash(_this.requestHeaders),const DeepCollectionEquality().hash(_this.responseHeaders),_this.requestBody,_this.requestTruncated,_this.body,_this.truncated,_this.duration);
 }
 
 @override
 String toString() {
   final _this = this as NetworkEntry;
-  return 'NetworkEntry(method: ${_this.method}, url: ${_this.url}, status: ${_this.status}, requestHeaders: ${_this.requestHeaders}, responseHeaders: ${_this.responseHeaders}, body: ${_this.body}, truncated: ${_this.truncated}, duration: ${_this.duration})';
+  return 'NetworkEntry(method: ${_this.method}, url: ${_this.url}, status: ${_this.status}, requestHeaders: ${_this.requestHeaders}, responseHeaders: ${_this.responseHeaders}, requestBody: ${_this.requestBody}, requestTruncated: ${_this.requestTruncated}, body: ${_this.body}, truncated: ${_this.truncated}, duration: ${_this.duration})';
 }
 
 
@@ -353,7 +353,7 @@ abstract mixin class $NetworkEntryCopyWith<$Res>  {
   factory $NetworkEntryCopyWith(NetworkEntry value, $Res Function(NetworkEntry) _then) = _$NetworkEntryCopyWithImpl;
 @useResult
 $Res call({
- String method, String url, int? status, Map<String, List<String>> requestHeaders, Map<String, List<String>> responseHeaders, String? body, bool truncated, Duration duration
+ String method, String url, int? status, Map<String, List<String>> requestHeaders, Map<String, List<String>> responseHeaders, String? requestBody, bool requestTruncated, String? body, bool truncated, Duration duration
 });
 
 
@@ -370,14 +370,16 @@ class _$NetworkEntryCopyWithImpl<$Res>
 
 /// Create a copy of NetworkEntry
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? method = null,Object? url = null,Object? status = freezed,Object? requestHeaders = null,Object? responseHeaders = null,Object? body = freezed,Object? truncated = null,Object? duration = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? method = null,Object? url = null,Object? status = freezed,Object? requestHeaders = null,Object? responseHeaders = null,Object? requestBody = freezed,Object? requestTruncated = null,Object? body = freezed,Object? truncated = null,Object? duration = null,}) {
   return _then(NetworkEntry(
 method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
 as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as int?,requestHeaders: null == requestHeaders ? _self.requestHeaders : requestHeaders // ignore: cast_nullable_to_non_nullable
 as Map<String, List<String>>,responseHeaders: null == responseHeaders ? _self.responseHeaders : responseHeaders // ignore: cast_nullable_to_non_nullable
-as Map<String, List<String>>,body: freezed == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
+as Map<String, List<String>>,requestBody: freezed == requestBody ? _self.requestBody : requestBody // ignore: cast_nullable_to_non_nullable
+as String?,requestTruncated: null == requestTruncated ? _self.requestTruncated : requestTruncated // ignore: cast_nullable_to_non_nullable
+as bool,body: freezed == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String?,truncated: null == truncated ? _self.truncated : truncated // ignore: cast_nullable_to_non_nullable
 as bool,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
 as Duration,
@@ -465,10 +467,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String method,  String url,  int? status,  Map<String, List<String>> requestHeaders,  Map<String, List<String>> responseHeaders,  String? body,  bool truncated,  Duration duration)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String method,  String url,  int? status,  Map<String, List<String>> requestHeaders,  Map<String, List<String>> responseHeaders,  String? requestBody,  bool requestTruncated,  String? body,  bool truncated,  Duration duration)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NetworkEntry() when $default != null:
-return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.responseHeaders,_that.body,_that.truncated,_that.duration);case _:
+return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.responseHeaders,_that.requestBody,_that.requestTruncated,_that.body,_that.truncated,_that.duration);case _:
   return orElse();
 
 }
@@ -486,10 +488,10 @@ return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String method,  String url,  int? status,  Map<String, List<String>> requestHeaders,  Map<String, List<String>> responseHeaders,  String? body,  bool truncated,  Duration duration)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String method,  String url,  int? status,  Map<String, List<String>> requestHeaders,  Map<String, List<String>> responseHeaders,  String? requestBody,  bool requestTruncated,  String? body,  bool truncated,  Duration duration)  $default,) {final _that = this;
 switch (_that) {
 case _NetworkEntry():
-return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.responseHeaders,_that.body,_that.truncated,_that.duration);case _:
+return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.responseHeaders,_that.requestBody,_that.requestTruncated,_that.body,_that.truncated,_that.duration);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -506,10 +508,10 @@ return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String method,  String url,  int? status,  Map<String, List<String>> requestHeaders,  Map<String, List<String>> responseHeaders,  String? body,  bool truncated,  Duration duration)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String method,  String url,  int? status,  Map<String, List<String>> requestHeaders,  Map<String, List<String>> responseHeaders,  String? requestBody,  bool requestTruncated,  String? body,  bool truncated,  Duration duration)?  $default,) {final _that = this;
 switch (_that) {
 case _NetworkEntry() when $default != null:
-return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.responseHeaders,_that.body,_that.truncated,_that.duration);case _:
+return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.responseHeaders,_that.requestBody,_that.requestTruncated,_that.body,_that.truncated,_that.duration);case _:
   return null;
 
 }
@@ -521,7 +523,7 @@ return $default(_that.method,_that.url,_that.status,_that.requestHeaders,_that.r
 @JsonSerializable()
 
 class _NetworkEntry implements NetworkEntry {
-  const _NetworkEntry({required this.method, required this.url, this.status,  Map<String, List<String>> requestHeaders = const {},  Map<String, List<String>> responseHeaders = const {}, this.body, this.truncated = false, required this.duration}): _requestHeaders = requestHeaders,_responseHeaders = responseHeaders;
+  const _NetworkEntry({required this.method, required this.url, this.status,  Map<String, List<String>> requestHeaders = const {},  Map<String, List<String>> responseHeaders = const {}, this.requestBody, this.requestTruncated = false, this.body, this.truncated = false, required this.duration}): _requestHeaders = requestHeaders,_responseHeaders = responseHeaders;
   factory _NetworkEntry.fromJson(Map<String, dynamic> json) => _$NetworkEntryFromJson(json);
 
 @override final  String method;
@@ -541,6 +543,8 @@ class _NetworkEntry implements NetworkEntry {
   return EqualUnmodifiableMapView(_responseHeaders);
 }
 
+@override final  String? requestBody;
+@override@JsonKey() final  bool requestTruncated;
 @override final  String? body;
 @override@JsonKey() final  bool truncated;
 @override final  Duration duration;
@@ -558,18 +562,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NetworkEntry&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.requestHeaders, _requestHeaders)&&const DeepCollectionEquality().equals(other.responseHeaders, _responseHeaders)&&(identical(other.body, body) || other.body == body)&&(identical(other.truncated, truncated) || other.truncated == truncated)&&(identical(other.duration, duration) || other.duration == duration));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NetworkEntry&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.requestHeaders, _requestHeaders)&&const DeepCollectionEquality().equals(other.responseHeaders, _responseHeaders)&&(identical(other.requestBody, requestBody) || other.requestBody == requestBody)&&(identical(other.requestTruncated, requestTruncated) || other.requestTruncated == requestTruncated)&&(identical(other.body, body) || other.body == body)&&(identical(other.truncated, truncated) || other.truncated == truncated)&&(identical(other.duration, duration) || other.duration == duration));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,method,url,status,const DeepCollectionEquality().hash(_requestHeaders),const DeepCollectionEquality().hash(_responseHeaders),body,truncated,duration);
+    return Object.hash(runtimeType,method,url,status,const DeepCollectionEquality().hash(_requestHeaders),const DeepCollectionEquality().hash(_responseHeaders),requestBody,requestTruncated,body,truncated,duration);
 }
 
 @override
 String toString() {
-    return 'NetworkEntry(method: $method, url: $url, status: $status, requestHeaders: $requestHeaders, responseHeaders: $responseHeaders, body: $body, truncated: $truncated, duration: $duration)';
+    return 'NetworkEntry(method: $method, url: $url, status: $status, requestHeaders: $requestHeaders, responseHeaders: $responseHeaders, requestBody: $requestBody, requestTruncated: $requestTruncated, body: $body, truncated: $truncated, duration: $duration)';
 }
 
 
@@ -580,7 +584,7 @@ abstract mixin class _$NetworkEntryCopyWith<$Res> implements $NetworkEntryCopyWi
   factory _$NetworkEntryCopyWith(_NetworkEntry value, $Res Function(_NetworkEntry) _then) = __$NetworkEntryCopyWithImpl;
 @override @useResult
 $Res call({
- String method, String url, int? status, Map<String, List<String>> requestHeaders, Map<String, List<String>> responseHeaders, String? body, bool truncated, Duration duration
+ String method, String url, int? status, Map<String, List<String>> requestHeaders, Map<String, List<String>> responseHeaders, String? requestBody, bool requestTruncated, String? body, bool truncated, Duration duration
 });
 
 
@@ -597,14 +601,16 @@ class __$NetworkEntryCopyWithImpl<$Res>
 
 /// Create a copy of NetworkEntry
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? method = null,Object? url = null,Object? status = freezed,Object? requestHeaders = null,Object? responseHeaders = null,Object? body = freezed,Object? truncated = null,Object? duration = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? method = null,Object? url = null,Object? status = freezed,Object? requestHeaders = null,Object? responseHeaders = null,Object? requestBody = freezed,Object? requestTruncated = null,Object? body = freezed,Object? truncated = null,Object? duration = null,}) {
   return _then(_NetworkEntry(
 method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
 as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as int?,requestHeaders: null == requestHeaders ? _self._requestHeaders : requestHeaders // ignore: cast_nullable_to_non_nullable
 as Map<String, List<String>>,responseHeaders: null == responseHeaders ? _self._responseHeaders : responseHeaders // ignore: cast_nullable_to_non_nullable
-as Map<String, List<String>>,body: freezed == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
+as Map<String, List<String>>,requestBody: freezed == requestBody ? _self.requestBody : requestBody // ignore: cast_nullable_to_non_nullable
+as String?,requestTruncated: null == requestTruncated ? _self.requestTruncated : requestTruncated // ignore: cast_nullable_to_non_nullable
+as bool,body: freezed == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String?,truncated: null == truncated ? _self.truncated : truncated // ignore: cast_nullable_to_non_nullable
 as bool,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
 as Duration,

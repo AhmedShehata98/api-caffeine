@@ -26,6 +26,106 @@ RpcFrame frame({
 );
 
 void main() {
+  test(
+    'network bodies have independent previews, full text and partial flags',
+    () async {
+      final buffer = McpDiagnosticBuffer(previewBytes: 5);
+      buffer.addNetwork(
+        const NetworkEntry(
+          method: 'POST',
+          url: 'https://example.test',
+          requestBody: '{"request":"é😀"}',
+          body: '{"response":true}',
+          responseHeaders: {
+            'content-type': ['text/event-stream'],
+          },
+          duration: Duration.zero,
+        ),
+      );
+      final entry = buffer.entries.single;
+      expect(entry.requestBody!.truncated, isTrue);
+      expect(entry.truncated, isTrue);
+      expect(entry.network!.requestBody, entry.requestBody!.text);
+      expect(entry.network!.body, entry.text);
+      expect(utf8.encode(entry.requestBody!.text).length, lessThanOrEqualTo(5));
+      expect(entry.requestBody!.text, isNot(contains('�')));
+      expect(
+        buffer.copyText(0, side: McpNetworkBodySide.request).valueOrNull,
+        '{"request":"é😀"}',
+      );
+      expect(
+        (await buffer.loadFullJson(
+          0,
+          side: McpNetworkBodySide.request,
+        )).valueOrNull,
+        {'request': 'é😀'},
+      );
+      expect((await buffer.loadFullJson(0)).valueOrNull, [
+        {'response': true},
+      ]);
+      buffer.addNetwork(
+        const NetworkEntry(
+          method: 'POST',
+          url: 'https://example.test',
+          requestBody: '{}',
+          requestTruncated: true,
+          body: '{}',
+          duration: Duration.zero,
+        ),
+      );
+      expect(buffer.entries.last.requestBody!.fullAvailable, isFalse);
+      expect(buffer.entries.last.fullAvailable, isTrue);
+      expect(
+        (await buffer.loadFullJson(
+          1,
+          side: McpNetworkBodySide.request,
+        )).isSuccess,
+        isFalse,
+      );
+      expect((await buffer.loadFullJson(1)).isSuccess, isTrue);
+    },
+  );
+
+  test(
+    'both network bodies share the byte budget and are released together',
+    () async {
+      final buffer = McpDiagnosticBuffer(bodyBudgetBytes: 8);
+      const network = NetworkEntry(
+        method: 'POST',
+        url: 'https://example.test',
+        requestBody: '{}',
+        body: '{}',
+        duration: Duration.zero,
+      );
+      buffer.addNetwork(network);
+      buffer.addNetwork(network);
+      expect(buffer.retainedBodyBytes, 8);
+      buffer.addNetwork(network);
+      expect(buffer.copyText(0).isSuccess, isFalse);
+      expect(
+        buffer.copyText(0, side: McpNetworkBodySide.request).isSuccess,
+        isFalse,
+      );
+      expect(buffer.retainedBodyBytes, 8);
+      buffer.addNetwork(network.copyWith(requestBody: '1234567'));
+      expect(buffer.dropped, 2);
+      final pending = buffer.loadFullJson(1, side: McpNetworkBodySide.request);
+      buffer.clear();
+      expect((await pending).isSuccess, isFalse);
+      expect(buffer.retainedBodyBytes, 0);
+      expect(
+        buffer.copyText(1, side: McpNetworkBodySide.request).isSuccess,
+        isFalse,
+      );
+      buffer.addNetwork(network);
+      buffer.dispose();
+      expect(
+        buffer.copyText(3, side: McpNetworkBodySide.request).isSuccess,
+        isFalse,
+      );
+    },
+  );
+
   test('pairs opposite directions and preserves string versus integer IDs', () {
     final buffer = McpDiagnosticBuffer();
     buffer.addFrame(frame());

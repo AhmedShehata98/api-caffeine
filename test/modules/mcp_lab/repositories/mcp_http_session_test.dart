@@ -129,6 +129,7 @@ void main() {
       final entry = await captured;
       expect(entry.truncated, isFalse);
       expect(entry.body, isNot(contains('canary')));
+      expect(jsonDecode(entry.requestBody!)['params']['name'], 'large');
       final buffer = McpDiagnosticBuffer()..addNetwork(entry);
       expect(buffer.entries.single.truncated, isTrue);
       expect(buffer.entries.single.fullAvailable, isTrue);
@@ -142,6 +143,69 @@ void main() {
       buffer.dispose();
       expect(buffer.copyText(0).isSuccess, isFalse);
       await session.close();
+    },
+  );
+
+  test(
+    'network retains the sanitized request, notifications and bodyless DELETE',
+    () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      final entries = <NetworkEntry>[];
+      final done = Completer<void>();
+      final subscription = session.network.listen(
+        entries.add,
+        onDone: done.complete,
+      );
+      final captured = session.network.firstWhere(
+        (entry) => entry.requestBody?.contains('request-tail') ?? false,
+      );
+      final requestText = '${'é' * (170 * 1024)}canary-request-tail';
+      await session.request('tools/call', {
+        'name': 'large',
+        'arguments': {'text': requestText},
+      });
+      final entry = await captured;
+      expect(entry.requestBody, isNot(contains('canary')));
+      expect(entry.requestBody, contains('[REDACTED]-request-tail'));
+      final buffer = McpDiagnosticBuffer()..addNetwork(entry);
+      expect(buffer.entries.single.requestBody!.truncated, isTrue);
+      expect(buffer.entries.single.truncated, isFalse);
+      expect(
+        (await buffer.loadFullJson(
+          0,
+          side: McpNetworkBodySide.request,
+        )).valueOrNull,
+        isA<Map>(),
+      );
+      expect(
+        jsonDecode(
+          buffer.copyText(0, side: McpNetworkBodySide.request).valueOrNull!,
+        )['params']['arguments']['text'],
+        endsWith('[REDACTED]-request-tail'),
+      );
+      expect(
+        jsonDecode(
+          adapter.requests.last.data as String,
+        )['params']['arguments']['text'],
+        requestText,
+      );
+      await session.close();
+      await done.future;
+      await subscription.cancel();
+      final notice = entries.firstWhere(
+        (value) =>
+            value.requestBody?.contains('notifications/initialized') ?? false,
+      );
+      expect(
+        jsonDecode(notice.requestBody!)['method'],
+        'notifications/initialized',
+      );
+      final deleted = entries.singleWhere((value) => value.method == 'DELETE');
+      expect(notice.truncated, isTrue);
+      expect(deleted.requestBody, isNull);
+      expect(deleted.body, isNull);
+      buffer.dispose();
     },
   );
 

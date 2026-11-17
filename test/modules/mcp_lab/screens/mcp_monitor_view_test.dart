@@ -260,7 +260,12 @@ void main() {
     expect(copied!.length, greaterThan(300 * 1024));
     expect(copied, isNot(contains('secret-canary')));
   });
-  void network({bool partial = false}) {
+  void network({
+    bool partial = false,
+    bool requestPartial = false,
+    String? requestBody = '{"method":"tools/call"}',
+    String responseBody = '{"safe":true}',
+  }) {
     final sentinel =
         '=?base64?${base64Encode(utf8.encode('team/é secret-canary'))}?=';
     session.networkEvents.add(
@@ -276,7 +281,11 @@ void main() {
         responseHeaders: {
           'content-type': ['application/json'],
         },
-        body: '{"safe":true}',
+        requestBody: requestBody == null
+            ? null
+            : session.sanitizer.frame(requestBody).text,
+        requestTruncated: requestPartial,
+        body: session.sanitizer.frame(responseBody).text,
         truncated: partial,
         duration: const Duration(milliseconds: 35),
       ),
@@ -307,9 +316,69 @@ void main() {
       await select(tester, 0);
       expect(find.textContaining('Partial transport body'), findsOneWidget);
       expect(find.text('Load full'), findsNothing);
-      expect(find.text('Copy retained body'), findsOneWidget);
+      expect(find.text('Copy retained response body'), findsOneWidget);
+      await tester.tap(find.text('Request body'));
+      await tester.pump();
+      expect(find.textContaining('Partial transport body'), findsNothing);
+      expect(find.text('Copy request body'), findsOneWidget);
     },
   );
+  testWidgets('network full loads and copies stay with their selected body', (
+    tester,
+  ) async {
+    network(
+      requestBody:
+          '{"request":"${'x' * (300 * 1024)}secret-canary-request-tail"}',
+      responseBody:
+          '{"response":"${'y' * (300 * 1024)}secret-canary-response-tail"}',
+    );
+    await pump(tester, kind: McpMonitorKind.network);
+    await select(tester, 0);
+    await tester.tap(find.text('Load full'));
+    // Switch sides before the response's isolate work returns.
+    await tester.tap(find.text('Request body'));
+    await settle(tester);
+    expect(find.text('Load full'), findsOneWidget);
+    expect(
+      tester.widget<CodeView>(find.byType(CodeView)).controller.text,
+      startsWith('{"request":'),
+    );
+    await tester.tap(find.text('Load full'));
+    await settle(tester);
+    expect(
+      tester.widget<CodeView>(find.byType(CodeView)).controller.text,
+      contains('[REDACTED]-request-tail'),
+    );
+    await tester.tap(find.text('Copy request body'));
+    await tester.pump();
+    expect(copied, contains('[REDACTED]-request-tail'));
+    expect(copied, isNot(contains('secret-canary')));
+    await tester.tap(find.text('Response body'));
+    await settle(tester);
+    expect(find.text('Load full'), findsNothing);
+    expect(
+      tester.widget<CodeView>(find.byType(CodeView)).controller.text,
+      contains('[REDACTED]-response-tail'),
+    );
+    await tester.tap(find.text('Copy response body'));
+    await tester.pump();
+    expect(copied, contains('[REDACTED]-response-tail'));
+  });
+
+  testWidgets('request partial and empty states do not change the response', (
+    tester,
+  ) async {
+    network(requestPartial: true, requestBody: null);
+    await pump(tester, kind: McpMonitorKind.network);
+    await select(tester, 0);
+    expect(find.text('Copy response body'), findsOneWidget);
+    await tester.tap(find.text('Request body'));
+    await tester.pump();
+    expect(find.text('Copy retained request body'), findsOneWidget);
+    expect(find.text('No request body captured.'), findsOneWidget);
+    expect(find.text('Load full'), findsNothing);
+    expect(find.textContaining('Partial transport body'), findsOneWidget);
+  });
   testWidgets('Console updates live and clear affects only its own buffer', (
     tester,
   ) async {
@@ -376,28 +445,41 @@ void main() {
     expect(find.text('1 / 10000 captures'), findsOneWidget);
   });
   for (final light in [false, true]) {
-    testWidgets('${light ? 'light' : 'dark'} monitor layout fits and renders', (
-      tester,
-    ) async {
-      pair();
-      await pump(tester, light: light);
-      await select(tester, 0);
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      if (const bool.fromEnvironment('MCP_UI_SCREENSHOTS')) {
-        await tester.runAsync(() async {
-          final rendered =
-              await (boundary.currentContext!.findRenderObject()
-                      as RenderRepaintBoundary)
-                  .toImage();
-          final bytes = await rendered.toByteData(
-            format: ui.ImageByteFormat.png,
-          );
-          await File('.dart_tool/mcp_monitor_${light ? 'light' : 'dark'}.png')
-              .writeAsBytes(bytes!.buffer.asUint8List());
-          rendered.dispose();
-        });
-      }
-    });
+    for (final kind in [McpMonitorKind.protocol, McpMonitorKind.network]) {
+      testWidgets(
+        '${light ? 'light' : 'dark'} ${kind.name} monitor layout fits and renders',
+        (tester) async {
+          if (kind == McpMonitorKind.network) {
+            network(
+              requestBody: '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"echo","arguments":{"message":"secret-canary"}}}',
+            );
+          } else {
+            pair();
+          }
+          await pump(tester, light: light, kind: kind);
+          await select(tester, 0);
+          if (kind == McpMonitorKind.network) {
+            await tester.tap(find.text('Request body'));
+          }
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          if (const bool.fromEnvironment('MCP_UI_SCREENSHOTS')) {
+            await tester.runAsync(() async {
+              final rendered =
+                  await (boundary.currentContext!.findRenderObject()
+                          as RenderRepaintBoundary)
+                      .toImage();
+              final bytes = await rendered.toByteData(
+                format: ui.ImageByteFormat.png,
+              );
+              await File(
+                '.dart_tool/mcp_${kind.name}_${light ? 'light' : 'dark'}.png',
+              ).writeAsBytes(bytes!.buffer.asUint8List());
+              rendered.dispose();
+            });
+          }
+        },
+      );
+    }
   }
 }

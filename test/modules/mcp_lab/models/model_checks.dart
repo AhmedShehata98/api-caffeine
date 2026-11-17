@@ -175,6 +175,9 @@ void main() {
   const network = NetworkEntry(
     method: 'POST',
     url: 'https://example.test',
+    requestBody: '{"safe":true}',
+    requestTruncated: true,
+    body: '{"response":true}',
     duration: Duration(microseconds: 1234),
     responseHeaders: {
       'content-type': ['application/json'],
@@ -224,4 +227,3 @@ void main() {
     'PASS: MCP model round trips, defaults, immutability and failure kinds',
   );
 }
-

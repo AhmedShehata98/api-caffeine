@@ -279,7 +279,12 @@ Future<void> main() async {
       final captured = session.network
           .firstWhere((entry) => entry.body?.contains('tail-marker') ?? false)
           .timeout(const Duration(seconds: 5));
-      final response = await session.request('tools/call', {'name': 'large'});
+      final requestText =
+          '${'x' * (300 * 1024)}${McpHttpPeer.secret}request-tail';
+      final response = await session.request('tools/call', {
+        'name': 'large',
+        'arguments': {'text': requestText},
+      });
       check(
         response.valueOrNull!['largeText'] == largePeer.largeText,
         'Operation result was changed by diagnostics',
@@ -290,6 +295,31 @@ Future<void> main() async {
         'Full network capture was partial or unredacted',
       );
       buffer.addNetwork(entry);
+      check(
+        buffer.entries.single.requestBody!.truncated &&
+            buffer.entries.single.requestBody!.fullAvailable,
+        'Request preview/full-body state mismatch',
+      );
+      final request =
+          (await buffer.loadFullJson(
+                0,
+                side: McpNetworkBodySide.request,
+              )).valueOrNull
+              as Map;
+      check(
+        (request['params']['arguments']['text'] as String).endsWith(
+              '[REDACTED]request-tail',
+            ) &&
+            !buffer
+                .copyText(0, side: McpNetworkBodySide.request)
+                .valueOrNull!
+                .contains(McpHttpPeer.secret),
+        'Request body was lost or unredacted',
+      );
+      check(
+        largePeer.bodies.last['params']['arguments']['text'] == requestText,
+        'Request diagnostics changed the transmitted payload',
+      );
       check(
         buffer.entries.single.truncated && buffer.entries.single.fullAvailable,
         'Preview/full-body state mismatch',
@@ -304,7 +334,8 @@ Future<void> main() async {
       );
       buffer.clear();
       check(
-        !buffer.copyText(0).isSuccess,
+        !buffer.copyText(0).isSuccess &&
+            !buffer.copyText(0, side: McpNetworkBodySide.request).isSuccess,
         'Clear retained full diagnostic body',
       );
     } finally {
@@ -314,6 +345,6 @@ Future<void> main() async {
     }
   }
   stdout.writeln(
-    'PASS: large JSON/SSE diagnostics retain sanitized full bodies, preview truncation, isolate loading and clear',
+    'PASS: separate large JSON/SSE request and response diagnostics, redaction, preview, isolate loading and clear',
   );
 }

@@ -8,6 +8,21 @@ import '../models/mcp_failure.dart';
 
 enum McpMonitorKind { protocol, network, console }
 
+enum McpNetworkBodySide { request, response }
+
+class McpMonitorBody {
+  const McpMonitorBody({
+    required this.text,
+    required this.size,
+    required this.truncated,
+    required this.fullAvailable,
+  });
+  final String text;
+  final int size;
+  final bool truncated;
+  final bool fullAvailable;
+}
+
 class McpMonitorEntry {
   const McpMonitorEntry({
     required this.sequence,
@@ -20,6 +35,7 @@ class McpMonitorEntry {
     this.pairedSequence,
     this.duration,
     this.fullAvailable = true,
+    this.requestBody,
   });
   final int sequence;
   final String text;
@@ -31,6 +47,17 @@ class McpMonitorEntry {
   final int? pairedSequence;
   final Duration? duration;
   final bool fullAvailable;
+  final McpMonitorBody? requestBody;
+
+  McpMonitorBody bodyFor(McpNetworkBodySide side) =>
+      side == McpNetworkBodySide.request && requestBody != null
+      ? requestBody!
+      : McpMonitorBody(
+          text: text,
+          size: size,
+          truncated: truncated,
+          fullAvailable: fullAvailable,
+        );
 
   McpMonitorEntry paired(int sequence, Duration duration) => McpMonitorEntry(
     sequence: this.sequence,
@@ -43,6 +70,7 @@ class McpMonitorEntry {
     pairedSequence: sequence,
     duration: duration,
     fullAvailable: fullAvailable,
+    requestBody: requestBody,
   );
 
   McpMonitorEntry unpaired() => McpMonitorEntry(
@@ -54,6 +82,7 @@ class McpMonitorEntry {
     network: network,
     console: console,
     fullAvailable: fullAvailable,
+    requestBody: requestBody,
   );
 }
 
@@ -75,6 +104,7 @@ class McpDiagnosticBuffer {
   final int bodyBudgetBytes;
   final _entries = <int, McpMonitorEntry>{};
   final _full = <int, String>{};
+  final _requests = <int, String>{};
   final _pending = <(RpcDirection, Object), int>{};
   var _next = 0;
   var _bytes = 0;
@@ -96,17 +126,19 @@ class McpDiagnosticBuffer {
   }) {
     if (_disposed) return;
     final bytes = utf8.encode(text);
-    if (bytes.length > bodyBudgetBytes) {
+    final request = network?.requestBody ?? '';
+    final requestBytes = utf8.encode(request);
+    final retainedSize = bytes.length + requestBytes.length;
+    if (retainedSize > bodyBudgetBytes) {
       dropped++;
       return;
     }
     final truncated = bytes.length > previewBytes;
-    var end = truncated ? previewBytes : bytes.length;
-    // End on a UTF-8 code point boundary, without replacement characters.
-    while (end < bytes.length && end > 0 && bytes[end] & 0xc0 == 0x80) {
-      end--;
-    }
-    final preview = truncated ? utf8.decode(bytes.sublist(0, end)) : text;
+    final preview = _preview(text, bytes);
+    final requestPreview = _preview(request, requestBytes);
+    final requestTruncated =
+        requestBytes.length > previewBytes ||
+        (network?.requestTruncated ?? false);
     final sequence = _next++;
     var entry = McpMonitorEntry(
       sequence: sequence,
@@ -114,15 +146,25 @@ class McpDiagnosticBuffer {
       size: bytes.length,
       truncated: truncated || (network?.truncated ?? false),
       fullAvailable: !(network?.truncated ?? false),
+      requestBody: network == null
+          ? null
+          : McpMonitorBody(
+              text: requestPreview,
+              size: requestBytes.length,
+              truncated: requestTruncated,
+              fullAvailable: !network.requestTruncated,
+            ),
       frame: frame?.copyWith(rawJson: preview),
       network: network?.copyWith(
         body: preview,
         truncated: truncated || network.truncated,
+        requestBody: requestPreview,
+        requestTruncated: requestTruncated,
       ),
       console: console?.copyWith(text: preview),
     );
     while (_entries.length >= capacity ||
-        _bytes + bytes.length > bodyBudgetBytes) {
+        _bytes + retainedSize > bodyBudgetBytes) {
       _evict();
     }
     if (frame != null && (frame.id is String || frame.id is int)) {
@@ -145,7 +187,18 @@ class McpDiagnosticBuffer {
     }
     _entries[sequence] = entry;
     _full[sequence] = text;
-    _bytes += bytes.length;
+    if (network != null) _requests[sequence] = request;
+    _bytes += retainedSize;
+  }
+
+  String _preview(String text, List<int> bytes) {
+    if (bytes.length <= previewBytes) return text;
+    var end = previewBytes;
+    // End on a UTF-8 code point boundary, without replacement characters.
+    while (end > 0 && bytes[end] & 0xc0 == 0x80) {
+      end--;
+    }
+    return utf8.decode(bytes.sublist(0, end));
   }
 
   void _evict() {
@@ -154,7 +207,8 @@ class McpDiagnosticBuffer {
     final partner = _entries[first.value.pairedSequence];
     if (partner != null) _entries[partner.sequence] = partner.unpaired();
     _full.remove(first.key);
-    _bytes -= first.value.size;
+    _requests.remove(first.key);
+    _bytes -= first.value.size + (first.value.requestBody?.size ?? 0);
     final frame = first.value.frame;
     if (frame?.id != null &&
         _pending[(frame!.direction, frame.id!)] == first.key) {
@@ -163,16 +217,24 @@ class McpDiagnosticBuffer {
     dropped++;
   }
 
-  Result<String> copyText(int sequence) {
-    final text = _full[sequence];
+  Result<String> copyText(
+    int sequence, {
+    McpNetworkBodySide side = McpNetworkBodySide.response,
+  }) {
+    final text = side == McpNetworkBodySide.request
+        ? _requests[sequence]
+        : _full[sequence];
     return text == null || _disposed
         ? const Result.failure(_unavailable)
         : Result.success(text);
   }
 
-  Future<Result<Object?>> loadFullJson(int sequence) async {
+  Future<Result<Object?>> loadFullJson(
+    int sequence, {
+    McpNetworkBodySide side = McpNetworkBodySide.response,
+  }) async {
     final epoch = _epoch;
-    if (_entries[sequence]?.fullAvailable == false) {
+    if (_entries[sequence]?.bodyFor(side).fullAvailable == false) {
       return const Result.failure(
         McpValidationFailure(
           'The transport retained only a partial body.',
@@ -180,19 +242,20 @@ class McpDiagnosticBuffer {
         ),
       );
     }
-    final text = copyText(sequence);
+    final text = copyText(sequence, side: side);
     if (text case Err(:final failure)) return Result.failure(failure);
     final isEventStream =
-        _entries[sequence]?.network?.responseHeaders.entries.any(
-          (entry) =>
-              entry.key.toLowerCase() == 'content-type' &&
-              entry.value.any(
-                (value) =>
-                    value.split(';').first.trim().toLowerCase() ==
-                    'text/event-stream',
-              ),
-        ) ??
-        false;
+        side == McpNetworkBodySide.response &&
+        (_entries[sequence]?.network?.responseHeaders.entries.any(
+              (entry) =>
+                  entry.key.toLowerCase() == 'content-type' &&
+                  entry.value.any(
+                    (value) =>
+                        value.split(';').first.trim().toLowerCase() ==
+                        'text/event-stream',
+                  ),
+            ) ??
+            false);
     try {
       final body = text.valueOrNull!;
       final parsed = await Isolate.run(
@@ -216,6 +279,7 @@ class McpDiagnosticBuffer {
     _epoch++;
     _entries.clear();
     _full.clear();
+    _requests.clear();
     _pending.clear();
     _bytes = 0;
     dropped = 0;

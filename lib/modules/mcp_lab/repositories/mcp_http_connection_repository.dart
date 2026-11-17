@@ -521,6 +521,10 @@ class _HttpSession implements McpSession {
         }
       }
     }
+    // Learn mirrored credential values before recording outgoing JSON.
+    _sanitizer.headers({
+      for (final entry in headers.entries) entry.key: [entry.value],
+    });
     return headers;
   }
 
@@ -724,7 +728,11 @@ class _HttpSession implements McpSession {
           if (_sessionId != null) _sanitizer.addSecrets([_sessionId!]);
         }
         if (operation.id == null) {
-          await _body(response.data!, operation).drain<void>();
+          await for (final chunk in _body(response.data!, operation)) {
+            // Notification responses are not RPC results. Do not claim an
+            // omitted nonempty body is a complete, empty diagnostic capture.
+            if (chunk.isNotEmpty) body.truncated = true;
+          }
           result = const Result.success({});
         } else {
           final contentType = response.headers
@@ -793,6 +801,8 @@ class _HttpSession implements McpSession {
       }
     } finally {
       if (!_disposed && !_closing && isAuthorized(context, serverId)) {
+        final requestBody = McpHttpDiagnosticBody()
+          ..add(_sanitizer.frame(wire).text);
         final entry = NetworkEntry(
           method: 'POST',
           url: _sanitizer.text(_url.toString()),
@@ -802,11 +812,19 @@ class _HttpSession implements McpSession {
               entry.key: [entry.value],
           }),
           responseHeaders: _sanitizer.headers(responseHeaders),
+          requestBody: requestBody.text,
+          requestTruncated: requestBody.truncated,
           body: body.text,
           truncated: body.truncated,
           duration: watch.elapsed,
         );
-        _network.add(entry, utf8.encode(entry.body ?? '').length + 1024);
+        _network.add(
+          entry,
+          utf8.encode(entry.body ?? '').length +
+              utf8.encode(entry.requestBody ?? '').length +
+              1024,
+        );
+        requestBody.clear();
       }
       body.clear();
     }
@@ -911,6 +929,7 @@ class _HttpSession implements McpSession {
     final watch = Stopwatch()..start();
     int? status;
     Map<String, List<String>> responseHeaders = {};
+    var responseBodyOmitted = false;
     Result<void> result;
     try {
       if (!_live(operation)) return Result.failure(_inactive);
@@ -928,7 +947,9 @@ class _HttpSession implements McpSession {
       );
       status = response.statusCode;
       responseHeaders = response.headers.map;
-      await _body(response.data!, operation).drain<void>();
+      await for (final chunk in _body(response.data!, operation)) {
+        if (chunk.isNotEmpty) responseBodyOmitted = true;
+      }
       result = status != null && status >= 200 && status < 300
           ? const Result.success(null)
           : Result.failure(_mapper.http(status ?? 0));
@@ -939,6 +960,9 @@ class _HttpSession implements McpSession {
       );
     } finally {
       if (!_disposed && !_closing && isAuthorized(context, serverId)) {
+        _sanitizer.headers(responseHeaders);
+        final requestBody = McpHttpDiagnosticBody()
+          ..add(_sanitizer.frame(wire).text);
         _network.add(
           NetworkEntry(
             method: 'POST',
@@ -948,10 +972,14 @@ class _HttpSession implements McpSession {
               for (final entry in headers.entries) entry.key: [entry.value],
             }),
             responseHeaders: _sanitizer.headers(responseHeaders),
+            requestBody: requestBody.text,
+            requestTruncated: requestBody.truncated,
+            truncated: responseBodyOmitted,
             duration: watch.elapsed,
           ),
-          1024,
+          utf8.encode(requestBody.text).length + 1024,
         );
+        requestBody.clear();
       }
     }
     if (status == 404) {
