@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -18,6 +19,7 @@ import 'mcp_diagnostic_sanitizer.dart';
 import 'mcp_diagnostic_stream.dart';
 import 'mcp_http_diagnostic_body.dart';
 import 'mcp_error_mapper.dart';
+import 'mcp_frame_limits.dart';
 import 'mcp_proxy.dart';
 import 'mcp_rpc_diagnostics.dart';
 import 'mcp_sse_parser.dart';
@@ -750,16 +752,16 @@ class _HttpSession implements McpSession {
               if (matched != null) break;
             }
           } else if (contentType == 'application/json') {
-            final collected = <int>[];
+            final collected = BytesBuilder(copy: false);
             await for (final chunk in bytes) {
-              if (collected.length + chunk.length > 10 * 1024 * 1024) {
+              if (collected.length + chunk.length > mcpMaxFrameBytes) {
                 throw const FormatException('HTTP frame limit exceeded.');
               }
-              collected.addAll(chunk);
+              collected.add(chunk);
             }
             if (_live(operation)) {
               matched = await _acceptFrame(
-                utf8.decode(collected),
+                utf8.decode(collected.takeBytes()),
                 operation,
                 body,
               );
@@ -782,6 +784,7 @@ class _HttpSession implements McpSession {
     } on Object catch (error) {
       if (!_live(operation)) return;
       if (error is FormatException) {
+        body.truncated = true;
         _frames.record(
           'Malformed or incomplete MCP HTTP response.',
           RpcDirection.incoming,

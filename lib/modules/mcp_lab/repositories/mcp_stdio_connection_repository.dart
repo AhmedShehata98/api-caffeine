@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:mcp_dart/mcp_dart.dart'
     show McpMetaKey, legacyProtocolVersions, stableProtocolVersion;
@@ -14,6 +15,7 @@ import '../models/mcp_server.dart';
 import 'mcp_connection_repository.dart';
 import 'mcp_diagnostic_sanitizer.dart';
 import 'mcp_error_mapper.dart';
+import 'mcp_frame_limits.dart';
 import 'mcp_diagnostic_stream.dart';
 import 'mcp_rpc_diagnostics.dart';
 import 'mcp_stdio_launcher.dart';
@@ -128,7 +130,7 @@ class _StdioSession implements McpSession {
       onError: (Object error) => _transportError(error),
       onDone: () {
         if (_stdoutBytes.isNotEmpty && !_closing) {
-          _warning(utf8.decode(_stdoutBytes, allowMalformed: true));
+          _warning(utf8.decode(_stdoutBytes.takeBytes(), allowMalformed: true));
         }
         _stdoutBytes.clear();
         _stdoutDone.complete();
@@ -139,7 +141,9 @@ class _StdioSession implements McpSession {
       onError: (Object error) => _transportError(error),
       onDone: () {
         if (_stderrBytes.isNotEmpty && !_closing) {
-          _consoleLine(utf8.decode(_stderrBytes, allowMalformed: true));
+          _consoleLine(
+            utf8.decode(_stderrBytes.takeBytes(), allowMalformed: true),
+          );
         }
         _stderrBytes.clear();
         _stderrDone.complete();
@@ -164,8 +168,8 @@ class _StdioSession implements McpSession {
     ),
   );
   final _status = StreamController<ConnectionStatus>.broadcast();
-  final _stdoutBytes = <int>[];
-  final _stderrBytes = <int>[];
+  final _stdoutBytes = BytesBuilder(copy: false);
+  final _stderrBytes = BytesBuilder(copy: false);
   final _pending = <Object, _PendingRequest>{};
   final _issued = <Object>{};
   final _stdoutDone = Completer<void>();
@@ -184,7 +188,7 @@ class _StdioSession implements McpSession {
   bool _closing = false;
   bool _legacyInitialized = false;
   bool _dropStderrLine = false;
-  static const _maxLineBytes = 10 * 1024 * 1024;
+  static const _maxStderrLineBytes = 10 * 1024 * 1024;
 
   @override
   Stream<RpcFrame> get frames => _frames.stream;
@@ -329,7 +333,10 @@ class _StdioSession implements McpSession {
           ...Map<String, dynamic>.from(params['_meta'] as Map),
         McpMetaKey.protocolVersion: _version ?? stableProtocolVersion,
         McpMetaKey.clientCapabilities: <String, dynamic>{},
-        McpMetaKey.clientInfo: {'name': 'API Caffeine', 'version': clientVersion},
+        McpMetaKey.clientInfo: {
+          'name': 'API Caffeine',
+          'version': clientVersion,
+        },
       },
     };
   }
@@ -404,29 +411,15 @@ class _StdioSession implements McpSession {
   void _readBytes(List<int> bytes, {required bool stderr}) {
     if (!_active()) return;
     final buffer = stderr ? _stderrBytes : _stdoutBytes;
-    for (final byte in bytes) {
+    final chunk = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+    var start = 0;
+    while (start < chunk.length) {
       if (_closing) return;
-      if (byte == 10) {
-        if (stderr && _dropStderrLine) {
-          _dropStderrLine = false;
-          continue;
-        }
-        if (buffer.isNotEmpty && buffer.last == 13) buffer.removeLast();
-        final line = List<int>.from(buffer);
-        buffer.clear();
-        try {
-          final text = utf8.decode(line);
-          if (stderr) {
-            _consoleLine(text);
-          } else {
-            _line(text);
-          }
-        } on FormatException {
-          _warning('Invalid UTF-8 in server output.');
-        }
-      } else if (!stderr || !_dropStderrLine) {
-        buffer.add(byte);
-        if (buffer.length > _maxLineBytes) {
+      final newline = chunk.indexOf(10, start);
+      final end = newline < 0 ? chunk.length : newline;
+      if (!stderr || !_dropStderrLine) {
+        final limit = stderr ? _maxStderrLineBytes : mcpMaxFrameBytes;
+        if (buffer.length + end - start > limit) {
           buffer.clear();
           if (stderr) {
             _dropStderrLine = true;
@@ -435,7 +428,29 @@ class _StdioSession implements McpSession {
             _transportError(const HttpException('Maximum frame size exceeded'));
             return;
           }
+        } else if (end > start) {
+          buffer.add(Uint8List.sublistView(chunk, start, end));
         }
+      }
+      if (newline < 0) break;
+      start = newline + 1;
+      if (stderr && _dropStderrLine) {
+        _dropStderrLine = false;
+        continue;
+      }
+      var line = buffer.takeBytes();
+      if (line.isNotEmpty && line.last == 13) {
+        line = Uint8List.sublistView(line, 0, line.length - 1);
+      }
+      try {
+        final text = utf8.decode(line);
+        if (stderr) {
+          _consoleLine(text);
+        } else {
+          _line(text);
+        }
+      } on FormatException {
+        _warning('Invalid UTF-8 in server output.');
       }
     }
   }

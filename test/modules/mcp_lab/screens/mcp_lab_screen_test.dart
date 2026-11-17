@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:test_point/app/shell/nav_rail.dart';
 import 'package:test_point/core/error/result.dart';
 import 'package:test_point/core/ui/theme/app_theme.dart';
 import 'package:test_point/core/ui/widgets/code_view.dart';
@@ -256,7 +257,12 @@ void main() {
         mcpLifecycleProvider.overrideWith((_) {}),
       ],
     );
-    await tester.tap(find.text('MCP Lab'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ShellNavRail),
+        matching: find.text('MCP Lab'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(McpLabScreen), findsOneWidget);
     expect(find.text('MCP servers'), findsOneWidget);

@@ -28,7 +28,9 @@ class McpDiagnosticSanitizer {
   };
   static final _query = RegExp(r'''([?&])([^=&\s"'<>#]+)=([^&#\s"'<>]*)''');
   static final _headerLine = RegExp(
-    r'\b((?:authorization|proxy-authorization|cookie|set-cookie|x-api-key|[a-z0-9-]+-(?:token|key|secret))\s*:\s*)[^\r\n]*',
+    // Match fixed credential suffixes instead of backtracking over an entire
+    // arbitrary token (a multi-megabyte base64 value can itself be one token).
+    r'((?:\b(?:authorization|proxy-authorization|cookie|set-cookie|x-api-key)|-(?:token|key|secret))\s*:\s*)[^\r\n]*',
     caseSensitive: false,
   );
 
@@ -37,7 +39,7 @@ class McpDiagnosticSanitizer {
   }
 
   static final _jsonHeader = RegExp(
-    r'("(?:authorization|proxy-authorization|cookie|set-cookie|x-api-key|[a-z0-9-]+-(?:token|key|secret))"\s*:\s*)(?:"(?:\\.|[^"\\])*"|[^\r\n]*)',
+    r'((?:"(?:authorization|proxy-authorization|cookie|set-cookie|x-api-key)|-(?:token|key|secret))"\s*:\s*)',
     caseSensitive: false,
   );
 
@@ -131,10 +133,7 @@ class McpDiagnosticSanitizer {
           ? '${match[1]}${match[2]}=$_marker'
           : match[0]!;
     });
-    clean = clean.replaceAllMapped(
-      _jsonHeader,
-      (match) => '${match[1]}"$_marker"',
-    );
+    clean = _redactJsonHeaders(clean);
     clean = clean.replaceAllMapped(
       _headerLine,
       (match) => '${match[1]}$_marker',
@@ -145,6 +144,40 @@ class McpDiagnosticSanitizer {
               .split(_marker)
               .map((part) => part.replaceAll(_pattern!, _marker))
               .join(_marker);
+  }
+
+  String _redactJsonHeaders(String value) {
+    final output = StringBuffer();
+    var cursor = 0;
+    for (final match in _jsonHeader.allMatches(value)) {
+      if (match.start < cursor) continue;
+      var end = match.end;
+      if (end < value.length && value.codeUnitAt(end) == 34) {
+        // Scan quoted values without a recursive alternation per character.
+        // This also safely consumes a missing closing quote to EOF.
+        end++;
+        while (end < value.length) {
+          final unit = value.codeUnitAt(end++);
+          if (unit == 92 && end < value.length) {
+            end++;
+          } else if (unit == 34) {
+            break;
+          }
+        }
+      } else {
+        while (end < value.length &&
+            value.codeUnitAt(end) != 10 &&
+            value.codeUnitAt(end) != 13) {
+          end++;
+        }
+      }
+      output.write(value.substring(cursor, match.end));
+      output.write('"$_marker"');
+      cursor = end;
+    }
+    if (cursor == 0) return value;
+    output.write(value.substring(cursor));
+    return output.toString();
   }
 
   void _rememberJsonHeaders(Object? value) {

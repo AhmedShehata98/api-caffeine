@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'binary_payload.dart';
+
 Future<void> main(List<String> args) async {
   final mode = args
       .firstWhere(
@@ -48,6 +50,18 @@ Future<void> main(List<String> args) async {
       });
     } else if (method == 'tools/call') {
       final params = value['params'] as Map;
+      if (params['name'] == 'binary-20-mib') {
+        reply(id, binaryToolResult());
+        continue;
+      }
+      if (params['name'] == 'oversized-frame') {
+        final chunk = 'x' * (64 * 1024);
+        for (var index = 0; index < 513; index++) {
+          stdout.write(chunk);
+        }
+        await stdout.flush();
+        continue;
+      }
       if (mode == 'crash') {
         stderr.writeln('crash $secret');
         await stderr.flush();

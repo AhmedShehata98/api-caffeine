@@ -577,3 +577,20 @@ frontend-design and ui-ux-pro-max. See the progress tracker for exact byte limit
 and compatibility behavior. This slice is complete; large-payload transport,
 Windows descendant cleanup and remaining S1 protocol/native/database gates remain
 open. No new dependencies, database changes or remote deployment were required.
+
+### 20 MiB binary transport and export progress
+
+Raised the shared incoming JSON/stdout/SSE frame budget to a bounded 32 MiB so a
+20 MiB blob fits after base64 expansion. Typed byte collectors avoid growable
+integer-list overhead; diagnostic retention limits remain separate. Fixed the
+diagnostic sanitizer stack overflow exposed by the live base64 fixture, while
+retaining credential redaction and explicit partial-body behavior.
+
+Three new real Windows stdio/HTTP JSON/SSE checks verify content mapping,
+metadata-only binary previews, isolate-based decoding and byte-exact file export.
+Overflow checks cover the production bound. All 304 selected unit/widget tests,
+seven existing stdio groups, six existing HTTP groups and static analysis pass.
+The native-plugin bypass remains in use for unit tests. Full large-result native
+UI responsiveness/dialog acceptance remains open; this completes the transport
+capacity/export slice only. Next: Windows descendant cleanup after early parent
+exit. See the progress tracker for exact limits and remaining S1 gates.

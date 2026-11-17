@@ -14,7 +14,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
 | S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, scalar templates and Protocol/Network/Console monitors with separate HTTP bodies implemented | Composite template inputs/completion, monitor pin/export, native save-dialog/full desktop review |
-| S1 integration and exit (§3.7) | Seven stdio + six HTTP scenario groups pass on Windows; partial fixture matrix | Remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
+| S1 integration and exit (§3.7) | Seven stdio + six HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
 | S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
@@ -40,9 +40,10 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected regression run passes **299** tests (293 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected regression run passes **304** tests (298 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **six loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, and large sanitized request/response captures over JSON/SSE. The stdio scenarios were rerun after sharing diagnostic code and still pass.
+- `dart test/integration/mcp_lab/large_payload_checks.dart` passes three real stdio/HTTP JSON/SSE checks: a 20 MiB embedded binary result, bounded diagnostics, off-isolate preview metadata and decode, and byte-exact file export. Stdio framing overflow is also rejected. The exporter uses a test file destination, not a native dialog; native UI responsiveness remains unverified.
 - Static analysis of the MCP module and tests is clean. The empty URL user-info marker case (`https://@host`) is rejected against the original URL before URI normalization can hide it.
 - Redaction tests cover nested values, credential headers, bearer/cookie echoes, query names/values, mixed-case percent encoding, malformed JSON/stderr, wire-format preservation and disposal. This does not certify unwritten transport/cache/UI paths.
 - Unit tests use a temporary `.dart_tool/mcp_unit_runner.dart` invoking Flutter's test command without native-plugin builds or asset bundling. This validates model/REST/mocked-storage behavior, not native plugins.
@@ -59,8 +60,8 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Address the remaining large-payload transport acceptance gap and Windows descendant-cleanup guarantees.
-2. Close stdio platform/lifecycle, HTTP legacy resumption/deprecated-SSE and large-payload transport gaps.
+1. Close Windows descendant-cleanup guarantees, including an early parent exit.
+2. Close remaining stdio platform/lifecycle and HTTP legacy resumption/deprecated-SSE gaps.
 3. Validate a fresh full migration replay in an isolated environment and broaden organization/security cases.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
 5. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
@@ -757,3 +758,40 @@ native plugins; this does not close normal Flutter/native or S1 exit acceptance.
 
 Next: address the large-payload transport acceptance gap and Windows descendant
 cleanup, followed by remaining legacy HTTP, database replay and platform gates.
+
+## 20 MiB binary transport and export verification
+
+The shared incoming frame budget is now 32 MiB for stdio JSON lines, HTTP JSON
+and SSE events. A 20 MiB binary blob expands to about 26.7 MiB in base64, which
+the previous 10 MiB limit rejected. This leaves envelope room while preserving
+a hard bound. HTTP and stdio/SSE collectors use typed byte buffers instead of
+growable integer lists; stderr keeps its independent 10 MiB line limit.
+
+The live binary fixture exposed a sanitizer regular-expression stack overflow on
+long base64 tokens. Credential header matching now uses fixed suffixes rather
+than backtracking over arbitrary-length names, and quoted credential values are
+scanned with escape handling. Regression cases preserve long values and redact
+long custom header names, large quoted credentials and malformed strings.
+
+Real Windows stdio, loopback HTTP JSON and loopback SSE now each receive a
+20 MiB embedded binary tool result, map it through the content model, prepare
+metadata without inline content, decode through the existing isolate-based Save
+service, and export a byte-exact file. The test destination verifies every decoded
+byte and the saved file's SHA-256 digest, then deletes the temporary file.
+Protocol previews remain 256 KiB. Network response retention remains 16 MiB and
+is explicitly partial; Load full is denied for that partial capture. Clear releases
+both diagnostic buffers. No diagnostic cap was raised to match operation payloads.
+
+Over-budget HTTP JSON fails only that request and permits an explicit new call;
+oversized SSE events fail parsing, and oversized stdio lines disconnect rather
+than trying to recover framing. Invalid/incomplete HTTP responses now also mark
+the diagnostic body partial. Tests cover the production 32 MiB overflow bounds.
+
+All 304 selected regression tests, seven existing real stdio groups, six existing
+real HTTP groups and three new large-binary checks pass; static analysis is clean.
+The navigation test now targets the rail specifically because the current welcome
+screen also contains an MCP Lab label. Existing welcome/theme changes are outside
+this commit. The unit harness still skips native-plugin hooks. This closes the
+transport/export capacity slice, not full AC-TOL-03.3: native dialog behavior,
+Flutter frame responsiveness during large-message parsing/sanitization, and
+macOS/manual acceptance remain open. Next: Windows descendant cleanup.

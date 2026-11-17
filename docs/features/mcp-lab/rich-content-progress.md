@@ -65,3 +65,9 @@ Native file dialogs, full multi-content desktop visual acceptance, playback,
 gates. Existing database/RLS, transport/platform, monitor body/export/pinning and
 other S1 acceptance gaps remain open. Next work should audit the remaining S1
 acceptance criteria rather than treating these UI slices as full S1 completion.
+
+The subsequent [large-binary transport slice](implementation-progress.md#20-mib-binary-transport-and-export-verification)
+now verifies 20 MiB binary results and byte-exact file exports over real Windows
+stdio, HTTP JSON and SSE, using bounded 32 MiB input frames. This uses a test file
+destination and the production preview/Save services. Native dialog and large-result
+Flutter frame responsiveness remain open parts of AC-TOL-03.3.

@@ -9,6 +9,7 @@ import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_sanitizer
 import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_stream.dart';
 import 'package:test_point/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
 import 'package:test_point/modules/mcp_lab/repositories/mcp_rpc_diagnostics.dart';
+import 'package:test_point/modules/mcp_lab/repositories/mcp_frame_limits.dart';
 import 'package:test_point/modules/mcp_lab/repositories/mcp_sse_parser.dart';
 
 class _Adapter implements HttpClientAdapter {
@@ -209,6 +210,38 @@ void main() {
     },
   );
 
+  test(
+    'JSON frame overflow fails the request and preserves the session',
+    () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      adapter.held = Completer<ResponseBody>();
+      final captured = session.network.firstWhere((entry) => entry.truncated);
+      final request = session.request('tools/call', {'name': 'oversized'});
+      await adapter.arrived.future;
+      adapter.held!.complete(
+        ResponseBody.fromBytes(
+          Uint8List(mcpMaxFrameBytes + 1),
+          200,
+          headers: {
+            'content-type': ['application/json'],
+          },
+        ),
+      );
+      expect((await request).failureOrNull, isA<McpNetworkFailure>());
+      final buffer = McpDiagnosticBuffer()..addNetwork(await captured);
+      expect(buffer.entries.single.fullAvailable, isFalse);
+      expect((await buffer.loadFullJson(0)).isSuccess, isFalse);
+      adapter.held = null;
+      expect(
+        (await session.request('tools/call', {'name': 'retry'})).isSuccess,
+        isTrue,
+      );
+      buffer.dispose();
+      await session.close();
+    },
+  );
+
   test('large multi-frame SSE network body loads sanitized complete frames', () async {
     final adapter = _Adapter();
     final session = await open(adapter);
@@ -304,6 +337,21 @@ void main() {
         throwsFormatException,
       );
     });
+    test(
+      'production SSE bound rejects an unterminated event above 32 MiB',
+      () async {
+        final chunk = Uint8List(64 * 1024)..fillRange(0, 64 * 1024, 65);
+        final chunks = Stream<List<int>>.fromIterable([
+          for (var bytes = 0; bytes < mcpMaxFrameBytes; bytes += chunk.length)
+            chunk,
+          [65],
+        ]);
+        await expectLater(
+          mcpSseFrames(chunks).drain<void>(),
+          throwsFormatException,
+        );
+      },
+    );
   });
   group('shared diagnostic capture', () {
     test(

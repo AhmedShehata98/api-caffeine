@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'binary_payload.dart';
+
 /// Controlled loopback peer for real HTTP transport integration checks.
 class McpHttpPeer {
   McpHttpPeer._(this._server) {
@@ -120,18 +122,20 @@ class McpHttpPeer {
           await response.flush();
           return;
         }
-        result = {
-          'resultType': body['params']['name'] == 'needs-input'
-              ? 'input_required'
-              : 'complete',
-          'content': [
-            {'type': 'text', 'text': secret},
-          ],
-          'cookieEcho': 'response-canary',
-          if (largeText != null) 'largeText': largeText,
-          'observedMeta': body['params']['_meta'],
-          'label': '雪',
-        };
+        result = body['params']['name'] == 'binary-20-mib'
+            ? binaryToolResult()
+            : {
+                'resultType': body['params']['name'] == 'needs-input'
+                    ? 'input_required'
+                    : 'complete',
+                'content': [
+                  {'type': 'text', 'text': secret},
+                ],
+                'cookieEcho': 'response-canary',
+                if (largeText != null) 'largeText': largeText,
+                'observedMeta': body['params']['_meta'],
+                'label': '雪',
+              };
       }
       response.headers.set('set-cookie', 'session=response-canary; Path=/');
       final message = jsonEncode({
