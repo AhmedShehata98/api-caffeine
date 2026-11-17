@@ -138,6 +138,9 @@ After implementation:
 
 ## Core Stack
 
+- MCP protocol: `mcp_dart` for MCP client/server types and transport verification; production transport selection is gated by the MCP Lab Step 0 spike.
+- Cryptography: `crypto` for HMAC-SHA-256 device-local launch approval digests.
+
 - Language: Dart (null safety)
 - Framework: Flutter (stable channel), Material 3
 - Platforms: desktop first (Windows, macOS, Linux)

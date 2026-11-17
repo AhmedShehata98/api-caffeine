@@ -2,6 +2,8 @@
 
 _Hand-off brief for an AI agent. Written 2026-11-15. Self-contained: read this first, then the files in §2._
 
+> **Historical hand-off:** the original decisions below were completed. The 2026-11-16 high-priority review in specification §6.7 supersedes A4/A5 and the S1 readiness claim. Do not rerun this brief as an outstanding task. Q13 remains owner input for S2.
+
 ## 1. Your task
 
 Test Point has 14 open product/engineering questions for its new **MCP Lab** feature, plus 4
@@ -161,8 +163,8 @@ Each question lists: the background, the options, a recommendation (from the pre
 | A1 | The tool form falls back to the raw JSON editor when the schema nests more than **32 levels** or takes over **100 ms** to build | AC-TOL-02.6 |
 | A2 | stdio shutdown: close stdin, wait **2 s**, send SIGTERM, wait **2 s**, send SIGKILL; the whole sequence is done within **5 s** | AC-NFR-REL-06.1/2 |
 | A3 | A new user makes a first tool call in **under 3 minutes** (NFR-USE-01 walkthrough) | S1 exit check |
-| A4 | Changing an env **value** does not require approval again. A change to the command, args, cwd or env **keys** does | AC-SEC-04.2/3 |
-| A5 | Server secrets are stored under the secure-storage key `mcp-server-secrets:<server id>` | AC-CFG-01.3 |
+| A4 | **Revised 2026-11-16:** any effective env key/value, resolved executable, command, args or cwd change requires renewed approval | AC-SEC-04.2/3 |
+| A5 | Server secrets are stored under the secure-storage key `mcp-server-secrets:<user id>:<server id>` | AC-CFG-01.3 |
 
 ## 6. Deliverables
 
@@ -176,7 +178,7 @@ Don't commit unless the owner asks you to. If you do, end the commit message wit
 
 ## 7. Done when
 
-- Q16, Q14, Q15, Q6 and Q5 are resolved in the spec, so S1 coding can start.
+- Q16, Q14, Q15, Q6 and Q5 are resolved in the spec, so the S1 transport spike can start; implementation follows only after the spike gate passes.
 - Q1, Q2, Q12 and Q3 are resolved or explicitly deferred with a reason.
 - Q13 has a recommendation and states exactly what the owner must provide.
 - A1–A5 are confirmed or changed in the S1 criteria.

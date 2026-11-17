@@ -18,6 +18,7 @@ class NavDestination {
 const navDestinations = [
   NavDestination('Collections', Icons.folder_outlined, '/collections'),
   NavDestination('Environments', Icons.layers_outlined, '/environments'),
+  NavDestination('MCP Lab', Icons.hub_outlined, '/mcp-lab'),
   NavDestination('Settings', Icons.settings_outlined, '/settings'),
 ];
 

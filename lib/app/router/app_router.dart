@@ -6,6 +6,7 @@ import 'package:test_point/app/shell/app_shell.dart';
 import 'package:test_point/modules/environments/environments.dart';
 import 'package:test_point/modules/requests/requests.dart';
 import 'package:test_point/modules/settings/settings.dart';
+import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
 
 final appRouterProvider = Provider<GoRouter>(
   (ref) => GoRouter(
@@ -29,6 +30,7 @@ final appRouterProvider = Provider<GoRouter>(
           ),
           ...requestsRoutes,
           ...environmentsRoutes,
+          ...mcpLabRoutes,
           ...settingsRoutes,
         ],
       ),

@@ -392,6 +392,7 @@ and `flutter analyze` and `flutter test` pass. This also closes the Part B
 
 Full requirements and priorities: [features/mcp-lab/feature-specification.md](features/mcp-lab/feature-specification.md)
 (release slices in its §4.1). Open items: [gap-review.md](features/mcp-lab/gap-review.md).
+Build plan (S1 by layer, S2–S4 outline): [features/mcp-lab/implementation-plan.md](features/mcp-lab/implementation-plan.md).
 
 **Before S1**
 - ~~Stitch designs~~ Done 2026-11-15: screens #14–#22 and a light variant ([stitch-mvp-progress.md](design/stitch-mvp-progress.md)).

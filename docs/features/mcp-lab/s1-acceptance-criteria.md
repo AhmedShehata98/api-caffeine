@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Slice** | S1: Core lab ([spec §4.1](feature-specification.md#41-proposed-release-slices)) |
+| **Slice** | S1: Core lab ([spec §4.1](feature-specification.md#41-release-slices)) |
 | **Date** | 2026-11-15 |
-| **Status** | Draft v1.1: open points resolved; S1 assumptions A1–A5 confirmed |
+| **Status** | Draft v1.2: high-priority review corrections; A4/A5 superseded below; transport spike pending |
 | **Designs** | Stitch #14–#18, #19 (Prompts), #21 (Add server) in [stitch-mvp-progress.md](../../design/stitch-mvp-progress.md#mcp-lab-screens-phase-8-started-2026-11-15) |
 
 Each S1 requirement has one or more Given/When/Then criteria. S1 is done when every
@@ -62,9 +62,9 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 |---|---|---|---|---|
 | AC-CFG-01.1 | A signed-in user (guest or GitHub) in workspace W | The user saves a server | A `mcp_servers` row is created with `workspace_id = W`, and it appears after an app restart | I (Supabase) |
 | AC-CFG-01.2 | User B in another organization | User B queries `mcp_servers` | User A's rows are not returned (RLS), and inserting into A's workspace is rejected | I (Supabase) |
-| AC-CFG-01.3 | A stdio env value or header marked **secret** | The server is saved | The Supabase row stores the key with `secret: true` and the placeholder `""`; the real value is in `SecretStore` under `mcp-server-secrets:<server id>` | U, I |
+| AC-CFG-01.3 | A stdio env value or header marked **secret** | The server is saved | The Supabase row stores a string-map value `""` and its qualified name in `secret_keys` (domain `secret: true`); the real value is in `SecretStore` under `mcp-server-secrets:<user id>:<server id>` | U, I |
 | AC-CFG-01.4 | The same server opened on a device without the local secret | The server settings render | The field shows **Not set on this device**, and Connect is blocked with a message naming the missing key; the placeholder is never sent | U, W |
-| AC-CFG-01.5 | A server with a secret is deleted | Delete completes | The Supabase row and the local `mcp-server-secrets:<id>` entry are both removed | U |
+| AC-CFG-01.5 | A server with a secret is deleted | Delete completes | The Supabase row and the local `mcp-server-secrets:<user id>:<id>` entry are both removed | U |
 | AC-CFG-01.6 | The user adds headers `Authorization`, `x-api-key`, `X-Github-Token` and `X-Team` (Q1, NFR-SEC-10) | The headers table renders | The first three are marked secret automatically (case-insensitive match) and `X-Team` is not | U, W |
 | AC-CFG-01.7 | An auto-marked header | The user unmarks it | The same confirmation as environments ("Stop keeping this value secret?") is shown; after confirming, the value syncs as plain text and the row keeps a warning icon (FR-SEC-03) | W |
 | AC-CFG-01.8 | The secure store is unavailable (`SecretStore` returns a failure) (Q2, NFR-SEC-05) | The user saves a server that has a secret value | The secret is not written anywhere; a warning "Secure storage is unavailable…" is shown; non-secret fields save normally. A server without secrets saves with no warning | U, W |
@@ -154,8 +154,8 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 | AC-SEC-01.1 | A stdio server never approved on this device | The user clicks Connect | The approval dialog shows the resolved executable path, every arg, working directory and env **keys** (no secret values); nothing starts until **Run** | W, U |
 | AC-SEC-01.2 | The user clicks **Cancel** in the approval dialog | — | No process starts and nothing is recorded as approved | U |
 | AC-SEC-04.1 | A server approved on this device | It connects again unchanged | No dialog; it starts directly | U |
-| AC-SEC-04.2 | The approved server's args, cwd, command or env keys change (locally or through the synced catalog) | It connects | The dialog appears again with an amber "Changed since last approval: <fields>" | U, W |
-| AC-SEC-04.3 | An env **value** changes but the keys stay the same | It connects | No re-approval (the hash covers env keys only) | U |
+| AC-SEC-04.2 | The approved server's args, effective cwd, command, resolved executable or effective env keys/values change (locally or through the synced catalog) | It connects | The dialog appears again with an amber "Changed since last approval: <fields>" | U, W |
+| AC-SEC-04.3 | An env **value** changes but the keys stay the same | It connects | Re-approval is required; the dialog names the changed env key without revealing its value | U |
 | AC-SEC-04.4 | Approvals on device A | The same server opens on device B | Device B asks for approval; approvals are stored locally under the Supabase user id and never written to Supabase | U |
 | AC-SEC-04.5 | Another user signs in on the same device | That user connects the server | Approval is asked again (records are per user id) | U |
 | AC-NFR-SEC-07.1 | Parent process env contains `SECRET_TOKEN=abc` | A stdio server starts | The child env contains only the allow-listed variables for the OS plus the configured `env`; `SECRET_TOKEN` is absent | U, I |
@@ -173,7 +173,7 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 | AC-TST-01.1 | A Dart test with no widgets | It calls the protocol service: connect → `tools/call add` → disconnect | It gets a typed result with `5` and no UI is needed | I |
 | AC-TST-02.1 | Each method in FR-TST-02 that `fx-basic` supports (`initialize` / `server/discover`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `resources/templates/list`, `prompts/list`, `prompts/get`, `logging/setLevel` on legacy) | The harness runs it | It returns a `Result.success` with the parsed model | I |
 | AC-TST-05.1 | Any harness result | It is serialized | `toJson()` round-trips to the same model (stable assertions) | U |
-| AC-TST-06.1 | Each failure fixture: unreachable URL, missing command, `isError`, unknown tool, invalid params, `-32022`, HTTP 429, server crash | The harness runs it | It returns `Result.failure` with the `McpFailure.code` from spec §6.6 (`unreachable`, `unreachable`, `tool_error`, `tool_not_found`, `invalid_params`, `protocol_version_unsupported`, `rate_limited` with `retryAfter`, `process_exited`) and the matching core `Failure` kind | U, I |
+| AC-TST-06.1 | Each failure fixture: unreachable URL, missing command, unknown tool, invalid params, `-32022`, HTTP 429, server crash | The harness runs it | It returns `Result.failure` with the `McpFailure.code` from spec §6.6 (`unreachable`, `unreachable`, `tool_not_found`, `invalid_params`, `protocol_version_unsupported`, `rate_limited` with `retryAfter`, `process_exited`) and the matching core `Failure` kind | U, I |
 | AC-TST-06.2 | Any infrastructure exception (`SocketException`, `ProcessException`, `FormatException`, `PostgrestException`) | It is thrown inside a repository | It is mapped to a `Failure`; no raw exception reaches a provider or the UI | U |
 
 ---
@@ -211,5 +211,27 @@ and `task` results only as the notice in AC-PRO-01.2.
 | A1 | Tool form falls back to raw JSON when the schema nests more than **32** levels or takes over **100 ms** to build | **Confirmed** | AC-TOL-02.6 |
 | A2 | stdio shutdown: close stdin → wait **2 s** → SIGTERM → wait **2 s** → SIGKILL; whole sequence within **5 s** | **Confirmed** | AC-NFR-REL-06.1/2 |
 | A3 | A new user makes a first tool call in **under 3 minutes** (NFR-USE-01 walkthrough) | **Confirmed** | S1 exit check |
-| A4 | Changing an env **value** does not require approval again; a change to command, args, cwd or env **keys** does | **Confirmed** | AC-SEC-04.2/3 |
-| A5 | Server secrets are stored under the secure-storage key `mcp-server-secrets:<server id>` | **Confirmed** | AC-CFG-01.3 |
+| A4 | Any effective env key/value, resolved executable, command, args or cwd change requires renewed approval (spec §6.7 supersedes original A4) | **Confirmed** | AC-SEC-04.2/3 |
+| A5 | Server secrets are stored under the secure-storage key `mcp-server-secrets:<user id>:<server id>` | **Confirmed** | AC-CFG-01.3 |
+
+## 10. High-priority review regression criteria (S1)
+
+| ID | Given | When | Then | Lvl |
+|---|---|---|---|---|
+| AC-CFG-URL.1 | An HTTP/SSE server with URL and a stdio server with command | Each is saved and loaded after restart | URL and target round-trip without loss; secret maps/qualified `secret_keys` round-trip exactly | U, I (Supabase) |
+| AC-CFG-URL.2 | Both targets, neither target, wrong target for transport, wrong JSON container types, or URL user-info | Saving is attempted | Service rejects invalid drafts; direct database writes reject target inconsistency/container types; no row contains a real marked-secret value | U, I (Supabase) |
+| AC-TST-TOOL.1 | A fixture returns `isError: true` | UI service and headless harness call it | Both return `Success<ToolCallResult>` with outcome `tool_error`, not `Err`; transport failure remains `Err` | U, I |
+| AC-ACCOUNT.1 | Active sessions, secret fields, drafts, results and monitors | Sign-out, account/workspace switch or workspace access loss occurs | New operations stop immediately; generations invalidate; requests cancel, remote streams close and stdio trees stop within 5 s; all prior transient UI/diagnostics/temp bodies clear | U, W, I |
+| AC-ACCOUNT.2 | User A has local secrets and an operation completing late | User B signs in on the same device | No A key is read; late A results cannot enter B state; B must supply their own values and approval | U, I |
+| AC-ACCOUNT.3 | A guest links GitHub without changing user ID, or returns to an authorized workspace | Catalog reloads | Same-user secrets remain available; a changed user ID is isolated and never silently copies credentials; explicit clear deletes only that user's secret/trust records | U, I |
+| AC-PRO-07.1 | Legacy fixture requires initialized and session/version headers | Connect then call | Initialized follows successful supported-version negotiation before list/call; subsequent HTTP requests carry negotiated version and assigned session ID; unsupported versions disconnect | I |
+| AC-PRO-07.2 | Legacy fixture expires its session with HTTP 404 | A call is sent | Pending calls fail, ID is discarded and state disconnects; reconnect initializes anew; no tool call is replayed automatically | I |
+| AC-PRO-07.3 | Legacy session with optional GET returning 405 and DELETE returning 405 or an error | Connect then disconnect | GET 405 is tolerated; bounded DELETE includes session ID; 405 is allowed, other cleanup failures are visible, and local cleanup always completes | I |
+| AC-PRO-07.4 | S1 has not implemented elicitation/sampling/roots | Handshake or unexpected server request occurs | Unsupported capabilities are not advertised; unsupported server requests get method-not-found without hanging | U, I |
+| AC-REDACT.1 | Canary credentials in headers (including Set-Cookie), env, query, JSON, stderr and exception text | Protocol/Network/Console/errors/Copy/Load full are used, including a truncated body | Literal and URL-encoded known values and credential fields are redacted before retention; debug logs and temporary files contain no raw canaries; metadata says redacted; no reveal/raw-copy action exists | U, W, I |
+| AC-REDACT.2 | Sanitized cached full bodies and active results | Session/account disposal runs | Cached files and diagnostic buffers are removed; no automatic raw payload persistence occurs; result Save requires explicit user action | U, I |
+| AC-TRUST.1 | Approved server | Shared catalog changes PATH, NODE_OPTIONS, any secret/nonsecret env value, args or resolved executable | Approval is required again; changed field names are shown without values; preferences contain only keyed per-field digests/labels | U, W, I |
+| AC-TRUST.2 | Approval dialog is open | Configuration or effective launch resolution changes | Approval cannot authorize the changed target; only the immutable approved snapshot launches | U, I |
+| AC-TRUST.3 | Trust key missing or secure storage unavailable | Connect is attempted | Explicit approval is required; unavailable key storage permits only a one-time approved launch, with no remembered approval or plaintext fallback | U, W |
+
+These criteria are included in the S1 exit check's “every criterion” requirement. Fixtures must support session-header enforcement/expiry/DELETE responses, unexpected server requests and diagnostic canary payloads. A4 and A5 above use the revised spec §6.7 decisions.

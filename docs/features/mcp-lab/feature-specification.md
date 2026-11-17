@@ -7,7 +7,7 @@
 | **Source** | Product-owner analysis of MCP Inspector (`@modelcontextprotocol/inspector`), 2026-11-15 |
 | **Adapted for** | Test Point stack: Flutter (desktop-first), Riverpod, go_router, Dio, Supabase, modular monolith |
 | **Date** | 2026-11-15 |
-| **Status** | Draft v1.3: open questions resolved (except Q13 owner input); S1 unblocked |
+| **Status** | Draft v1.4: high-priority review corrections applied; S1 transport spike pending; Q13 open for S2 |
 | **Related** | [PRD.md](../../PRD.md) · [ARCHITECTURE.md](../../ARCHITECTURE.md) · [AGENTS.md](../../../AGENTS.md) · [gap-review.md](gap-review.md) · [open-questions-brief.md](open-questions-brief.md) |
 
 > **v1.3 changes:** resolved open questions Q1–Q3, Q5–Q10, Q12, Q14–Q16 and confirmed S1 assumptions A1–A5 (see §12). Q13 remains waiting on owner domain/hosting. Requirement text updated for NFR-SEC-05/10, NFR-PRF-01…03, NFR-CMP-06, FR-CON-09, FR-SEC-03, FR-AUT-01.
@@ -160,9 +160,9 @@ MCP Lab is a *developer tool surface* inside Test Point — not a production gat
 
 | Slice | Contents | Key requirements |
 |---|---|---|
-| **S1: Core lab** | stdio + Streamable HTTP, both eras (`legacy` default), tools / resources / prompts, raw-JSON args fallback, Protocol + Network + Console, catalog in Supabase (with migrations and RLS), failure model | FR-CON-01…07, FR-TOL-01…04/08, FR-RES-01/02, FR-PRM-01/02, FR-PRO-01…03/05/06, FR-MON-01…03/10, FR-ERA-01…05, FR-SEC-01/04, FR-TST-01/02/05/06 |
+| **S1: Core lab** | stdio + Streamable HTTP, both eras (`legacy` default), tools / resources / prompts, raw-JSON args fallback, Protocol + Network + Console, catalog in Supabase (with migrations and RLS), failure model | FR-CON-01…07, FR-TOL-01…04/08, FR-RES-01/02, FR-PRM-01/02, FR-PRO-01…03/05/06/07 (required lifecycle), FR-MON-01…03/10, FR-ERA-01…05, FR-SEC-01/04, FR-TST-01/02/05/06 |
 | **S2: Remote auth** | OAuth (CIMD / pre-registered / DCR fallback), secret store, stored-auth-only harness | FR-AUT-*, NFR-SEC-03…06/12, FR-TST-08 |
-| **S3: Interactions** | Subscriptions, listChanged, progress, elicitation, sampling, roots, MRTR, tasks, logs | FR-RES-03/05, FR-PRO-07…09, FR-INT-*, FR-TSK-*, FR-MON-04 |
+| **S3: Interactions** | Subscriptions, listChanged, progress, elicitation, sampling, roots, MRTR, tasks, logs | FR-RES-03/05, FR-PRO-07 (optional notification-stream controls)/08/09, FR-INT-*, FR-TSK-*, FR-MON-04 |
 | **S4: Test Point integration** | Environment variables, saved MCP calls, history, import/export, synced catalog | FR-TPI-*, FR-CFG-05…10 |
 | **Later** | MCP Apps, Skills, extension toggles, OpenTelemetry | FR-APP-*, FR-SKL-01, FR-ERA-06/07, FR-MON-09 |
 
@@ -266,8 +266,8 @@ Shared HTTP proxy settings from `modules/settings` should be reused for remote t
 | Per-device stdio trust records | Local only (secure storage or app data dir) | Never synced; see FR-SEC-04 |
 
 **Secret placeholder rule (app-wide).** Applies to MCP Lab and to environment variables.
-- A field marked secret is synced with its key and `secret: true`, but its `value` is replaced by a fixed placeholder. The exact placeholder is chosen in the data model, for example an empty value.
-- The real value is saved in OS secure storage under a key built from the record's UUID, for example `environment-secrets:<environment id>`, which holds a JSON map `{key: value}`. Record UUIDs are unique across users and workspaces, so a different account never loads another account's values. Implemented for environments in `EnvironmentService` with the shared `lib/core/secrets/secret_store.dart`.
+- A field marked secret is synced with its key and `secret: true`, but its `value` is replaced by a fixed placeholder. MCP uses the empty string placeholder and the qualified `secret_keys` wire representation in §6.7.
+- The real value is saved in OS secure storage under a key built from the record's UUID, for example `environment-secrets:<environment id>` for existing environments; new MCP keys use `mcp-server-secrets:<user id>:<server id>`, which holds a JSON map `{key: value}`. For MCP, UUID uniqueness is not an account boundary: the user namespace and current authorized workspace must both be checked before reading secrets. Implemented for environments in `EnvironmentService` with the shared `lib/core/secrets/secret_store.dart`.
 - On load, the app swaps the placeholder for the local value.
 - On a device that has no local value, the field shows **"Not set on this device"**. A variable that uses it stays unresolved and shows as an amber chip. The placeholder is never sent to a server as if it were the real value.
 - Clearing the `secret` flag syncs the value as plain text, so the user must confirm this first.
@@ -299,12 +299,30 @@ MCP Lab is part of Test Point, not a separate app inside it. It reuses the produ
 | `protocol_version_unsupported` | `NetworkFailure` | `-32022`; carries `data.supported` |
 | `header_mismatch` / `missing_capability` | `NetworkFailure` | `-32020` / `-32021` |
 | `tool_not_found` / `invalid_params` | `ValidationFailure` | `-32602` split by message (FR-TOL-05) |
-| `tool_error` | `ValidationFailure` | `isError: true` result (not a transport failure) |
+| `tool_error` | Successful `ToolCallResult` diagnostic | `isError: true` remains `Success<ToolCallResult>` with outcome `tool_error`; never converted into `Err` by the shared service or harness |
 | `schema_unportable` | `ValidationFailure` | Strict schema check failed (FR-TST-07) |
 | `store_unavailable` | `StorageFailure` | Secret store unreadable / refused (NFR-SEC-06) |
 | `process_exited` | `UnexpectedFailure` | stdio server exited unexpectedly; carries exit code + stderr tail |
 
 **Resolved (Q15):** `code` stays module-local in `McpFailure`. Promote into core `Failure` only when a second module needs machine-readable codes.
+
+---
+
+### 6.7 S1 review decisions (2026-11-16)
+
+These decisions supersede earlier assumptions A4/A5 and apply to the specification, plan and S1 criteria.
+
+**Catalog wire shape.** `mcp_servers.url` is nullable text. `stdio` requires a nonblank command and null URL; `http`/`sse` require a nonblank HTTP(S) URL and null command. Reject URL user-info; trim blank optional fields to null. Repository serialization uses `env` and `headers` as string maps, and `secret_keys` as a string array of qualified names (`env.KEY`, `header.authorization`); header names are canonicalized to lowercase and duplicate names are rejected case-insensitively. A listed secret has value `""` in its map. `secret: true` is the domain/UI representation derived from membership in `secret_keys`, not an additional nested database property. Validate this shape in the service and enforce JSON container types and transport/target consistency in the migration. Secrets embedded in args or URLs are not protected catalog fields; the editor warns users to move credentials to secret env/header fields before saving.
+
+**Tool errors.** The shared service and harness return `Success<ToolCallResult>` for `isError: true`, with outcome code `tool_error`. Protocol/transport failures return `Err` with `McpCoded`. Test assertions can fail on the outcome, but must not change the service result contract.
+
+**Account and workspace boundary (S1).** Keys are `mcp-server-secrets:<user id>:<server id>`. Read only for the captured current user and a server in the currently authorized workspace. Before sign-out, account/workspace switch, or loss of workspace access, stop new operations, invalidate the session generation, cancel requests, close remote streams, terminate stdio trees within 5 s, and clear selection, drafts, results, monitors and full-body caches. Late completions from the previous generation are discarded. An externally observed auth change follows the same gate immediately. Retained keys are inaccessible to another account; returning to the original account restores them only after authorization. Offer explicit deletion of that user's local secrets/trust records. Guest linking that preserves the Supabase user ID preserves keys; a changed ID is an account switch and never silently copies credentials. Workspace switching retains user-owned keys but requires fresh authorized loading. Recheck membership before connecting; RLS remains authoritative for catalog access.
+
+**Legacy lifecycle (S1).** Send `initialize`, validate its returned version, then send `notifications/initialized` before ordinary operations. Subsequent HTTP requests carry the negotiated `MCP-Protocol-Version` and server-assigned `Mcp-Session-Id` when present. On session HTTP 404, fail pending calls, discard the session ID and show disconnected; only explicit reconnect initializes again, with no automatic replay of calls. Disconnect makes a bounded best-effort DELETE with the session ID; 405 is allowed, other failures are visible but local cleanup still completes. An optional GET stream returning 405 does not break the connection. S1 does not advertise unimplemented interaction capabilities; unsupported server requests receive a JSON-RPC method-not-found response. Notification-stream UI controls and subscriptions remain S3. References: [lifecycle](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle), [transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
+
+**Diagnostic redaction (S1).** Only the transport and immediate operation hold raw wire payloads. Before diagnostics enter streams, buffers, logs or temporary storage, replace credential-header values (including Set-Cookie), configured secret env/header values and known active credentials with `[REDACTED]`; redact credential query parameters (`token`, `access_token`, `refresh_token`, `api_key`, `key`, `secret`, `password`, `code`, case-insensitive). Match known nonempty values recursively in JSON strings and in console/error text, including URL-encoded forms; redact before truncation, pairing detail or body caching. Copy and Load full use the same sanitized representation; S1 offers no diagnostic reveal or raw-copy bypass. Raw payloads must not reach Dio debug logs, crash diagnostics or disk. A stored frame remains protocol-shaped but is explicitly labelled redacted when changed. Unknown secrets emitted by a server cannot be detected reliably: show that limitation and allow users to clear monitors. Explicit result viewing/binary Save is separate from diagnostic Copy and requires a user action; no automatic payload persistence. Account/session disposal deletes any sanitized full-body temporary files and releases buffers.
+
+**Launch trust (S1).** Changing any configured env value now requires renewed approval, including secret values; A4's earlier exception is withdrawn. Resolve the absolute executable and effective cwd/environment before approval, then launch that same immutable snapshot; changes during approval invalidate it. Include the resolved executable path and effective inherited environment in comparison, so PATH changes cannot silently select a different binary. Use HMAC-SHA-256 with a random per-user device key in secure storage; preferences hold the digest and non-secret field labels, never raw env values or secret-bearing args. Compare per-field digests to describe changed fields without displaying values. Missing trust key means unapproved; unavailable secure storage permits one explicitly approved launch but cannot persist approval. Trust is consent to a launch configuration, not binary integrity verification or a sandbox.
 
 ---
 
@@ -482,7 +500,7 @@ MCP Lab is part of Test Point, not a separate app inside it. It reuses the produ
 | FR-SEC-01 | Connecting a **stdio** server shall require an explicit user action and show the command that will be spawned. | M | P/A |
 | FR-SEC-02 | Secrets (OAuth tokens, client secrets, stdio `env` values) shall not appear in catalog exports or transcript defaults. | M | D/A |
 | FR-SEC-03 | Credential-bearing custom headers shall be auto-marked secret (NFR-SEC-10). The user may unmark a header; unmarked credential-looking headers still show a warning. | S | P |
-| FR-SEC-04 | **Per-device stdio trust:** before a stdio server first runs on a device, the user approves a hash of (command, args, cwd, env keys). Any change, including one that arrives through a synced or shared catalog, requires approval again. Trust records stay local and are never synced. | M | P |
+| FR-SEC-04 | **Per-device stdio trust:** before a stdio server first runs on a device, the user approves a device-local keyed digest of the resolved launch target (executable path, command, args, effective cwd, effective allow-listed environment and configured environment keys and values). Any change, including one that arrives through a synced or shared catalog, requires approval again. Trust records stay local and are never synced. | M | P |
 | FR-SEC-05 | Server-supplied text (tool, prompt and resource descriptions, server `instructions`) shall be shown as plain text. Zero-width / bidi Unicode and ANSI escapes are made visible, and HTML or Markdown is never rendered as live content. | S | P |
 
 ### 7.15 Protocol fundamentals (FR-PRO)
@@ -495,7 +513,7 @@ MCP Lab is part of Test Point, not a separate app inside it. It reuses the produ
 | FR-PRO-04 | The system shall display the `ttlMs` / `cacheScope` cache hints on list and read results (SEP-2549). It does not cache by them in v1. | C | D |
 | FR-PRO-05 | Resource-not-found shall be recognised as `-32602` (modern) and `-32002` (legacy servers). | S | D |
 | FR-PRO-06 | **Stream loss:** on a modern connection, a broken response stream fails the in-flight request, which the user can re-issue under a new request ID (no `Last-Event-ID`). Legacy connections may resume with `Last-Event-ID`. | S | D |
-| FR-PRO-07 | **Legacy sessions:** keep the server-assigned `Mcp-Session-Id`, send `DELETE` on disconnect, open the standalone GET notification stream, and offer a *Suppress Notification Stream* option per server. Modern connections are sessionless, so disconnect is purely local. | S | D |
+| FR-PRO-07 | **Legacy sessions (required lifecycle in S1):** keep the server-assigned `Mcp-Session-Id`, send `DELETE` on disconnect, open the standalone GET notification stream, and offer a *Suppress Notification Stream* option per server. Modern connections are sessionless, so disconnect is purely local. | S | D |
 | FR-PRO-08 | The system shall handle `notifications/{tools,prompts,resources}/list_changed` (legacy notifications; modern via the `subscriptions/listen` opt-ins) by marking the list stale and re-listing (automatically or on click, per a setting). | S | D |
 | FR-PRO-09 | The system shall attach a progress token to long calls and show `notifications/progress` as a progress bar with message. Progress resets the request timeout (FR-CON-08). | S | D |
 | FR-PRO-10 | On legacy connections the system shall offer `ping` as a manual health check and show the round-trip time. The control is hidden on modern connections, where `ping` was removed. | C | D |
@@ -511,7 +529,7 @@ MCP Lab is part of Test Point, not a separate app inside it. It reuses the produ
 | FR-TPI-03 | The system shall keep a per-server **call history** for the current app session, with replay and copy-as-JSON. | C | P |
 | FR-TPI-04 | Open servers and saved MCP calls shall use the top-bar **tabs** with the unsaved marker. The **status bar** shows the active MCP connection (transport, era, state). | S | P/A |
 | FR-TPI-05 | Several servers may be connected at once (a default limit of 8, configurable). Each has its own transcript, and a slow call on one server never blocks another (NFR-PRF-04). | S | P |
-| FR-TPI-06 | **Account rules:** the catalog follows the workspace (PRD §5.8). Local secrets and trust records are namespaced by Supabase user ID. When a guest links GitHub, they are kept. On sign-out or a switch to an existing account, the previous user's secrets are no longer readable, and the user can choose to clear them. | M | P/A |
+| FR-TPI-06 | **Account rules:** the catalog follows the workspace (PRD §5.8). Local secrets and trust records are namespaced by Supabase user ID. Account and workspace isolation is required in S1; only later integration surfaces belong to S4. When a guest links GitHub, they are kept. On sign-out or a switch to an existing account, the previous user's secrets are no longer readable, and the user can choose to clear them. | M | P/A |
 
 ### 7.17 Out-of-scope / Won't-have (this release)
 
@@ -540,7 +558,7 @@ MCP Lab is part of Test Point, not a separate app inside it. It reuses the produ
 | NFR-SEC-06 | The secret store shall not overwrite undecryptable data; misconfiguration fails visibly. | M | D |
 | NFR-SEC-07 | stdio servers shall receive only an **allow-listed environment** plus their configured `env`. POSIX: `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM`, `USER`. Windows: `PATH`, `PATHEXT`, `SystemRoot`, `SystemDrive`, `ComSpec`, `APPDATA`, `LOCALAPPDATA`, `USERPROFILE`, `TEMP`, `TMP`, `USERNAME`. Without these, `node`/`npx` fail on Windows. | M | D/A |
 | NFR-SEC-08 | Deep-link auto-connect shall require explicit user confirmation (CSRF / drive-by gate). | S | D/A |
-| NFR-SEC-09 | Redact query-string secrets in URLs shown in errors; mask secrets in the Network view. | S | D |
+| NFR-SEC-09 | Apply the S1 redaction policy in §6.7 before retaining or presenting diagnostics across Protocol, Network, Console, errors, Copy and Load full. | S | D |
 | NFR-SEC-10 | Header names matching `Authorization`, `Proxy-Authorization`, `Cookie`, `X-Api-Key`, or ending in `-Token` / `-Key` / `-Secret` (case-insensitive) are **marked secret automatically**. The user can unmark one. Secret header values follow the device-only rule (§6.4). | S | P |
 | NFR-SEC-11 | A threat model for MCP Lab shall be documented: spawn, secrets, OAuth, import of untrusted config, synced catalogs (FR-SEC-04), malicious server text (FR-SEC-05), URL-mode elicitation and remote icons. | S | P/A |
 | NFR-SEC-12 | Secrets shall never be truncated by a platform size limit. `flutter_secure_storage` 11.x on Windows already writes values to an AES-GCM encrypted file and keeps only the key in Credential Manager, so the about 2.5 KB entry limit does not apply. | M | A |
@@ -776,9 +794,9 @@ void main() {
       toolName: 'get_weather',
       arguments: const {'city': ''},
     );
-    // success or tool_error — never hang / unknown
+    // A completed tool response, including isError, is a successful result.
     expect(
-      result.isSuccess || result.failure?.code == 'tool_error',
+      result.isSuccess,
       isTrue,
     );
   });
