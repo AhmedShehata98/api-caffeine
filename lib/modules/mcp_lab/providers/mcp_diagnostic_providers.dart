@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
+import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_point/core/error/failure.dart';
@@ -129,6 +130,47 @@ class McpMonitorActions {
       : const Result.failure(_stale);
   void clear(McpMonitorKind kind) {
     if (isCurrent()) monitor!.clearBuffer(kind);
+  }
+
+  Future<Result<String>> export(
+    McpMonitorKind kind,
+    List<McpMonitorEntry> entries,
+  ) async {
+    if (!isCurrent()) return const Result.failure(_stale);
+    final buffer = _buffer(kind);
+    if (buffer == null) return const Result.failure(_stale);
+    var bytes = 0;
+    final records = <Map<String, Object?>>[];
+    for (final entry in entries) {
+      if (!isCurrent() || !buffer.copyText(entry.sequence).isSuccess) {
+        return const Result.failure(_stale);
+      }
+      final body = entry.text.substring(
+        0,
+        math.min(entry.text.length, 64 * 1024),
+      );
+      bytes += body.length * 4;
+      if (bytes > 1024 * 1024) {
+        return const Result.failure(
+          ValidationFailure(
+            'The filtered export exceeds 1 MiB. Narrow the filter and try again.',
+          ),
+        );
+      }
+      records.add({
+        'sequence': entry.sequence,
+        'text': body,
+        'frame': entry.frame?.toJson(),
+        'network': entry.network?.toJson(),
+        'console': entry.console?.toJson(),
+        'truncated': entry.truncated || entry.text.length > body.length,
+      });
+    }
+    final value = await _formatDiagnostic({
+      'monitor': kind.name,
+      'captures': records,
+    });
+    return isCurrent() ? Result.success(value) : const Result.failure(_stale);
   }
 
   Future<Result<String>> loadFull(

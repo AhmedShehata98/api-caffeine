@@ -38,6 +38,7 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
   final _filterFocus = FocusNode();
   final _busy = <String>{};
   String _view = 'settings';
+  bool _monitorPinned = false;
   @override
   void dispose() {
     _filter.dispose();
@@ -447,6 +448,8 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
                   : view == 'network'
                   ? McpMonitorKind.network
                   : McpMonitorKind.console,
+              pinned: _monitorPinned,
+              onPinChanged: (value) => setState(() => _monitorPinned = value),
             ),
             _ => _settingsDetails(server),
           },

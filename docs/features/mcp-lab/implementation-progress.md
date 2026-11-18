@@ -1079,3 +1079,14 @@ reference types. No new dependency, production transport or database change is
 introduced. Normal native-plugin testing still has the documented hook blocker;
 Windows process cleanup and other platform/security/native S1 exit gates remain
 open. Next: monitor pin/export and preferences.
+
+## Monitor pin and export
+
+The selected monitor tab can be pinned or unpinned from its toolbar; the pin
+state is shared across Protocol, Network and Console while this MCP Lab screen
+is mounted. Export serializes the current filtered, already-sanitized captures
+as JSON and copies them to the clipboard after an explicit click. If clipboard
+access fails, a bounded selectable preview remains available for manual copy.
+Exports cap retained preview text at 64 KiB per capture and stop above 1 MiB;
+the message asks the user to narrow the filter. Full bodies are not implicitly
+loaded into the export.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_point/core/ui/theme/http_colors.dart';
+import 'package:test_point/core/error/result.dart';
 
 import '../models/mcp_diagnostics.dart';
 import '../providers/mcp_diagnostic_providers.dart';
@@ -11,9 +12,17 @@ import '../services/mcp_monitor_presentation.dart';
 import 'mcp_monitor_detail.dart';
 
 class McpMonitorView extends ConsumerStatefulWidget {
-  const McpMonitorView({required this.serverId, required this.kind, super.key});
+  const McpMonitorView({
+    required this.serverId,
+    required this.kind,
+    this.pinned = false,
+    this.onPinChanged,
+    super.key,
+  });
   final String serverId;
   final McpMonitorKind kind;
+  final bool pinned;
+  final ValueChanged<bool>? onPinChanged;
   @override
   ConsumerState<McpMonitorView> createState() => _McpMonitorViewState();
 }
@@ -24,11 +33,51 @@ class _McpMonitorViewState extends ConsumerState<McpMonitorView> {
   int? _selected;
   RpcDirection? _direction;
   RpcFrameKind? _frameKind;
+  Result<String>? _export;
+  bool _exporting = false;
   @override
   void dispose() {
     _filter.dispose();
     _focus.dispose();
     super.dispose();
+  }
+
+  Future<void> _exportCaptures(
+    McpMonitorActions actions,
+    List<McpMonitorEntry> rows,
+  ) async {
+    setState(() {
+      _exporting = true;
+      _export = null;
+    });
+    final result = await actions.export(widget.kind, rows);
+    if (!mounted) return;
+    if (result case Err(:final failure)) {
+      setState(() {
+        _exporting = false;
+        _export = Result.failure(failure);
+      });
+      return;
+    }
+    final value = result.valueOrNull!;
+    try {
+      await Clipboard.setData(ClipboardData(text: value));
+      if (mounted) {
+        setState(() {
+          _exporting = false;
+          _export = const Result.success(
+            'Sanitized JSON export copied to clipboard.',
+          );
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _exporting = false;
+          _export = result;
+        });
+      }
+    }
   }
 
   @override
@@ -166,12 +215,61 @@ class _McpMonitorViewState extends ConsumerState<McpMonitorView> {
                     icon: const Icon(Icons.clear_all),
                     label: const Text('Clear captures'),
                   ),
+                  IconButton(
+                    tooltip: widget.pinned ? 'Unpin monitor' : 'Pin monitor',
+                    onPressed: widget.onPinChanged == null
+                        ? null
+                        : () => widget.onPinChanged!(!widget.pinned),
+                    icon: Icon(
+                      widget.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Copy filtered sanitized JSON export',
+                    onPressed: rows.isEmpty || _exporting
+                        ? null
+                        : () => _exportCaptures(actions, rows),
+                    icon: _exporting
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.copy_all_outlined),
+                  ),
                 ],
+              ),
+              IconButton(
+                tooltip: 'Export filtered sanitized captures',
+                onPressed: rows.isEmpty
+                    ? null
+                    : () async {
+                        final exported = await actions.export(
+                          widget.kind,
+                          rows,
+                        );
+                        if (mounted) setState(() => _export = exported);
+                      },
+                icon: const Icon(Icons.download_outlined),
               ),
               if (diagnostic.hasError)
                 const Text('Could not observe diagnostic updates.'),
               if (snapshot == null)
                 const Text('No diagnostics are retained for this session.'),
+              if (_export?.failureOrNull case final failure?)
+                Text(failure.message),
+              if (_export?.valueOrNull case final exported?) ...[
+                Text(
+                  exported == 'Sanitized JSON export copied to clipboard.'
+                      ? exported
+                      : 'Sanitized JSON export ready to copy.',
+                ),
+                if (exported != 'Sanitized JSON export copied to clipboard.')
+                  SelectableText(exported, maxLines: 4),
+                TextButton(
+                  onPressed: () => setState(() => _export = null),
+                  child: const Text('Clear export'),
+                ),
+              ],
               if (dropped > 0)
                 Text('$dropped older entries dropped', maxLines: 1),
               if ((snapshot?.streamErrors ?? 0) > 0)
