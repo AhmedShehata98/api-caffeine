@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test_point/app/shell/nav_rail.dart';
 import 'package:test_point/core/error/result.dart';
 import 'package:test_point/core/ui/theme/app_theme.dart';
@@ -14,9 +15,10 @@ import 'package:test_point/core/ui/widgets/code_view.dart';
 import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
 import 'package:test_point/modules/mcp_lab/screens/mcp_lab_screen.dart';
 import 'package:test_point/modules/mcp_lab/services/mcp_catalog_service.dart';
+import 'package:test_point/modules/settings/settings.dart';
 
-import '../../../support/pump_app.dart';
 import '../../../support/load_bundled_test_fonts.dart';
+import '../../../support/pump_app.dart';
 
 class _Catalog extends Mock implements McpCatalogService {}
 
@@ -73,6 +75,8 @@ void main() {
     tester.view.physicalSize = Size(width, 760);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -80,6 +84,7 @@ void main() {
           mcpCatalogServiceProvider.overrideWithValue(catalog),
           mcpSessionActionsProvider.overrideWithValue(actions),
           mcpLifecycleProvider.overrideWith((_) {}),
+          sharedPreferencesProvider.overrideWithValue(preferences),
         ],
         child: MaterialApp(
           theme: (theme ?? AppTheme.dark).copyWith(

@@ -1,28 +1,17 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:isolate';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mcp_dart/mcp_dart.dart';
+
+import '../support/dart_executable.dart';
 
 void main() {
   test(
     'SDK stdio preserves manual IDs and exposes both frame directions',
     () async {
-      final flutterLibrary = await Isolate.resolvePackageUri(
-        Uri.parse('package:flutter/widgets.dart'),
-      );
-      final flutterRoot = File.fromUri(flutterLibrary!)
-          .parent
-          .parent
-          .parent
-          .parent;
-      final dart =
-          '${flutterRoot.path}/bin/cache/dart-sdk/bin/'
-          '${Platform.isWindows ? 'dart.exe' : 'dart'}';
       final transport = StdioClientTransport(
         StdioServerParameters(
-          command: Platform.environment['DART_EXECUTABLE'] ?? dart,
+          command: dartExecutableForTests(),
           args: ['test/fixtures/mcp/fixture_server.dart'],
           restartOnUnexpectedExit: false,
         ),

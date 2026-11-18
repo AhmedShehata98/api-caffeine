@@ -391,7 +391,7 @@ void main() {
 
     await tester.tap(find.text('New'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('New collection'));
+    await tester.tap(find.widgetWithText(MenuItemButton, 'New collection'));
     await tester.pumpAndSettle();
     await _enterInDialog(tester, 'Reports');
     await _tapInDialog(tester, 'Create');

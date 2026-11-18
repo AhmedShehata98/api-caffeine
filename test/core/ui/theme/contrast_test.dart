@@ -43,7 +43,7 @@ void main() {
           );
         });
 
-        test('brand teal text and errors on ${surface.key}', () {
+        test('brand accent text and errors on ${surface.key}', () {
           expect(
             contrast(scheme.primary, surface.value),
             greaterThanOrEqualTo(aa),

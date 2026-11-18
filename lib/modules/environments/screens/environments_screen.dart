@@ -126,18 +126,19 @@ class _EnvironmentsScreenState extends ConsumerState<EnvironmentsScreen> {
                 decoration: BoxDecoration(
                   color: scheme.surfaceContainer,
                   border: Border(
-                    right: BorderSide(
-                      color: scheme.outlineVariant,
-                    ),
+                    right: BorderSide(color: scheme.outlineVariant),
                   ),
                 ),
-                child: _EnvironmentList(
-                  environments: environments,
-                  selectedId: selected?.id,
-                  onSelect: _select,
-                  onCreate: _create,
-                  onRename: _rename,
-                  onDelete: _delete,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: _EnvironmentList(
+                    environments: environments,
+                    selectedId: selected?.id,
+                    onSelect: _select,
+                    onCreate: _create,
+                    onRename: _rename,
+                    onDelete: _delete,
+                  ),
                 ),
               ),
             ),
@@ -179,7 +180,7 @@ class _EnvironmentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch, 
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),

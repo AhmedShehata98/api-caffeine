@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test_point/core/error/result.dart';
 import 'package:test_point/core/ui/theme/app_theme.dart';
 import 'package:test_point/core/ui/widgets/code_view.dart';
@@ -13,6 +14,7 @@ import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
 import 'package:test_point/modules/mcp_lab/widgets/mcp_tools_view.dart';
 import 'package:test_point/modules/mcp_lab/services/schema_form_values.dart';
 import 'package:test_point/modules/mcp_lab/widgets/mcp_schema_form.dart';
+import 'package:test_point/modules/settings/settings.dart';
 
 import '../../../support/load_bundled_test_fonts.dart';
 
@@ -108,9 +110,14 @@ void main() {
     tester.view.physicalSize = const Size(800, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [mcpSessionOwnerProvider.overrideWithValue(owner)],
+        overrides: [
+          mcpSessionOwnerProvider.overrideWithValue(owner),
+          sharedPreferencesProvider.overrideWithValue(preferences),
+        ],
         child: MaterialApp(
           theme: (light ? AppTheme.light : AppTheme.dark).copyWith(
             splashFactory: InkRipple.splashFactory,

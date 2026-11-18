@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test_point/app/router/app_router.dart';
+import 'package:test_point/app/shell/nav_rail.dart';
+import 'package:test_point/app/shell/sidebar/sidebar.dart';
 import 'package:test_point/core/error/failure.dart';
 import 'package:test_point/core/error/result.dart';
 import 'package:test_point/core/ui/theme/app_theme.dart';
@@ -42,9 +44,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Welcome to API Caffeine'), findsOneWidget);
-      // Nav rail label and the sidebar header.
-      expect(find.text('Collections'), findsOneWidget); // nav rail
-      expect(find.text('COLLECTIONS'), findsOneWidget); // sidebar header
+      for (final section in [ShellNavRail, ShellSidebar]) {
+        expect(
+          find.descendant(
+            of: find.byType(section),
+            matching: find.text('Collections'),
+          ),
+          findsOneWidget,
+        );
+      }
       expect(find.text('Proxy: Off'), findsOneWidget);
     });
   }
@@ -57,7 +65,7 @@ void main() {
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Theme'), findsOneWidget);
+    expect(find.byType(SegmentedButton<ThemeMode>), findsOneWidget);
     expect(find.text('Follow redirects'), findsOneWidget);
   });
 

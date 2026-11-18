@@ -35,12 +35,12 @@ class HttpColors extends ThemeExtension<HttpColors> {
     post: Color(0xFFF5A524),
     put: Color(0xFF4C9AFF),
     patch: Color(0xFFA78BFA),
-    delete: Color(0xFFF25F5C),
+    delete: Color(0xFFF8716D),
     other: Color(0xFF9AA4A2),
     status2xx: Color(0xFF34C759),
     status3xx: Color(0xFF4C9AFF),
     status4xx: Color(0xFFF5A524),
-    status5xx: Color(0xFFF25F5C),
+    status5xx: Color(0xFFF8716D),
   );
 
   static const light = HttpColors(
