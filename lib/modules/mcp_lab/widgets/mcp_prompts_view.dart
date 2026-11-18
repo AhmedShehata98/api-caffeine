@@ -7,10 +7,12 @@ import 'package:test_point/core/error/result.dart';
 import '../models/mcp_protocol_models.dart';
 import '../providers/mcp_prompts_provider.dart';
 import '../providers/mcp_work_providers.dart';
+import '../providers/mcp_prompt_completion_provider.dart';
 import '../services/mcp_session_work.dart';
 import 'mcp_json_result.dart';
 import 'mcp_content_block_view.dart';
 import '../services/mcp_content_presentation.dart';
+import 'mcp_completion_text_input.dart';
 
 class McpPromptsView extends ConsumerStatefulWidget {
   const McpPromptsView({
@@ -29,6 +31,7 @@ class _McpPromptsViewState extends ConsumerState<McpPromptsView> {
   McpPrompt? _prompt;
   final _arguments = <String, String>{};
   int _revision = 0;
+  int _inputRevision = 0;
 
   @override
   void initState() {
@@ -68,6 +71,11 @@ class _McpPromptsViewState extends ConsumerState<McpPromptsView> {
   @override
   Widget build(BuildContext context) {
     final prompts = ref.watch(mcpPromptsProvider(widget.serverId));
+    final completion = ref.watch(mcpPromptCompletionProvider(widget.serverId));
+    final sessionWork = ref.watch(mcpSessionWorkProvider(widget.serverId));
+    ref.listen(mcpSessionWorkProvider(widget.serverId), (_, next) {
+      if (next == null) setState(() => _select(null));
+    });
     ref.listen(mcpPromptsProvider(widget.serverId), (_, next) {
       // Reattaching providers briefly has no services while the session stream
       // emits its initial value. That is not a server list removing the draft.
@@ -167,28 +175,42 @@ class _McpPromptsViewState extends ConsumerState<McpPromptsView> {
                     for (final argument in prompt.arguments)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: TextFormField(
-                          key: ValueKey((_revision, argument.name)),
-                          initialValue: _arguments[argument.name] ?? '',
-                          enabled: !running,
-                          decoration: InputDecoration(
-                            labelText:
-                                '${argument.title ?? argument.name}${argument.required ? ' *' : ''}',
-                            helperText: argument.description,
-                          ),
+                        child: McpCompletionTextInput(
+                          key: ValueKey((
+                            sessionWork,
+                            _revision,
+                            argument.name,
+                          )),
+                          name: argument.name,
+                          value: _arguments[argument.name] ?? '',
+                          contextToken: (prompt, _inputRevision),
+                          sessionToken: completion,
+                          complete: completion == null
+                              ? null
+                              : () => completion.complete(
+                                  prompt,
+                                  argument.name,
+                                  Map.of(_arguments),
+                                ),
+                          maxLength: null,
+                          enabled: !running && ready,
+                          label:
+                              '${argument.title ?? argument.name}${argument.required ? ' *' : ''}',
+                          helperText: argument.description,
                           validator: (value) =>
                               argument.required &&
                                   (value?.trim().isEmpty ?? true)
                               ? 'Enter ${argument.title ?? argument.name}.'
                               : null,
-                          onChanged: (value) {
+                          onChanged: (value) => setState(() {
                             if (value.isEmpty && !argument.required) {
                               _arguments.remove(argument.name);
                             } else {
                               _arguments[argument.name] = value;
                             }
+                            _inputRevision++;
                             _persist();
-                          },
+                          }),
                         ),
                       ),
                   ],

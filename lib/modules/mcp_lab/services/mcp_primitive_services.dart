@@ -371,6 +371,49 @@ class McpResourceService {
 class McpPromptService {
   McpPromptService._(this._client);
   final _PrimitiveClient _client;
+
+  /// Required arguments may still be unfilled while the user asks for help.
+  /// Completion never invokes prompts/get or silently supplies an argument.
+  Future<Result<McpCompletion>> complete(
+    McpPrompt prompt,
+    String name,
+    Map<String, String> arguments,
+  ) async {
+    bool bounded(String value) =>
+        value.length <= 4096 && utf8.encode(value).length <= 4096;
+    final names = prompt.arguments.map((arg) => arg.name).toSet();
+    if (prompt.name.trim().isEmpty ||
+        !bounded(prompt.name) ||
+        name.trim().isEmpty ||
+        !bounded(name) ||
+        !names.contains(name) ||
+        names.length != prompt.arguments.length ||
+        arguments.length > 64 ||
+        arguments.entries.any(
+          (entry) =>
+              !names.contains(entry.key) ||
+              !bounded(entry.key) ||
+              !bounded(entry.value),
+        )) {
+      return const Result.failure(_invalidCompletion);
+    }
+    var bytes = 0;
+    for (final entry in arguments.entries) {
+      bytes += utf8.encode(entry.key).length + utf8.encode(entry.value).length;
+      if (bytes > 64 * 1024) return const Result.failure(_invalidCompletion);
+    }
+    final context = Map<String, String>.of(arguments)..remove(name);
+    return _client.request('completions', 'completion/complete', {
+      'ref': {'type': 'ref/prompt', 'name': prompt.name},
+      'argument': {'name': name, 'value': arguments[name] ?? ''},
+      if (context.isNotEmpty) 'context': {'arguments': context},
+    }, McpCompletion.fromJson);
+  }
+
+  static const _invalidCompletion = McpValidationFailure(
+    'Choose a known prompt argument and keep completion inputs within their size limits.',
+    code: McpErrorCode.invalidParams,
+  );
   Future<Result<List<McpPrompt>>> list() async {
     final result = await _client.all(
       'prompts',

@@ -165,6 +165,81 @@ Future<void> main() async {
                 2,
             'Completion retried automatically',
           );
+          const prompt = McpPrompt(
+            name: 'forecast',
+            arguments: [
+              PromptArgument(name: 'city', required: true),
+              PromptArgument(name: 'tone'),
+            ],
+          );
+          final promptReply = await services.prompts.complete(prompt, 'city', {
+            'city': 'Li',
+            'tone': 'friendly',
+          });
+          check(
+            promptReply.isSuccess &&
+                jsonEncode(promptReply.valueOrNull!.values) ==
+                    jsonEncode(['Lisbon', '雪', McpHttpPeer.secret]),
+            'Prompt completion values changed',
+          );
+          final promptParams = peer.bodies.last['params'] as Map;
+          check(
+            promptParams['ref']['type'] == 'ref/prompt' &&
+                promptParams['ref']['name'] == 'forecast' &&
+                !promptParams['ref'].containsKey('uri'),
+            'Prompt reference changed',
+          );
+          check(
+            promptParams['argument']['name'] == 'city' &&
+                promptParams['argument']['value'] == 'Li' &&
+                promptParams['context']['arguments']['tone'] == 'friendly',
+            'Prompt completion context changed',
+          );
+          check(
+            promptReply.valueOrNull!.hasMore &&
+                promptReply.valueOrNull!.total == 5,
+            'Prompt completion metadata lost',
+          );
+          if (era == McpProtocolEra.modern) {
+            check(
+              promptParams['_meta']['io.modelcontextprotocol/protocolVersion'] ==
+                      '2026-07-28' &&
+                  peer.headers.last['mcp-method'] == 'completion/complete',
+              'Modern prompt completion metadata missing',
+            );
+          } else {
+            check(
+              peer.headers.last['mcp-session-id'] == 'fixture-session',
+              'Prompt completion session missing',
+            );
+          }
+          peer.nextStatus = 429;
+          final promptLimited = await services.prompts.complete(
+            prompt,
+            'city',
+            {},
+          );
+          check(
+            (promptLimited.failureOrNull as McpCoded).code ==
+                McpErrorCode.rateLimited,
+            'Prompt completion rate limit was not preserved',
+          );
+          check(
+            peer.bodies
+                        .where(
+                          (body) => body['method'] == 'completion/complete',
+                        )
+                        .length ==
+                    4 &&
+                !peer.bodies.any((body) => body['method'] == 'prompts/get'),
+            'Prompt completion retried or got the prompt automatically',
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          check(
+            !'${frames.map((frame) => frame.rawJson).join()}${jsonEncode(network.map((entry) => entry.toJson()).toList())}'
+                .contains(McpHttpPeer.secret),
+            'Credential leaked in prompt completion diagnostics',
+          );
         } finally {
           await frameSubscription.cancel();
           await networkSubscription.cancel();
@@ -174,7 +249,7 @@ Future<void> main() async {
         await peer.close();
       }
       stdout.writeln(
-        'PASS: ${era.name} completion over ${sse ? 'SSE' : 'JSON'}, context, metadata, redaction and rate limiting',
+        'PASS: ${era.name} resource and prompt completion over ${sse ? 'SSE' : 'JSON'}, context, metadata, redaction and rate limiting',
       );
     }
   }

@@ -280,6 +280,148 @@ void main() {
       expect(session.calls, hasLength(1));
     },
   );
+  const prompt = McpPrompt(
+    name: 'forecast',
+    arguments: [
+      PromptArgument(name: 'city', required: true),
+      PromptArgument(name: 'tone'),
+    ],
+  );
+  for (final era in NegotiatedEra.values) {
+    test(
+      '$era prompt completion uses prompt name and copies other arguments',
+      () async {
+        session.respond = (_, _) async => const Result.success({
+          'completion': {
+            'values': ['Lisbon'],
+          },
+        });
+        final arguments = {'city': 'Li', 'tone': 'friendly'};
+        final result = await completions(era: era).prompts
+            .complete(prompt, 'city', arguments);
+        expect(result.valueOrNull!.values, ['Lisbon']);
+        arguments['tone'] = 'changed';
+        expect(session.calls.single.$1, 'completion/complete');
+        expect(session.calls.single.$2, {
+          'ref': {'type': 'ref/prompt', 'name': 'forecast'},
+          'argument': {'name': 'city', 'value': 'Li'},
+          'context': {
+            'arguments': {'tone': 'friendly'},
+          },
+        });
+      },
+    );
+  }
+  test('prompt completion supports unfilled required and omitted optional arguments', () async {
+    session.respond = (_, _) async => const Result.success({
+      'completion': {'values': []},
+    });
+    final service = completions().prompts;
+    expect((await service.complete(prompt, 'city', {})).isSuccess, isTrue);
+    expect(session.calls.last.$2, {
+      'ref': {'type': 'ref/prompt', 'name': 'forecast'},
+      'argument': {'name': 'city', 'value': ''},
+    });
+    expect(
+      (await service.complete(prompt, 'tone', {'city': ''})).isSuccess,
+      isTrue,
+    );
+    expect(session.calls.last.$2['context'], {
+      'arguments': {'city': ''},
+    });
+  });
+  test(
+    'prompt completion capability and input limits block requests locally',
+    () async {
+      final missing = await services.prompts.complete(prompt, 'city', {});
+      expect(
+        (missing.failureOrNull as McpCoded).code,
+        McpErrorCode.missingCapability,
+      );
+      final service = completions().prompts;
+      for (final arguments in [
+        {'unknown': 'x'},
+        {'city': 'x' * 4097},
+        {'tone': '雪' * 1400},
+      ]) {
+        expect(
+          (await service.complete(prompt, 'city', arguments)).isSuccess,
+          isFalse,
+        );
+      }
+      expect(
+        (await service.complete(prompt, 'unknown', {})).isSuccess,
+        isFalse,
+      );
+      expect(
+        (await service.complete(
+          prompt.copyWith(name: ''),
+          'city',
+          {},
+        )).isSuccess,
+        isFalse,
+      );
+      expect(
+        (await service.complete(
+          prompt.copyWith(
+            arguments: [...prompt.arguments, prompt.arguments.first],
+          ),
+          'city',
+          {},
+        )).isSuccess,
+        isFalse,
+      );
+      final many = McpPrompt(
+        name: 'many',
+        arguments: List.generate(65, (i) => PromptArgument(name: 'a$i')),
+      );
+      expect(
+        (await service.complete(many, 'a0', {
+          for (var i = 0; i < 65; i++) 'a$i': '',
+        })).isSuccess,
+        isFalse,
+      );
+      expect(
+        (await service.complete(many, 'a0', {
+          for (var i = 0; i < 17; i++) 'a$i': 'x' * 4096,
+        })).isSuccess,
+        isFalse,
+      );
+      expect(session.calls, isEmpty);
+    },
+  );
+  test('prompt completion preserves failures and rejects malformed and stale results', () async {
+    final service = completions().prompts;
+    const failure = McpValidationFailure(
+      'Completion unavailable',
+      code: McpErrorCode.invalidParams,
+    );
+    session.respond = (_, _) async => const Result.failure(failure);
+    expect(
+      (await service.complete(prompt, 'city', {})).failureOrNull,
+      same(failure),
+    );
+    session.respond = (_, _) async => const Result.success({
+      'completion': {
+        'values': [42],
+      },
+    });
+    expect((await service.complete(prompt, 'city', {})).isSuccess, isFalse);
+    final pending = Completer<Result<Map<String, dynamic>>>();
+    session.respond = (_, _) => pending.future;
+    final request = service.complete(prompt, 'city', {});
+    current = false;
+    pending.complete(
+      const Result.success({
+        'completion': {
+          'values': ['private city'],
+        },
+      }),
+    );
+    expect((await request).isSuccess, isFalse);
+    expect((await service.complete(prompt, 'city', {})).isSuccess, isFalse);
+    expect(session.calls, hasLength(3));
+  });
   test(
     'schema-aware form calls block invalid fields and normalize before send',
     () async {

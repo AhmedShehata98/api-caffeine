@@ -705,3 +705,21 @@ analysis is clean. Both themes and keyboard selection were reviewed with
 ui-ux-pro-max. Tests retain the documented native-hook bypass. See the progress
 tracker for exact bounds and limitations. Prompt-argument completion is next,
 followed by monitor pin/export and preferences; full S1 acceptance remains open.
+
+### Prompt-argument completion progress
+
+Added explicit capability-gated Suggest actions to prompt fields. Requests use
+`ref/prompt`, the current argument text and the other supplied string arguments
+as context. Missing required fields do not prevent asking for suggestions; Get
+prompt keeps its existing validation. Completion validates argument identity and
+bounded inputs locally without imposing those limits on manual prompts/get.
+
+Resource and prompt forms share the transient suggestion field with keyboard
+selection, loading/error/empty feedback and stale-response protection. Drafts
+remain session-owned; suggestions clear on argument edits, prompt refresh/change,
+scope/session replacement and unmount. No automatic Get or completion is added.
+
+All 412 selected app tests pass, along with four real HTTP groups covering both
+reference types over legacy/modern JSON/SSE. Analysis is clean and both prompt
+themes were reviewed using ui-ux-pro-max. Tests retain the documented native-hook
+bypass; full S1 acceptance remains open. Next: monitor pin/export and preferences.
