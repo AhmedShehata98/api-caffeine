@@ -1089,6 +1089,14 @@ during shutdown. Systems without an executable setsid still fail closed with a
 clear setup message. Analysis passes; native macOS/Linux execution was not
 available in this Windows workspace, so those platform checks remain open.
 
+## Persisted MCP Lab sidebar width
+
+The draggable server sidebar now restores its saved split ratio and stores
+changes after a short drag-settle delay. Values are clamped to 20–55% so both
+panes retain usable space; double-clicking the divider resets and saves the
+standard 25% layout. This uses the existing device-local shared-preferences
+provider and adds no dependency. Static analysis passes; tests were not run.
+
 ## Progress tracker correction
 
 Updated the phase table and next-step order to include the already-completed

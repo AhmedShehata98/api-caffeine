@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,11 +39,13 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
   final _filter = TextEditingController();
   final _filterFocus = FocusNode();
   final _busy = <String>{};
+  Timer? _sidebarSave;
   String _view = 'settings';
   @override
   void dispose() {
     _filter.dispose();
     _filterFocus.dispose();
+    _sidebarSave?.cancel();
     super.dispose();
   }
 
@@ -144,6 +147,7 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
         .where((row) => row.draft.name.toLowerCase().contains(query))
         .toList();
     final ready = ref.watch(mcpAccessContextProvider) != null;
+    final preferences = ref.watch(mcpLabPreferencesProvider);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
@@ -153,7 +157,17 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
         autofocus: true,
         child: ResizableSplitPane(
           axis: Axis.horizontal,
-          initialRatio: 0.25,
+          initialRatio: preferences.sidebarRatio,
+          onRatioChanged: (ratio) {
+            _sidebarSave?.cancel();
+            _sidebarSave = Timer(const Duration(milliseconds: 250), () {
+              if (mounted) {
+                ref
+                    .read(mcpLabPreferencesProvider.notifier)
+                    .setSidebarRatio(ratio);
+              }
+            });
+          },
           minFirstSize: 240,
           minSecondSize: 400,
           first: Material(

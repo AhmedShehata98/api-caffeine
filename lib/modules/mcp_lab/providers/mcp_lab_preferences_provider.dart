@@ -8,16 +8,20 @@ class McpLabPreferences {
   const McpLabPreferences({
     this.monitorPinned = false,
     this.confirmDestructiveTools = true,
+    this.sidebarRatio = 0.25,
   });
   final bool monitorPinned;
   final bool confirmDestructiveTools;
+  final double sidebarRatio;
   McpLabPreferences copyWith({
     bool? monitorPinned,
     bool? confirmDestructiveTools,
+    double? sidebarRatio,
   }) => McpLabPreferences(
     monitorPinned: monitorPinned ?? this.monitorPinned,
     confirmDestructiveTools:
         confirmDestructiveTools ?? this.confirmDestructiveTools,
+    sidebarRatio: sidebarRatio ?? this.sidebarRatio,
   );
 }
 
@@ -30,11 +34,13 @@ class McpLabPreferencesNotifier extends Notifier<McpLabPreferences> {
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
   static const _pinKey = 'mcp-lab.monitor-pinned.v1';
   static const _confirmKey = 'mcp-lab.confirm-destructive-tools.v1';
+  static const _sidebarKey = 'mcp-lab.sidebar-ratio.v1';
 
   @override
   McpLabPreferences build() => McpLabPreferences(
     monitorPinned: _prefs.getBool(_pinKey) ?? false,
     confirmDestructiveTools: _prefs.getBool(_confirmKey) ?? true,
+    sidebarRatio: (_prefs.getDouble(_sidebarKey) ?? 0.25).clamp(0.2, 0.55),
   );
 
   Future<Result<void>> _set(
@@ -62,4 +68,30 @@ class McpLabPreferencesNotifier extends Notifier<McpLabPreferences> {
       _set(_pinKey, value, state.copyWith(monitorPinned: value));
   Future<Result<void>> setConfirmDestructiveTools(bool value) =>
       _set(_confirmKey, value, state.copyWith(confirmDestructiveTools: value));
+
+  Future<Result<void>> setSidebarRatio(double value) {
+    final ratio = value.clamp(0.2, 0.55);
+    return _setDouble(_sidebarKey, ratio, state.copyWith(sidebarRatio: ratio));
+  }
+
+  Future<Result<void>> _setDouble(
+    String key,
+    double value,
+    McpLabPreferences next,
+  ) async {
+    try {
+      final saved = await _prefs.setDouble(key, value);
+      if (!saved) {
+        return const Result.failure(
+          StorageFailure('Could not save MCP Lab preferences.'),
+        );
+      }
+      state = next;
+      return const Result.success(null);
+    } on Object {
+      return const Result.failure(
+        StorageFailure('Could not save MCP Lab preferences.'),
+      );
+    }
+  }
 }
