@@ -9,6 +9,57 @@ import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_connection_rep
 class _Process extends Mock implements Process {}
 
 void main() {
+  for (final entry in {
+    577: 'executable signature',
+    1260: 'application policy',
+    225: 'blocked or removed',
+    226: 'blocked or removed',
+    5: 'Could not start the MCP server process.',
+  }.entries) {
+    test(
+      'Windows launch error ${entry.key} is actionable without exposing launch secrets',
+      () async {
+        var attempts = 0;
+        const secret = 'private-launch-canary';
+        final launcher = McpStdioLauncher(
+          start:
+              (
+                executable,
+                args, {
+                workingDirectory,
+                environment,
+                required includeParentEnvironment,
+              }) async {
+                attempts++;
+                throw ProcessException(
+                  executable,
+                  args,
+                  'raw exception $secret',
+                  entry.key,
+                );
+              },
+        );
+        final result = await launcher.start(
+          McpLaunchSnapshot(
+            command: 'dart',
+            executable: Platform.resolvedExecutable,
+            cwd: Directory.current.path,
+            args: [secret],
+            environment: {'TOKEN': secret},
+          ),
+        );
+        final failure = result.failureOrNull!;
+        expect(failure, isA<McpNetworkFailure>());
+        expect((failure as McpNetworkFailure).code, McpErrorCode.unreachable);
+        expect(failure.message, contains(entry.value));
+        expect(failure.message, isNot(contains(secret)));
+        expect(failure.message, isNot(contains(Platform.resolvedExecutable)));
+        expect(attempts, 1);
+      },
+      skip: !Platform.isWindows,
+    );
+  }
+
   test('missing or placeholder-only secrets cannot start a process', () async {
     var started = false;
     final launcher = McpStdioLauncher(

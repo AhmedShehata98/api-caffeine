@@ -594,3 +594,18 @@ The native-plugin bypass remains in use for unit tests. Full large-result native
 UI responsiveness/dialog acceptance remains open; this completes the transport
 capacity/export slice only. Next: Windows descendant cleanup after early parent
 exit. See the progress tracker for exact limits and remaining S1 gates.
+
+### Windows process-policy diagnostics and cleanup limitation
+
+A native Job Object helper prototype compiled, but local Application Control
+blocked its unsigned executable. The owner has no signing setup. Its integration
+was removed from the default launcher, fixtures and Windows build so existing
+direct launches keep working. No security settings were changed. Early-parent-exit
+descendant cleanup remains an open acceptance criterion pending an approved
+native execution route; no runtime guarantee is claimed for the prototype.
+
+Completed sanitized Windows process-start messages for signature verification,
+application policy and security block/removal errors. Five tests cover those
+codes, generic fallback, secret-safe messages and no retry. All 309 selected
+regression tests, seven real stdio scenario groups and analysis pass. Next
+unblocked work is HTTP legacy resumption/deprecated-SSE compatibility.

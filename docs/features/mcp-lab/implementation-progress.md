@@ -40,7 +40,7 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected regression run passes **304** tests (298 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected regression run passes **309** tests (303 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **six loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, and large sanitized request/response captures over JSON/SSE. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - `dart test/integration/mcp_lab/large_payload_checks.dart` passes three real stdio/HTTP JSON/SSE checks: a 20 MiB embedded binary result, bounded diagnostics, off-isolate preview metadata and decode, and byte-exact file export. Stdio framing overflow is also rejected. The exporter uses a test file destination, not a native dialog; native UI responsiveness remains unverified.
@@ -50,6 +50,7 @@ the remaining live-session and UI work is substantially larger than the complete
 - The normal Flutter test command stalls in the existing `cnativeapi` hook.
 - Docker Desktop's Linux engine and the existing local Supabase stack have been restarted. The pending additive MCP migration applied without a reset; catalog constraints, isolation and repository integration now pass. A fresh full migration replay and wider database acceptance are still pending.
 - Stdio remains partial: Windows `.cmd`/`.bat` launch is explicitly rejected until quoting is implemented/tested; macOS process-group launch is not implemented (POSIX currently requires `/usr/bin/setsid`); Windows descendant cleanup after an early parent exit still needs work. Linux group/GUI-PATH behavior and platform shutdown guarantees remain unverified. No shell fallback weakens these gates.
+- A Windows Job Object helper prototype compiled, but local Application Control blocked its unsigned executable (Code Integrity event 3077). The owner confirmed no signing setup is available. The prototype is not part of the app build or default launcher; the existing direct launch path remains in use. This approach needs an approved execution/signing route or a different supported native integration before its cleanup guarantee can be validated.
 - HTTP remains partial: legacy stream resumption/optional GET and deprecated HTTP+SSE transport remain pending. Redirects are not followed; TLS proxy endpoints are explicitly rejected (an HTTP proxy can still tunnel an HTTPS MCP target). OAuth remains S2. No automatic call replay or modern Last-Event-ID resumption is introduced.
 - Q13's CIMD hosting URL is needed for S2, not for continuing S1.
 
@@ -60,8 +61,8 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Close Windows descendant-cleanup guarantees, including an early parent exit.
-2. Close remaining stdio platform/lifecycle and HTTP legacy resumption/deprecated-SSE gaps.
+1. Close HTTP legacy resumption/deprecated-SSE gaps while the new Windows helper approach is blocked.
+2. Revisit Windows descendant cleanup with an approved native execution route; close remaining stdio platform/lifecycle gaps.
 3. Validate a fresh full migration replay in an isolated environment and broaden organization/security cases.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
 5. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
@@ -795,3 +796,30 @@ this commit. The unit harness still skips native-plugin hooks. This closes the
 transport/export capacity slice, not full AC-TOL-03.3: native dialog behavior,
 Flutter frame responsiveness during large-message parsing/sanitization, and
 macOS/manual acceptance remain open. Next: Windows descendant cleanup.
+
+## Windows application-policy launch diagnostics
+
+The attempted Windows descendant-cleanup helper compiled with MSVC, but Windows
+Application Control blocked execution before the server could start. Code Integrity
+event 3077 reported signing-level/policy requirements. The owner confirmed no
+signing setup is available. The helper integration was removed from production
+and fixtures, restoring the existing direct executable path; it is not bundled
+or retried. No security policy, Defender setting, exclusion or certificate trust
+was changed. Reliable descendant cleanup after early parent exit remains open.
+
+The completed change instead makes process-start failures actionable without
+copying executable paths, arguments, environment values or raw OS exception text.
+On Windows, error 577 reports signature verification failure, 1260 reports an
+application-policy block, and 225/226 report a security block/removal with a
+Protection history hint. Other launch errors retain the safe generic message.
+These follow Microsoft's [signature-error](https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--500-999-),
+[policy-error](https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--1000-1299-)
+and [security-error](https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-)
+definitions. Existing coded `unreachable` failures remain compatible; no fallback
+launch or automatic retry is introduced.
+
+All 309 selected tests and seven real stdio scenario groups pass after restoring
+direct launch; static analysis is clean. Five added cases verify Windows error
+classification, generic fallback, secret-safe messages and exactly one launch
+attempt. This completes the policy-diagnostics slice, not Windows process-tree
+acceptance. Next unblocked work: legacy HTTP/SSE compatibility.

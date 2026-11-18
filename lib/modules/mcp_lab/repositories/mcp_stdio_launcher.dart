@@ -190,6 +190,17 @@ class McpStdioLauncher {
         includeParentEnvironment: false,
       );
       return Result.success(McpStdioProcess(process, processGroup: group));
+    } on ProcessException catch (error) {
+      // Match Windows error codes, never localized exception text or argv.
+      final message = Platform.isWindows
+          ? switch (error.errorCode) {
+              577 => 'Windows could not verify the MCP executable signature. Use a trusted signed build or contact your administrator.',
+              1260 => 'Windows application policy blocked the MCP executable. Use an approved build or contact your administrator.',
+              225 || 226 => 'Windows security blocked or removed the MCP executable. Review Protection history and use a trusted build.',
+              _ => 'Could not start the MCP server process.',
+            }
+          : 'Could not start the MCP server process.';
+      return Result.failure(_failure(message));
     } on Object {
       return Result.failure(
         _failure('Could not start the MCP server process.'),
