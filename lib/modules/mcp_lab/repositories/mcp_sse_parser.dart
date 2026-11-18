@@ -4,10 +4,16 @@ import 'dart:typed_data';
 import 'mcp_frame_limits.dart';
 
 class McpSseEvent {
-  const McpSseEvent({this.data, this.id, this.retryMilliseconds});
+  const McpSseEvent({
+    this.data,
+    this.id,
+    this.retryMilliseconds,
+    this.type = 'message',
+  });
   final String? data;
   final String? id;
   final int? retryMilliseconds;
+  final String type;
 }
 
 class McpSseIncompleteEvent extends FormatException {
@@ -37,6 +43,7 @@ Stream<McpSseEvent> mcpSseEvents(
   var firstLine = true;
   String? id;
   int? retry;
+  var type = 'message';
   await for (final chunk in bytes) {
     final typed = chunk is Uint8List ? chunk : Uint8List.fromList(chunk);
     var start = 0;
@@ -67,11 +74,13 @@ Stream<McpSseEvent> mcpSseEvents(
             data: data.isEmpty ? null : data.join('\n'),
             id: id,
             retryMilliseconds: retry,
+            type: type,
           );
         }
         data.clear();
         id = null;
         retry = null;
+        type = 'message';
         size = 0;
       } else if (text == 'data' || text.startsWith('data:')) {
         final value = text == 'data' ? '' : text.substring(5);
@@ -87,6 +96,10 @@ Stream<McpSseEvent> mcpSseEvents(
         if (RegExp(r'^[0-9]+$').hasMatch(value)) {
           retry = (int.tryParse(value) ?? 0x7fffffff).clamp(0, 0x7fffffff);
         }
+      } else if (text == 'event' || text.startsWith('event:')) {
+        var value = text == 'event' ? '' : text.substring(6);
+        if (value.startsWith(' ')) value = value.substring(1);
+        type = value.isEmpty ? 'message' : value;
       }
     }
     if (start < typed.length) line.add(Uint8List.sublistView(typed, start));

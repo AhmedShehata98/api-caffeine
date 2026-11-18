@@ -713,7 +713,7 @@ void main() {
       expect((await session.close()).isSuccess, isTrue);
     }
   });
-  test('invalid URL, missing secrets and deprecated transport fail before client creation', () async {
+  test('invalid URL and missing secrets fail before client creation', () async {
     var created = 0;
     final repository = McpHttpConnectionRepository(
       isAuthorized: (_, _) => true,
@@ -726,9 +726,6 @@ void main() {
     for (final invalid in [
       server.copyWith(
         draft: server.draft.copyWith(url: 'https://@example.test'),
-      ),
-      server.copyWith(
-        draft: server.draft.copyWith(transport: McpTransport.sse),
       ),
       server.copyWith(secretStates: {}),
     ]) {

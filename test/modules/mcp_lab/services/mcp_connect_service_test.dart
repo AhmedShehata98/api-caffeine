@@ -254,9 +254,11 @@ void main() {
         .thenAnswer((_) async => Result.success(session));
     when(() => httpRepository.connect(http))
         .thenAnswer((_) async => Result.success(session));
+    when(() => httpRepository.connect(sse))
+        .thenAnswer((_) async => Result.success(session));
     expect((await dispatch.connect(target)).isSuccess, isTrue);
     expect((await dispatch.connect(http)).isSuccess, isTrue);
-    expect((await dispatch.connect(sse)).isSuccess, isFalse);
+    expect((await dispatch.connect(sse)).isSuccess, isTrue);
     final httpService = McpConnectService(
       dispatch,
       trust,
@@ -267,6 +269,7 @@ void main() {
     verifyZeroInteractions(trust);
     verify(() => stdioRepository.connect(target)).called(1);
     verify(() => httpRepository.connect(http)).called(2);
+    verify(() => httpRepository.connect(sse)).called(1);
     verifyNoMoreInteractions(stdioRepository);
     verifyNoMoreInteractions(httpRepository);
   });

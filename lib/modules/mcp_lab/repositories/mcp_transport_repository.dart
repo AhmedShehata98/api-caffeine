@@ -1,6 +1,5 @@
 import 'package:test_point/core/error/result.dart';
 
-import '../models/mcp_failure.dart';
 import '../models/mcp_server.dart';
 import 'mcp_connection_repository.dart';
 
@@ -14,14 +13,6 @@ class McpTransportRepository implements McpConnectionRepository {
   Future<Result<McpSession>> connect(McpConnectTarget target) =>
       switch (target.server.draft.transport) {
         McpTransport.stdio => stdio.connect(target),
-        McpTransport.http => http.connect(target),
-        McpTransport.sse => Future.value(
-          const Result.failure(
-            McpValidationFailure(
-              'Deprecated HTTP+SSE transport is not implemented yet.',
-              code: McpErrorCode.invalidParams,
-            ),
-          ),
-        ),
+        McpTransport.http || McpTransport.sse => http.connect(target),
       };
 }

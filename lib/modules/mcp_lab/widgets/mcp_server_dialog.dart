@@ -338,7 +338,7 @@ class _ServerDialogState extends ConsumerState<_ServerDialog> {
                   const Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Text(
-                      'Deprecated SSE targets can be saved. Connecting is not available yet.',
+                      'Deprecated HTTP+SSE transport. Use Legacy protocol mode.',
                     ),
                   ),
                 const SizedBox(height: 16),

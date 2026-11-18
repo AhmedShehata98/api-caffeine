@@ -5,6 +5,24 @@ import 'package:test_point/modules/mcp_lab/repositories/mcp_sse_parser.dart';
 
 void main() {
   test(
+    'event types apply to one completed block and default back to message',
+    () async {
+      final events = await mcpSseEvents(
+        Stream.value(
+          utf8.encode(
+            'event: ignored\nevent: endpoint\ndata: /messages\n\ndata: {}\n\nevent:\ndata: {}\n\n',
+          ),
+        ),
+      ).toList();
+      expect(events.map((event) => event.type), [
+        'endpoint',
+        'message',
+        'message',
+      ]);
+      expect(events.first.data, '/messages');
+    },
+  );
+  test(
     'fragmented blocks publish event IDs, priming data and retry metadata',
     () async {
       final wire = utf8.encode(

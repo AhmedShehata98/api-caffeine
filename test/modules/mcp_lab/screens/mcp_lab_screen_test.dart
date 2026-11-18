@@ -244,6 +244,29 @@ void main() {
     await tester.pumpAndSettle();
     verifyNever(() => catalog.delete(owner.context!, 's'));
   });
+  testWidgets('deprecated SSE keeps its label and offers Connect', (
+    tester,
+  ) async {
+    rows = [
+      server.copyWith(
+        draft: const McpServerDraft(
+          name: 'Old SSE server',
+          transport: McpTransport.sse,
+          url: 'https://example.test/sse',
+        ),
+      ),
+    ];
+    await pump(tester);
+    await tester.tap(find.text('Old SSE server'));
+    await tester.pumpAndSettle();
+    expect(find.text('SSE · Deprecated'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Connect'))
+          .onPressed,
+      isNotNull,
+    );
+  });
 
   testWidgets('app rail navigates to the MCP Lab route', (tester) async {
     await pumpApp(

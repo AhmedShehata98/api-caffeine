@@ -639,3 +639,20 @@ All 345 selected tests, five new real notification HTTP groups, seven existing
 HTTP groups, three real 20 MiB checks and analysis pass. This completes the
 optional GET/405 compatibility slice; S3 subscriptions/stream controls and other
 S1 native/database/platform acceptance remain open. Next: deprecated HTTP+SSE.
+
+### Deprecated HTTP+SSE compatibility progress
+
+Explicit SSE targets now open a bounded legacy endpoint negotiation, post to its
+fixed same-origin endpoint and correlate concurrent responses from the shared
+stream. Endpoint trust checks precede credential forwarding; endpoint query
+credentials are sanitized. Response-before-ack ordering, per-call deadlines,
+stream-loss failure, unsupported request replies and close without DELETE are
+verified. Modern probing, cross-origin endpoints, automatic fallback/reconnect
+and replay are excluded. The Deprecated label remains and Connect is enabled.
+
+All 367 selected tests, four new real HTTP+SSE groups (including a 20 MiB binary
+result), seven existing HTTP groups, five notification groups, three existing
+20 MiB transfer/export checks and analysis pass. Applied ui-ux-pro-max to the small
+interaction change. This completes the explicit deprecated-transport slice;
+Windows descendant cleanup, native acceptance and remaining S1 gates stay open.
+Next unblocked work: isolated fresh migration replay and broader RLS fixtures.

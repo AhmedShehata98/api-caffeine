@@ -46,10 +46,10 @@ class McpHttpConnectionRepository implements McpConnectionRepository {
     if (!isAuthorized(target.context, target.server.id)) {
       return const Result.failure(_accessFailure);
     }
-    if (target.server.draft.transport != McpTransport.http) {
+    if (target.server.draft.transport == McpTransport.stdio) {
       return const Result.failure(
         McpValidationFailure(
-          'Use Streamable HTTP for this target. Deprecated HTTP+SSE transport is not implemented yet.',
+          'Use the stdio transport for this target.',
           code: McpErrorCode.invalidParams,
         ),
       );
@@ -107,25 +107,32 @@ class McpHttpConnectionRepository implements McpConnectionRepository {
       final client = _createClient(target, proxy.valueOrNull);
       // Dedicated client: credential-bearing exchanges must not hit debug interceptors.
       client.interceptors.clear();
-      return Result.success(
-        _HttpSession(
-          client,
-          uri,
-          headers,
-          McpDiagnosticSanitizer(
-            secretValues: secrets,
-            headers: {
-              for (final entry in headers.entries) entry.key: [entry.value],
-            },
-          ),
-          context: target.context,
-          serverId: target.server.id,
-          timeout: target.timeout,
-          clientVersion: clientVersion,
-          isAuthorized: isAuthorized,
-          listenForLegacyNotifications: listenForLegacyNotifications,
+      final session = _HttpSession(
+        client,
+        uri,
+        headers,
+        McpDiagnosticSanitizer(
+          secretValues: secrets,
+          headers: {
+            for (final entry in headers.entries) entry.key: [entry.value],
+          },
         ),
+        context: target.context,
+        serverId: target.server.id,
+        timeout: target.timeout,
+        clientVersion: clientVersion,
+        isAuthorized: isAuthorized,
+        listenForLegacyNotifications: listenForLegacyNotifications,
+        deprecatedSse: draft.transport == McpTransport.sse,
       );
+      if (draft.transport == McpTransport.sse) {
+        final opened = await session.openDeprecatedStream();
+        if (!opened.isSuccess) {
+          final closed = await session.close();
+          return Result.failure(closed.failureOrNull ?? opened.failureOrNull!);
+        }
+      }
+      return Result.success(session);
     } on Object {
       return Result.failure(
         McpNetworkFailure(
@@ -200,6 +207,8 @@ class _HttpOperation {
   Timer? timer;
   String? lastEventId;
   int retryMilliseconds = 0;
+  bool postAccepted = false;
+  Result<Map<String, dynamic>>? streamedResult;
   bool get done => completion.isCompleted;
 }
 
@@ -227,6 +236,7 @@ class _HttpSession implements McpSession {
     required this.clientVersion,
     required this.isAuthorized,
     required this.listenForLegacyNotifications,
+    required this.deprecatedSse,
   }) : _client = client,
        _mapper = McpErrorMapper(_sanitizer),
        _frames = McpRpcDiagnostics(_sanitizer);
@@ -242,6 +252,9 @@ class _HttpSession implements McpSession {
   final String clientVersion;
   final bool Function(McpAccessContext, String) isAuthorized;
   final bool listenForLegacyNotifications;
+  final bool deprecatedSse;
+  Uri? _deprecatedEndpoint;
+  Uri get _postUrl => _deprecatedEndpoint ?? _url;
   _HttpOperation? _notificationOperation;
   bool _notificationsAttempted = false;
   final _operations = <_HttpOperation>{};
@@ -299,7 +312,9 @@ class _HttpSession implements McpSession {
       : _terminalFailure is Failure
       ? _terminalFailure as Failure
       : _cancelled;
-  bool _allowed(String method) => _era == null
+  bool _allowed(String method) => deprecatedSse && method == 'server/discover'
+      ? false
+      : _era == null
       ? method == 'initialize' || method == 'server/discover'
       : method != 'initialize' &&
             method != 'server/discover' &&
@@ -311,6 +326,14 @@ class _HttpSession implements McpSession {
     required String version,
   }) {
     if (!_active()) return Result.failure(_inactive);
+    if (deprecatedSse && era != NegotiatedEra.legacy) {
+      return const Result.failure(
+        McpValidationFailure(
+          'Deprecated HTTP+SSE requires Legacy protocol mode.',
+          code: McpErrorCode.invalidParams,
+        ),
+      );
+    }
     if (era == NegotiatedEra.modern
         ? version != stableProtocolVersion
         : !legacyProtocolVersions.contains(version)) {
@@ -398,7 +421,9 @@ class _HttpSession implements McpSession {
     if (result.isSuccess && method == 'notifications/initialized') {
       if (!_active()) return Result.failure(_inactive);
       _initialized = true;
-      if (listenForLegacyNotifications && !_notificationsAttempted) {
+      if (!deprecatedSse &&
+          listenForLegacyNotifications &&
+          !_notificationsAttempted) {
         return _openNotificationStream();
       }
     }
@@ -418,6 +443,8 @@ class _HttpSession implements McpSession {
     unawaited(task.whenComplete(() => _tasks.remove(task)));
     return ready.future;
   }
+
+  Future<Result<void>> openDeprecatedStream() => _openNotificationStream();
 
   void _notificationWarning(String message) {
     if (_closing || _disposed || !isAuthorized(context, serverId)) return;
@@ -446,6 +473,12 @@ class _HttpSession implements McpSession {
         _finish(operation, Result.failure(_inactive));
         return;
       }
+      if (deprecatedSse) {
+        final failure = _deprecatedStreamLost;
+        ready.complete(Result.failure(failure));
+        _disconnect(failure);
+        return;
+      }
       _notificationWarning(
         'Optional notification stream opening timed out. Request calls remain available.',
       );
@@ -464,7 +497,7 @@ class _HttpSession implements McpSession {
           headers: headers,
         ),
       );
-      openingTimer.cancel();
+      if (!deprecatedSse) openingTimer.cancel();
       if (!_live(operation)) {
         await response.data!.stream.listen((_) {}).cancel();
         return;
@@ -478,7 +511,7 @@ class _HttpSession implements McpSession {
         outcome = Result.failure(failure);
         if (status == 404) _sessionId = null;
         await response.data!.stream.listen((_) {}).cancel();
-      } else if (status == 405) {
+      } else if (status == 405 && !deprecatedSse) {
         await response.data!.stream.listen((_) {}).cancel();
       } else if (status != 200 ||
           response.headers
@@ -489,17 +522,52 @@ class _HttpSession implements McpSession {
                   .toLowerCase() !=
               'text/event-stream') {
         body.truncated = true;
-        _notificationWarning(
-          'Optional notification stream is unavailable. Request calls remain available.',
-        );
+        if (deprecatedSse) {
+          final failure = status == 200
+              ? const McpValidationFailure(
+                  'The deprecated SSE endpoint must return text/event-stream.',
+                  code: McpErrorCode.invalidParams,
+                )
+              : _mapper.http(status ?? 0);
+          terminal = failure as McpCoded;
+          outcome = Result.failure(failure);
+        } else {
+          _notificationWarning(
+            'Optional notification stream is unavailable. Request calls remain available.',
+          );
+        }
         await response.data!.stream.listen((_) {}).cancel();
       } else {
-        if (!ready.isCompleted) ready.complete(const Result.success(null));
+        if (!deprecatedSse && !ready.isCompleted) {
+          ready.complete(const Result.success(null));
+        }
         await for (final event in mcpSseEvents(
           _body(response.data!, operation),
         )) {
           if (!_live(operation)) break;
           final data = event.data;
+          if (deprecatedSse) {
+            if (_deprecatedEndpoint == null || event.type == 'endpoint') {
+              if (event.type != 'endpoint' && (data == null || data.isEmpty)) {
+                continue;
+              }
+              final endpoint = _acceptDeprecatedEndpoint(event);
+              if (!endpoint.isSuccess) {
+                terminal = endpoint.failureOrNull! as McpCoded;
+                outcome = endpoint;
+                break;
+              }
+              openingTimer.cancel();
+              if (!ready.isCompleted) {
+                ready.complete(const Result.success(null));
+              }
+              continue;
+            }
+            if (data != null && data.isNotEmpty && event.type == 'message') {
+              await _dispatchDeprecatedFrame(data, operation, body);
+            }
+            continue;
+          }
           if (data == null || data.isEmpty) continue;
           final result = await _acceptFrame(
             data,
@@ -513,7 +581,10 @@ class _HttpSession implements McpSession {
             );
           }
         }
-        if (_live(operation)) {
+        if (deprecatedSse && _active() && terminal == null) {
+          terminal = _deprecatedStreamLost;
+          outcome = Result.failure(_deprecatedStreamLost);
+        } else if (!deprecatedSse && _live(operation)) {
           _notificationWarning(
             'Optional notification stream ended. Request calls remain available.',
           );
@@ -521,7 +592,10 @@ class _HttpSession implements McpSession {
       }
     } on Object {
       body.truncated = true;
-      if (_live(operation)) {
+      if (deprecatedSse && _active()) {
+        terminal = _deprecatedStreamLost;
+        outcome = Result.failure(_deprecatedStreamLost);
+      } else if (!deprecatedSse && _live(operation)) {
         _notificationWarning(
           'Optional notification stream failed. Request calls remain available.',
         );
@@ -546,6 +620,169 @@ class _HttpSession implements McpSession {
         ready.complete(!_active() ? Result.failure(_inactive) : outcome);
       }
     }
+  }
+
+  McpNetworkFailure get _deprecatedStreamLost => McpNetworkFailure(
+    'Deprecated SSE stream lost. Reconnect to continue.',
+    code: McpErrorCode.unreachable,
+  );
+
+  Result<void> _acceptDeprecatedEndpoint(McpSseEvent event) {
+    const invalid = McpValidationFailure(
+      'The SSE server must announce one same-origin HTTP(S) POST endpoint without user-info or a fragment.',
+      code: McpErrorCode.invalidParams,
+    );
+    final value = event.data;
+    if (_deprecatedEndpoint != null ||
+        event.type != 'endpoint' ||
+        value == null ||
+        value.isEmpty ||
+        value.length > 8192 ||
+        RegExp(r'[\x00-\x20\x7f\\]').hasMatch(value) ||
+        RegExp(
+          r'^[a-z][a-z0-9+.-]*://[^/?#]*@',
+          caseSensitive: false,
+        ).hasMatch(value)) {
+      return const Result.failure(invalid);
+    }
+    final parsed = Uri.tryParse(value);
+    if (parsed == null) return const Result.failure(invalid);
+    final endpoint = _url.resolveUri(parsed);
+    if (!const {'http', 'https'}.contains(endpoint.scheme) ||
+        endpoint.scheme != _url.scheme ||
+        endpoint.host != _url.host ||
+        endpoint.port != _url.port ||
+        endpoint.userInfo.isNotEmpty ||
+        endpoint.hasFragment) {
+      return const Result.failure(invalid);
+    }
+    // Old servers commonly carry their session credential in the endpoint query.
+    _sanitizer.addSecrets(
+      endpoint.queryParametersAll.values.expand((values) => values),
+    );
+    _deprecatedEndpoint = endpoint;
+    return const Result.success(null);
+  }
+
+  Future<void> _dispatchDeprecatedFrame(
+    String wire,
+    _HttpOperation listener,
+    McpHttpDiagnosticBody body,
+  ) async {
+    Map<String, dynamic>? decoded;
+    try {
+      final value = jsonDecode(wire);
+      if (value is Map<String, dynamic>) decoded = value;
+    } on FormatException {
+      // The shared frame handler records the sanitized malformed frame.
+    }
+    _HttpOperation? pending;
+    if (decoded != null && !decoded.containsKey('method')) {
+      for (final operation in _operations) {
+        if (operation.id != null && operation.id == decoded['id']) {
+          pending = operation;
+          break;
+        }
+      }
+    }
+    final result = await _acceptFrame(
+      wire,
+      pending ?? listener,
+      body,
+      decoded: decoded,
+    );
+    if (pending != null && result != null && _live(pending)) {
+      pending.streamedResult = result;
+      _completeDeprecated(pending);
+    } else if (result != null && !result.isSuccess && _active()) {
+      _disconnect(_deprecatedStreamLost);
+    }
+  }
+
+  void _completeDeprecated(_HttpOperation operation) {
+    final result = operation.streamedResult;
+    if (operation.postAccepted && result != null) _finish(operation, result);
+  }
+
+  Future<void> _performDeprecated(_HttpOperation operation, String wire) async {
+    final url = _deprecatedEndpoint;
+    if (url == null) {
+      _finish(operation, Result.failure(_deprecatedStreamLost));
+      return;
+    }
+    final headers = _requestHeaders(operation.method, const {});
+    final body = McpHttpDiagnosticBody();
+    final watch = Stopwatch()..start();
+    Map<String, List<String>> responseHeaders = {};
+    int? status;
+    McpCoded? terminal;
+    try {
+      if (!_live(operation)) return;
+      _frames.record(wire, RpcDirection.outgoing);
+      final response = await _client!.post<ResponseBody>(
+        url.toString(),
+        data: wire,
+        cancelToken: operation.token,
+        options: Options(
+          responseType: ResponseType.stream,
+          followRedirects: false,
+          validateStatus: (_) => true,
+          headers: headers,
+        ),
+      );
+      if (!_live(operation)) {
+        await response.data!.stream.listen((_) {}).cancel();
+        return;
+      }
+      status = response.statusCode;
+      responseHeaders = response.headers.map;
+      _sanitizer.headers(responseHeaders);
+      if (status == null || status < 200 || status >= 300) {
+        final failure = _mapper.http(
+          status ?? 0,
+          retryAfter: response.headers.value('retry-after'),
+        );
+        if (status == 401 || status == 403 || status == 404) {
+          terminal = failure as McpCoded;
+        }
+        _finish(operation, Result.failure(failure));
+        await response.data!.stream.listen((_) {}).cancel();
+      } else {
+        await for (final chunk in _body(response.data!, operation)) {
+          if (chunk.isNotEmpty) body.truncated = true;
+        }
+        if (!_live(operation)) return;
+        operation.postAccepted = true;
+        if (operation.id == null) {
+          _finish(operation, const Result.success({}));
+        } else {
+          _completeDeprecated(operation);
+        }
+      }
+    } on Object catch (error) {
+      if (_live(operation)) {
+        _finish(
+          operation,
+          Result.failure(
+            _mapper.exception(error) ??
+                const UnexpectedFailure('The SSE POST request failed.'),
+          ),
+        );
+      }
+    } finally {
+      _captureNetwork(
+        method: 'POST',
+        requestHeaders: headers,
+        responseHeaders: responseHeaders,
+        status: status,
+        body: body,
+        duration: watch.elapsed,
+        wire: wire,
+        url: url,
+      );
+      body.clear();
+    }
+    if (terminal != null) _disconnect(terminal);
   }
 
   Future<Result<Map<String, dynamic>>> _run(
@@ -605,7 +842,9 @@ class _HttpSession implements McpSession {
         ),
       ),
     );
-    final task = _perform(operation, wire, params);
+    final task = deprecatedSse
+        ? _performDeprecated(operation, wire)
+        : _perform(operation, wire, params);
     _tasks.add(task);
     unawaited(task.whenComplete(() => _tasks.remove(task)));
     return operation.completion.future;
@@ -616,6 +855,7 @@ class _HttpSession implements McpSession {
     if (operation.done) return;
     operation.timer?.cancel();
     operation.lastEventId = null;
+    operation.streamedResult = null;
     _operations.remove(operation);
     operation.completion.complete(result);
     operation.finished.complete();
@@ -995,13 +1235,14 @@ class _HttpSession implements McpSession {
     required McpHttpDiagnosticBody body,
     required Duration duration,
     String? wire,
+    Uri? url,
   }) {
     if (_disposed || _closing || !isAuthorized(context, serverId)) return;
     final request = McpHttpDiagnosticBody();
     if (wire != null) request.add(_sanitizer.frame(wire).text);
     final entry = NetworkEntry(
       method: method,
-      url: _sanitizer.text(_url.toString()),
+      url: _sanitizer.text((url ?? _url).toString()),
       status: status,
       requestHeaders: _sanitizer.headers({
         for (final entry in requestHeaders.entries) entry.key: [entry.value],
@@ -1178,9 +1419,10 @@ class _HttpSession implements McpSession {
     _HttpOperation operation,
     McpHttpDiagnosticBody body, {
     bool allowResponse = true,
+    Map<String, dynamic>? decoded,
   }) async {
     try {
-      final value = jsonDecode(wire);
+      final value = decoded ?? jsonDecode(wire);
       if (value is! Map<String, dynamic> || value['jsonrpc'] != '2.0') {
         throw const FormatException();
       }
@@ -1298,7 +1540,7 @@ class _HttpSession implements McpSession {
       if (!_live(operation)) return Result.failure(_inactive);
       _frames.record(wire, RpcDirection.outgoing);
       final response = await _client!.post<ResponseBody>(
-        _url.toString(),
+        _postUrl.toString(),
         data: wire,
         cancelToken: operation.token,
         options: Options(
@@ -1330,7 +1572,7 @@ class _HttpSession implements McpSession {
         _network.add(
           NetworkEntry(
             method: 'POST',
-            url: _sanitizer.text(_url.toString()),
+            url: _sanitizer.text(_postUrl.toString()),
             status: status,
             requestHeaders: _sanitizer.headers({
               for (final entry in headers.entries) entry.key: [entry.value],
@@ -1380,6 +1622,7 @@ class _HttpSession implements McpSession {
     _toolHeaderParameters.clear();
     _issued.clear();
     _serverInfo = {};
+    _deprecatedEndpoint = null;
     if (_current is! ConnectionDisconnected) {
       _current = const ConnectionStatus.disconnected();
     }

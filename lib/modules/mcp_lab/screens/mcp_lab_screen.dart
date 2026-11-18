@@ -510,7 +510,7 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
             ),
             const SizedBox(width: 16),
             FilledButton.icon(
-              onPressed: busy || draft.transport == McpTransport.sse
+              onPressed: busy
                   ? null
                   : () => active ? _disconnect(server.id) : _connect(server),
               icon: Icon(active ? Icons.link_off : Icons.link),

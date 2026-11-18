@@ -10,11 +10,11 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | Step 0 — transport feasibility | Complete | Production transports still belong to S1 |
 | S1 database (§3.1) | Local migration applied; catalog constraints/RLS and repository checks pass | Fresh full migration replay, broader organization fixtures and remote deployment |
 | S1 models (§3.2) | Implemented; unit-tested | Extend as connection implementation requires |
-| S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy response resumption, optional legacy notification GET and modern HTTP parameter mirroring implemented | Stdio platform gaps, deprecated HTTP+SSE, remaining lifecycle guarantees |
+| S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Stdio platform gaps and remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
 | S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, scalar templates and Protocol/Network/Console monitors with separate HTTP bodies implemented | Composite template inputs/completion, monitor pin/export, native save-dialog/full desktop review |
-| S1 integration and exit (§3.7) | Seven stdio + twelve HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
+| S1 integration and exit (§3.7) | Seven stdio + sixteen HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
 | S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
@@ -40,11 +40,12 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected regression run passes **345** tests (339 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected regression run passes **367** tests (361 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **seven loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, large sanitized request/response captures over JSON/SSE, and legacy response resumption with concurrent cursor isolation/refusal recovery. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - `dart test/integration/mcp_lab/large_payload_checks.dart` passes three real stdio/HTTP JSON/SSE checks: a 20 MiB embedded binary result, bounded diagnostics, off-isolate preview metadata and decode, and byte-exact file export. Stdio framing overflow is also rejected. The exporter uses a test file destination, not a native dialog; native UI responsiveness remains unverified.
 - `dart test/integration/mcp_lab/http_notification_checks.dart` passes **five additional real HTTP groups**: GET 405 with DELETE cleanup outcomes, sanitized live notifications/server-request rejection, bounded idle close, terminal auth/session rejection and modern non-listening behavior.
+- `dart test/integration/mcp_lab/deprecated_sse_checks.dart` passes **four real HTTP+SSE groups**: old-protocol negotiation/routing/correlation/lifecycle, rejected unsafe endpoints, endpoint-announcement deadline and a 20 MiB binary result with metadata-only preview.
 - Static analysis of the MCP module and tests is clean. The empty URL user-info marker case (`https://@host`) is rejected against the original URL before URI normalization can hide it.
 - Redaction tests cover nested values, credential headers, bearer/cookie echoes, query names/values, mixed-case percent encoding, malformed JSON/stderr, wire-format preservation and disposal. This does not certify unwritten transport/cache/UI paths.
 - Unit tests use a temporary `.dart_tool/mcp_unit_runner.dart` invoking Flutter's test command without native-plugin builds or asset bundling. This validates model/REST/mocked-storage behavior, not native plugins.
@@ -52,7 +53,7 @@ the remaining live-session and UI work is substantially larger than the complete
 - Docker Desktop's Linux engine and the existing local Supabase stack have been restarted. The pending additive MCP migration applied without a reset; catalog constraints, isolation and repository integration now pass. A fresh full migration replay and wider database acceptance are still pending.
 - Stdio remains partial: Windows `.cmd`/`.bat` launch is explicitly rejected until quoting is implemented/tested; macOS process-group launch is not implemented (POSIX currently requires `/usr/bin/setsid`); Windows descendant cleanup after an early parent exit still needs work. Linux group/GUI-PATH behavior and platform shutdown guarantees remain unverified. No shell fallback weakens these gates.
 - A Windows Job Object helper prototype compiled, but local Application Control blocked its unsigned executable (Code Integrity event 3077). The owner confirmed no signing setup is available. The prototype is not part of the app build or default launcher; the existing direct launch path remains in use. This approach needs an approved execution/signing route or a different supported native integration before its cleanup guarantee can be validated.
-- HTTP remains partial: negotiated legacy response streams support one bounded resume GET, and an independent optional notification GET opens after initialized. Deprecated HTTP+SSE transport remains pending. Continuous polling/reconnection and notification-stream UI controls are not implemented. Redirects are not followed; TLS proxy endpoints are explicitly rejected (an HTTP proxy can still tunnel an HTTPS MCP target). OAuth remains S2. No automatic POST replay or modern Last-Event-ID resumption is introduced.
+- HTTP remains partial: legacy Streamable HTTP supports one bounded response resume and an optional notification GET. Explicit deprecated HTTP+SSE targets now support fixed same-origin endpoint routing in legacy mode. Cross-origin announced endpoints, automatic transport fallback, continuous polling/reconnection and notification-stream UI controls are not implemented. Redirects are not followed; TLS proxy endpoints are explicitly rejected (an HTTP proxy can still tunnel an HTTPS MCP target). OAuth remains S2. No automatic POST replay or modern Last-Event-ID resumption is introduced.
 - Q13's CIMD hosting URL is needed for S2, not for continuing S1.
 
 ## Design reference
@@ -62,9 +63,9 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Add deprecated HTTP+SSE compatibility while the new Windows helper approach is blocked.
+1. Validate a fresh migration replay in an isolated environment and broaden organization/security fixtures while the Windows helper approach is blocked.
 2. Revisit Windows descendant cleanup with an approved native execution route; close remaining stdio platform/lifecycle gaps.
-3. Validate a fresh full migration replay in an isolated environment and broaden organization/security cases.
+3. Complete remaining S1 resource-template inputs/completion and monitor/preferences acceptance gaps.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
 5. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
 
@@ -896,3 +897,43 @@ seven existing HTTP groups, three 20 MiB transport/export checks and static
 analysis pass. This closes the optional GET/405 slice, including AC-PRO-07.3's
 GET/DELETE behavior. Normal native-plugin and full S1 acceptance remain open.
 Next: deprecated HTTP+SSE transport compatibility.
+
+## Deprecated HTTP+SSE transport compatibility
+
+Explicit `sse` targets now dispatch through the shared HTTP repository. A persistent
+GET must announce its POST endpoint before a finite connect deadline; subsequent
+JSON-RPC messages are posted there, with responses correlated from SSE message
+events. This implements the two-endpoint layout in the
+[2024-11-05 transport specification](https://modelcontextprotocol.io/specification/2024-11-05/basic/transports#http-with-sse).
+There is no automatic fallback from Streamable HTTP and no modern discovery sent
+to this old transport. Auto negotiation can select legacy without sending the
+unsupported modern probe; explicit Modern mode is refused.
+
+The announced endpoint is accepted once, must resolve to the configured origin
+(same scheme, host and port), and cannot contain user-info, a fragment, whitespace
+or backslashes. It is bounded to 8192 characters. Cross-origin endpoints and live
+endpoint replacement fail before posting to the new target. Query values on the
+announced endpoint are learned as device-memory credentials and redacted from
+Network URLs, headers, frames and echoed diagnostic values. Endpoint control
+events are not misrepresented as JSON-RPC frames.
+
+Concurrent integer/string IDs remain distinct. A response arriving before its
+POST acknowledgement is retained until that POST succeeds; a rejected POST cannot
+be hidden by an early SSE result. Per-call timeouts do not close the shared stream.
+Stream loss fails remaining calls, disconnects and requires explicit reconnect,
+without replay. Unsupported server requests receive bounded method-not-found
+replies. Close cancels the GET and pending calls without Streamable HTTP DELETE.
+Authorization gates reject late payloads after access changes.
+
+The editor retains the Deprecated label, explains Legacy mode and enables the
+existing Connect action. Applied ui-ux-pro-max interaction guidance and added a
+widget regression for that availability; no theme or layout change was required.
+
+All 367 selected tests pass. Twenty-two added cases cover endpoint trust/deadline,
+event types, response/ack ordering, correlation, timeouts, stream loss, unsupported
+requests, modern refusal, revocation and Connect availability. Four new real
+HTTP+SSE groups, seven existing HTTP groups, five notification groups, three existing
+20 MiB transfer/export checks and static analysis pass. The old transport also
+receives a 20 MiB binary result and prepares metadata off-isolate. Native dialog,
+large-result Flutter responsiveness and remaining full S1 gates remain open.
+Next: isolated migration replay and broader database-security verification.
