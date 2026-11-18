@@ -40,13 +40,15 @@ class WelcomeScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: (_cardMaxWidth * 3) + (AppSpacing.lg * 2),
+                maxWidth: (_cardMaxWidth * 4) + (AppSpacing.lg * 3),
               ),
-              child: Row(
+              child: Wrap(
                 spacing: AppSpacing.lg,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                runSpacing: AppSpacing.lg,
+                alignment: WrapAlignment.center,
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: _cardMaxWidth,
                     child: _WelcomeActionCard(
                       maxWidth: _cardMaxWidth,
                       maxHeight: _cardMaxHeight,
@@ -61,7 +63,8 @@ class WelcomeScreen extends ConsumerWidget {
                       },
                     ),
                   ),
-                  Expanded(
+                  SizedBox(
+                    width: _cardMaxWidth,
                     child: _WelcomeActionCard(
                       maxWidth: _cardMaxWidth,
                       maxHeight: _cardMaxHeight,
@@ -73,7 +76,8 @@ class WelcomeScreen extends ConsumerWidget {
                       onTap: () => CollectionActions(context, ref).create(),
                     ),
                   ),
-                  Expanded(
+                  SizedBox(
+                    width: _cardMaxWidth,
                     child: _WelcomeActionCard(
                       maxWidth: _cardMaxWidth,
                       maxHeight: _cardMaxHeight,
@@ -83,6 +87,19 @@ class WelcomeScreen extends ConsumerWidget {
                       description:
                           'From raw cURL, OpenAPI v3, Swagger, or Postman dump.',
                       onTap: () => showImportDialog(context),
+                    ),
+                  ),
+                  SizedBox(
+                    width: _cardMaxWidth,
+                    child: _WelcomeActionCard(
+                      maxWidth: _cardMaxWidth,
+                      maxHeight: _cardMaxHeight,
+                      icon: Icons.hub_outlined,
+                      badge: 'MCP',
+                      title: 'MCP Lab',
+                      description:
+                          'Connect to MCP servers and explore tools, resources, and prompts.',
+                      onTap: () => context.go('/mcp-lab'),
                     ),
                   ),
                 ],

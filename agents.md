@@ -156,20 +156,20 @@ After implementation:
 
 The packages are chosen to support the MVP screens in [docs/design/stitch-mvp-progress.md](docs/design/stitch-mvp-progress.md). Add a package only when the module that needs it is built.
 
-| Concern     | Package                                            | UI/UX reason                                                                                                     |
-| ----------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| State       | `flutter_riverpod`                                 | Open request tabs, unsaved markers, active environment, theme mode                                               |
-| Routing     | `go_router`                                        | Nav rail sections (Collections, Environments, Settings) as routes                                                |
-| HTTP        | `dio`                                              | Send requests, cancel in-flight requests, proxy setting ("Proxy: Off"), timing and size for the response view    |
-| Database    | `supabase_flutter`                                 | Workspaces, collections, requests and environments stored in Supabase; Supabase Auth for users and organizations |
-| Models      | `freezed` + `json_serializable` (+ `build_runner`) | Immutable models; map Supabase rows (JSON) and Postman v2.1 import                                               |
-| Code editor | `re_editor` + `re_highlight`                       | JSON body editor and response viewer with syntax highlighting; stays fast on large responses                     |
-| Split panes | `multi_split_view`                                 | Resizable sidebar / request / response panes and the layout toggle                                               |
-| Window      | `window_manager`                                   | Desktop minimum window size and title                                                                            |
-| Import      | `file_picker`                                      | Choose a Postman v2.1 collection file in the Import dialog                                                       |
-| Preferences | `shared_preferences`                               | Theme mode, layout and proxy settings                                                                            |
+| Concern     | Package                                            | UI/UX reason                                                                                                                                                                                                       |
+| ----------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| State       | `flutter_riverpod`                                 | Open request tabs, unsaved markers, active environment, theme mode                                                                                                                                                 |
+| Routing     | `go_router`                                        | Nav rail sections (Collections, Environments, Settings) as routes                                                                                                                                                  |
+| HTTP        | `dio`                                              | Send requests, cancel in-flight requests, proxy setting ("Proxy: Off"), timing and size for the response view                                                                                                      |
+| Database    | `supabase_flutter`                                 | Workspaces, collections, requests and environments stored in Supabase; Supabase Auth for users and organizations                                                                                                   |
+| Models      | `freezed` + `json_serializable` (+ `build_runner`) | Immutable models; map Supabase rows (JSON) and Postman v2.1 import                                                                                                                                                 |
+| Code editor | `re_editor` + `re_highlight`                       | JSON body editor and response viewer with syntax highlighting; stays fast on large responses                                                                                                                       |
+| Split panes | `multi_split_view`                                 | Resizable sidebar / request / response panes and the layout toggle                                                                                                                                                 |
+| Window      | `window_manager`                                   | Desktop minimum window size and title                                                                                                                                                                              |
+| Import      | `file_picker`                                      | Choose a Postman v2.1 collection file in the Import dialog                                                                                                                                                         |
+| Preferences | `shared_preferences`                               | Theme mode, layout and proxy settings                                                                                                                                                                              |
 | Secrets     | `flutter_secure_storage`                           | Secret values (environment secrets, later MCP Lab tokens) stay on the device in the OS keychain / credential store; Supabase only gets a placeholder. Linux builds need `libsecret-1-dev` and a keyring at runtime |
-| Tests       | `mocktail` (dev)                                   | Mock repositories and services in unit tests                                                                     |
+| Tests       | `mocktail` (dev)                                   | Mock repositories and services in unit tests                                                                                                                                                                       |
 
 Use Flutter built-ins instead of packages for these:
 

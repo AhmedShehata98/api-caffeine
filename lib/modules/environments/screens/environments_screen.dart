@@ -108,6 +108,7 @@ class _EnvironmentsScreenState extends ConsumerState<EnvironmentsScreen> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(environmentsProvider);
+    final scheme = Theme.of(context).colorScheme;
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
@@ -123,10 +124,10 @@ class _EnvironmentsScreenState extends ConsumerState<EnvironmentsScreen> {
               width: 280,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  color: scheme.surfaceContainer,
                   border: Border(
                     right: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
+                      color: scheme.outlineVariant,
                     ),
                   ),
                 ),
@@ -178,7 +179,7 @@ class _EnvironmentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.stretch, 
       children: [
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),

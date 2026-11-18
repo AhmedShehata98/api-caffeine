@@ -206,6 +206,7 @@ class _SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     margin: EdgeInsets.zero,
+    color: Theme.of(context).colorScheme.surfaceContainer,
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(

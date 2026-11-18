@@ -3,6 +3,7 @@
 _Status: Draft · Last updated: 2026-11-15_
 
 Related docs:
+
 - Product scope: [PRD.md](PRD.md)
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 - Data model: [data_model.md](data_model.md)
@@ -14,33 +15,33 @@ Related docs:
 
 ## 1. Current State
 
-| Area | Today |
-| --- | --- |
-| Code | `lib/main.dart` is still the Flutter counter template |
-| Folders | `lib/common/` (empty), `lib/modules/projects/` (empty), `lib/modules/requests/` (empty) |
-| Dependencies | Only `cupertino_icons`; dev: `flutter_test`, `flutter_lints` |
-| Tests | Template `test/widget_test.dart` |
-| Backend | No `supabase/` project yet |
-| Tooling | Flutter 3.47.9 (stable) |
-| Design | 12 dark MVP screens in Stitch; screens #5–#9 still to verify; light variants and token handoff not done |
+| Area         | Today                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| Code         | `lib/main.dart` is still the Flutter counter template                                                   |
+| Folders      | `lib/common/` (empty), `lib/modules/projects/` (empty), `lib/modules/requests/` (empty)                 |
+| Dependencies | Only `cupertino_icons`; dev: `flutter_test`, `flutter_lints`                                            |
+| Tests        | Template `test/widget_test.dart`                                                                        |
+| Backend      | No `supabase/` project yet                                                                              |
+| Tooling      | Flutter 3.47.9 (stable)                                                                                 |
+| Design       | 12 dark MVP screens in Stitch; screens #5–#9 still to verify; light variants and token handoff not done |
 
 ---
 
 ## 2. Decisions
 
-| # | Decision | Notes |
-| --- | --- | --- |
-| D1 | **App starts with Supabase anonymous auth; the user avatar opens an Account dialog with one action: Continue with GitHub** | Users can work right away as a guest and connect a GitHub account when they want. GitHub OAuth is the only sign-in method (no email / password). Resolves PRD Q1. |
-| D2 | **`modules/projects` is renamed to `modules/workspaces`** | Matches the `workspaces` table. |
-| D3 | **`lib/common/` is renamed to `lib/core/`** | Matches `agents.md` and `ARCHITECTURE.md`. Resolves PRD Q4. |
-| D4 | First sign-in creates a personal organization and a default workspace | Done by a Postgres trigger on `auth.users`, so RLS always has an organization to scope to. |
-| D5 | ~~Secret variables are stored in Supabase~~ **Superseded (2026-11-15):** secret values stay on the device in OS secure storage (`core/secrets/`); Supabase stores the row with an empty placeholder value | Resolves PRD Q3. Plain-text secrets from older versions move to the device on first load. Done in `EnvironmentService`. |
-| D6 | Online-only for the MVP | No local cache; revisit PRD Q2 later. |
-| D7 | **Continue with GitHub first links the identity to the guest user in place** | `auth.linkIdentity(OAuthProvider.github)` adds GitHub to the same anonymous user, so the user id, organization, workspace and data are kept. Needs manual identity linking enabled in Supabase. |
-| D8 | **If that GitHub account already exists, warn, then sign in and discard the guest data** | Linking fails with `identity_already_exists`. If the guest has any collections, requests or environments, a confirm dialog says they will not be carried over; on confirm, `auth.signInWithOAuth(OAuthProvider.github)` loads that account's workspace. Merging is post-MVP. |
-| D9 | **Desktop OAuth returns through a custom URL scheme** | The browser opens GitHub's consent page and redirects to `testpoint://auth-callback`, which the app registers on Windows, macOS and Linux. The redirect URL is added to Supabase's allowed redirect list. |
-| D10 | **MCP Lab uses `mcp_dart`** behind an `mcp_lab` repository contract | The wrapper records every raw frame for the transcript and drives multi-round tool calls manually. Spec Q4. |
-| D11 | **The MCP Lab server catalog is stored in Supabase, per workspace** | Secret fields follow D5 (placeholders). Starting a stdio server needs per-device approval of the command (spec FR-SEC-04). Spec Q-DATA-1. |
+| #   | Decision                                                                                                                                                                                                  | Notes                                                                                                                                                                                                                                                                        |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | **App starts with Supabase anonymous auth; the user avatar opens an Account dialog with one action: Continue with GitHub**                                                                                | Users can work right away as a guest and connect a GitHub account when they want. GitHub OAuth is the only sign-in method (no email / password). Resolves PRD Q1.                                                                                                            |
+| D2  | **`modules/projects` is renamed to `modules/workspaces`**                                                                                                                                                 | Matches the `workspaces` table.                                                                                                                                                                                                                                              |
+| D3  | **`lib/common/` is renamed to `lib/core/`**                                                                                                                                                               | Matches `agents.md` and `ARCHITECTURE.md`. Resolves PRD Q4.                                                                                                                                                                                                                  |
+| D4  | First sign-in creates a personal organization and a default workspace                                                                                                                                     | Done by a Postgres trigger on `auth.users`, so RLS always has an organization to scope to.                                                                                                                                                                                   |
+| D5  | ~~Secret variables are stored in Supabase~~ **Superseded (2026-11-15):** secret values stay on the device in OS secure storage (`core/secrets/`); Supabase stores the row with an empty placeholder value | Resolves PRD Q3. Plain-text secrets from older versions move to the device on first load. Done in `EnvironmentService`.                                                                                                                                                      |
+| D6  | Online-only for the MVP                                                                                                                                                                                   | No local cache; revisit PRD Q2 later.                                                                                                                                                                                                                                        |
+| D7  | **Continue with GitHub first links the identity to the guest user in place**                                                                                                                              | `auth.linkIdentity(OAuthProvider.github)` adds GitHub to the same anonymous user, so the user id, organization, workspace and data are kept. Needs manual identity linking enabled in Supabase.                                                                              |
+| D8  | **If that GitHub account already exists, warn, then sign in and discard the guest data**                                                                                                                  | Linking fails with `identity_already_exists`. If the guest has any collections, requests or environments, a confirm dialog says they will not be carried over; on confirm, `auth.signInWithOAuth(OAuthProvider.github)` loads that account's workspace. Merging is post-MVP. |
+| D9  | **Desktop OAuth returns through a custom URL scheme**                                                                                                                                                     | The browser opens GitHub's consent page and redirects to `testpoint://auth-callback`, which the app registers on Windows, macOS and Linux. The redirect URL is added to Supabase's allowed redirect list.                                                                    |
+| D10 | **MCP Lab uses `mcp_dart`** behind an `mcp_lab` repository contract                                                                                                                                       | The wrapper records every raw frame for the transcript and drives multi-round tool calls manually. Spec Q4.                                                                                                                                                                  |
+| D11 | **The MCP Lab server catalog is stored in Supabase, per workspace**                                                                                                                                       | Secret fields follow D5 (placeholders). Starting a stdio server needs per-device approval of the command (spec FR-SEC-04). Spec Q-DATA-1.                                                                                                                                    |
 
 ---
 
@@ -49,16 +50,16 @@ Related docs:
 All cross-module calls go through each module's public API file
 (`modules/<name>/<name>.dart`). Arrows mean "depends on".
 
-| Module | Owns | Depends on |
-| --- | --- | --- |
-| `auth` | Session (guest or signed in), current user, Account dialogs, Continue with GitHub / sign out, avatar widget | — |
-| `workspaces` | Current workspace, organization bootstrap check | `auth` |
-| `collections` | Collections, sidebar tree, filter, overview | `workspaces` |
-| `environments` | Environments, variables, active environment, `{{var}}` resolver | `workspaces` |
-| `settings` | Theme mode, timeout, follow redirects, proxy (stored on device) | — |
-| `requests` | Request builder, send / cancel, response viewer, open tabs, saved requests | `collections`, `environments`, `settings` |
-| `import` | cURL parser, Postman v2.1 importer, import dialog | `collections`, `requests` |
-| `mcp_lab` (Phase 8) | MCP server catalog, connections (stdio / Streamable HTTP), tools / resources / prompts, transcript, OAuth | `workspaces`, `environments`, `settings` (via `core/network`); `core/secrets` |
+| Module              | Owns                                                                                                        | Depends on                                                                    |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `auth`              | Session (guest or signed in), current user, Account dialogs, Continue with GitHub / sign out, avatar widget | —                                                                             |
+| `workspaces`        | Current workspace, organization bootstrap check                                                             | `auth`                                                                        |
+| `collections`       | Collections, sidebar tree, filter, overview                                                                 | `workspaces`                                                                  |
+| `environments`      | Environments, variables, active environment, `{{var}}` resolver                                             | `workspaces`                                                                  |
+| `settings`          | Theme mode, timeout, follow redirects, proxy (stored on device)                                             | —                                                                             |
+| `requests`          | Request builder, send / cancel, response viewer, open tabs, saved requests                                  | `collections`, `environments`, `settings`                                     |
+| `import`            | cURL parser, Postman v2.1 importer, import dialog                                                           | `collections`, `requests`                                                     |
+| `mcp_lab` (Phase 8) | MCP server catalog, connections (stdio / Streamable HTTP), tools / resources / prompts, transcript, OAuth   | `workspaces`, `environments`, `settings` (via `core/network`); `core/secrets` |
 
 The workspace shell (nav rail, top bar, status bar, Welcome screen) lives in
 `lib/app/` and `lib/core/ui/`, and composes module widgets through their public APIs
@@ -79,21 +80,22 @@ auth ◄── workspaces ◄── collections ◄──┐
 written as Supabase migrations in `supabase/migrations/`. Update
 `data_model.md` in the same phase.
 
-| Table | Change | Why |
-| --- | --- | --- |
-| `users` | `id` references `auth.users(id)`; `email` becomes nullable | Anonymous users have no email; a GitHub account may hide its email |
-| all tables | Add `created_at`, `updated_at` | Sorting, sync checks |
-| `collections`, `requests` | Add `position int` | Order in the sidebar tree |
-| `requests` | Add `params jsonb`, `auth jsonb`, `body_type varchar` | Params, Auth and Body tabs |
-| `environments` | Define `variables` shape: `[{key, value, secret, enabled}]` | Secret flag and enable toggle |
-| all tables | Enable RLS; policies allow access only to members of the row's organization | Security (PRD §7) |
-| `auth.users` | Trigger `on_auth_user_created`: insert `users`, a personal `organizations` row, `organization_members` (role `owner`) and a default `workspaces` row | D4 |
-| `auth.users` | Trigger `on_auth_user_updated`: copy the new email into `users.email` when a guest connects GitHub | D7 |
-| `environments` | `variables[].value` is `""` for secret rows (no migration; the app moves old values to the device) | D5 |
-| `mcp_servers` (Phase 8) | New: `workspace_id`, `name`, `transport`, `command`, `args`, `cwd`, `url`, `env` (secret values as placeholders), `headers`, `settings jsonb` (era, timeouts, roots, OAuth non-secret fields), `position`; RLS by organization | D11 |
-| `mcp_saved_calls` (Phase 8, slice S4) | New: saved tool calls, prompt gets and resource reads (`server_id`, `method`, `params jsonb`); or a `kind` column on `requests`, decided in S4 | Spec FR-TPI-02 |
+| Table                                 | Change                                                                                                                                                                                                                         | Why                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `users`                               | `id` references `auth.users(id)`; `email` becomes nullable                                                                                                                                                                     | Anonymous users have no email; a GitHub account may hide its email |
+| all tables                            | Add `created_at`, `updated_at`                                                                                                                                                                                                 | Sorting, sync checks                                               |
+| `collections`, `requests`             | Add `position int`                                                                                                                                                                                                             | Order in the sidebar tree                                          |
+| `requests`                            | Add `params jsonb`, `auth jsonb`, `body_type varchar`                                                                                                                                                                          | Params, Auth and Body tabs                                         |
+| `environments`                        | Define `variables` shape: `[{key, value, secret, enabled}]`                                                                                                                                                                    | Secret flag and enable toggle                                      |
+| all tables                            | Enable RLS; policies allow access only to members of the row's organization                                                                                                                                                    | Security (PRD §7)                                                  |
+| `auth.users`                          | Trigger `on_auth_user_created`: insert `users`, a personal `organizations` row, `organization_members` (role `owner`) and a default `workspaces` row                                                                           | D4                                                                 |
+| `auth.users`                          | Trigger `on_auth_user_updated`: copy the new email into `users.email` when a guest connects GitHub                                                                                                                             | D7                                                                 |
+| `environments`                        | `variables[].value` is `""` for secret rows (no migration; the app moves old values to the device)                                                                                                                             | D5                                                                 |
+| `mcp_servers` (Phase 8)               | New: `workspace_id`, `name`, `transport`, `command`, `args`, `cwd`, `url`, `env` (secret values as placeholders), `headers`, `settings jsonb` (era, timeouts, roots, OAuth non-secret fields), `position`; RLS by organization | D11                                                                |
+| `mcp_saved_calls` (Phase 8, slice S4) | New: saved tool calls, prompt gets and resource reads (`server_id`, `method`, `params jsonb`); or a `kind` column on `requests`, decided in S4                                                                                 | Spec FR-TPI-02                                                     |
 
 Auth settings in `supabase/config.toml` (and the same in the hosted project):
+
 - `[auth] enable_anonymous_sign_ins = true`
 - `[auth] enable_manual_linking = true` (lets a guest link GitHub, D7)
 - `[auth.external.github] enabled = true`, with `client_id` and `secret` read
@@ -114,6 +116,7 @@ with a Phase 0 added for housekeeping.
 ### Phase 0 — Housekeeping
 
 **Tasks**
+
 - Rename `lib/common/` → `lib/core/` and `lib/modules/projects/` → `lib/modules/workspaces/`.
 - Replace the counter template in `lib/main.dart` with `ProviderScope` + `App`.
 - Create `lib/app/app.dart`, `lib/app/router/`, `lib/app/di/`.
@@ -128,6 +131,7 @@ with a Phase 0 added for housekeeping.
 ### Phase 1 — Foundation (M1)
 
 **Tasks**
+
 - `core/error/`: `Failure` types (`NetworkFailure`, `StorageFailure`,
   `ValidationFailure`, `AuthFailure`, `UnexpectedFailure`) and a `Result<T>` type.
 - `core/ui/theme/`:
@@ -162,6 +166,7 @@ workspace and shows the Welcome screen in dark and light themes.
 ### Phase 2 — Request Loop (M2)
 
 **Tasks**
+
 - `core/network/`: Dio client provider; error interceptor that maps
   `DioException` to `NetworkFailure` (timeout, DNS / connection, invalid URL).
 - `modules/requests`:
@@ -187,6 +192,7 @@ and read the response, including a 5 MB JSON response, without the UI freezing.
 ### Phase 3 — Collections (M3)
 
 **Tasks**
+
 - `modules/collections`: repository (Supabase), service, providers.
 - Sidebar: header with count and "Import", filter field (`Ctrl+K`),
   "+ New" split button, collection tree with method pills, footer request count.
@@ -205,6 +211,7 @@ and the tree, filter, tabs and context menu work.
 ### Phase 4 — Environments (M4)
 
 **Tasks**
+
 - `modules/environments`: repository, service, providers.
 - Environments manager screen: list, create, rename, delete; variable table
   (key, value, secret, enabled) with masked secret values.
@@ -222,6 +229,7 @@ widget test for the variable table and autocomplete.
 ### Phase 5 — Import & Settings (M5)
 
 **Tasks**
+
 - `modules/import`:
   - cURL parser (method, URL, `-H`, `-d` / `--data-*`, `-u`, `-X`), no package.
   - Postman v2.1 importer: collections, folders flattened, requests, headers,
@@ -248,6 +256,7 @@ is the polish pass. Build Part A first so Part B can cover its screens.
 _Moved here from the former Phase 5b. Method changed from email / password to GitHub OAuth (D1, D7–D9). Design: Stitch screen #13 (Account dialogs)._
 
 **Flow**
+
 - Clicking the avatar opens an **Account dialog** over the workspace (no route change).
 - **Guest** user: dialog with one **Continue with GitHub** button and the helper
   "Signing in with GitHub keeps your guest workspace." No tabs, no email or password fields.
@@ -265,6 +274,7 @@ _Moved here from the former Phase 5b. Method changed from email / password to Gi
 - The avatar shows a guest icon for anonymous users and the user's initial (GitHub name, else email) when signed in.
 
 **Tasks**
+
 - `modules/auth`: `AuthRepository` (anonymous sign-in, `linkGitHub`,
   `signInWithGitHub`, sign out, session stream); providers for session state.
   The OAuth redirect is received through the registered URL scheme (D9) and
@@ -303,6 +313,7 @@ and sign out back to a fresh guest session.
 #### Part B — Polish
 
 **Tasks**
+
 - Light theme pass against the Stitch light variants (including the Account dialogs).
 - Keyboard audit: every main action reachable; all hints say `Ctrl`.
 - No-wrap audit: labels, chips, tabs and status text use ellipsis.
@@ -313,13 +324,14 @@ and sign out back to a fresh guest session.
 - Release builds for Windows, macOS and Linux.
 
 **Part B status**
+
 - Done: no-wrap audit test; contrast audit test (WCAG AA, both themes, with colour
   fixes: dark `onPrimary`, darker light HTTP colours, stronger input borders);
   tooltips on all icon buttons; large response bodies split into lines off the main
   isolate; Windows release build; cold start measured at about 1.2 s to window shown
   (release build, Windows, local Supabase).
 - Done: keyboard control for the split-pane divider (Tab to focus; arrow keys move it by 16 px,
-  Shift 64 px; Enter or Home resets; tested).  
+  Shift 64 px; Enter or Home resets; tested).
 - Open: light-theme comparison with a Stitch light variant (only one early light screen
   exists; the Phase 7 audit reviewed the light captures instead); Linux runner for
   `testpoint://` (written, not built); macOS and Linux builds; demo of US-1 to US-10 on
@@ -342,6 +354,7 @@ tabs, Share, Run collection, Sync, Console/Zoom/UTF-8, `⌘` hints, version
 badges, breadcrumbs) are ignored.
 
 **Tasks**
+
 1. **Collect references:** download each screen's HTML and screenshot from
    Stitch into `docs/design/stitch-export/<nn>-<slug>.html|png`.
 2. **Capture the app:** `test/app/design_audit/screen_captures_test.dart`
@@ -359,20 +372,20 @@ badges, breadcrumbs) are ignored.
    behavior goes through the module's provider/service with a unit test. An
    unclear or conflicting design part is marked `Decision needed` and skipped.
 
-| # | Stitch screen | Main Flutter files |
-| --- | --- | --- |
-| S | Shell standard (from #1) | `app/shell/` (nav rail, top bar, status bar, sidebar), `core/ui/widgets/app_logo.dart`, auth `user_avatar.dart` |
+| #   | Stitch screen                          | Main Flutter files                                                                                                                             |
+| --- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| S   | Shell standard (from #1)               | `app/shell/` (nav rail, top bar, status bar, sidebar), `core/ui/widgets/app_logo.dart`, auth `user_avatar.dart`                                |
 | 1–3 | Request — Params, Body, Headers & Auth | `modules/requests/screens/request_screen.dart`, `request_bar.dart`, `url_field.dart`, `key_value_table.dart`, `body_tab.dart`, `auth_tab.dart` |
-| 4–5 | Response — Success, Error & Loading | `response_viewer.dart`, `core/ui/widgets/status_chip.dart` |
-| 6 | URL autocomplete & method menu | `url_field.dart`, `method_menu.dart`, `variable_chip.dart` |
-| 7 | Collections — Context menu & Overview | `core/ui/widgets/context_menu.dart`, `app/screens/collection_overview_screen.dart` |
-| 8 | Welcome | `app/screens/welcome_screen.dart` |
-| 9 | Environments manager | `modules/environments/screens/environments_screen.dart`, `variable_table.dart`, `environment_dropdown.dart` |
-| 10 | Import dialog | `modules/import/widgets/import_dialog.dart` |
-| 11 | Settings | `modules/settings/screens/settings_screen.dart` |
-| 12 | Dialogs & feedback | `core/ui/widgets/` dialogs and snackbar, `save_request_dialog.dart` |
-| 13 | Account dialogs | `modules/auth/widgets/` dialogs |
-| L1 | Response Success (Light) | `core/ui/theme/app_theme.dart`, `http_colors.dart` |
+| 4–5 | Response — Success, Error & Loading    | `response_viewer.dart`, `core/ui/widgets/status_chip.dart`                                                                                     |
+| 6   | URL autocomplete & method menu         | `url_field.dart`, `method_menu.dart`, `variable_chip.dart`                                                                                     |
+| 7   | Collections — Context menu & Overview  | `core/ui/widgets/context_menu.dart`, `app/screens/collection_overview_screen.dart`                                                             |
+| 8   | Welcome                                | `app/screens/welcome_screen.dart`                                                                                                              |
+| 9   | Environments manager                   | `modules/environments/screens/environments_screen.dart`, `variable_table.dart`, `environment_dropdown.dart`                                    |
+| 10  | Import dialog                          | `modules/import/widgets/import_dialog.dart`                                                                                                    |
+| 11  | Settings                               | `modules/settings/screens/settings_screen.dart`                                                                                                |
+| 12  | Dialogs & feedback                     | `core/ui/widgets/` dialogs and snackbar, `save_request_dialog.dart`                                                                            |
+| 13  | Account dialogs                        | `modules/auth/widgets/` dialogs                                                                                                                |
+| L1  | Response Success (Light)               | `core/ui/theme/app_theme.dart`, `http_colors.dart`                                                                                             |
 
 **Tests** golden captures for every screen in both themes; extend
 `test/app/no_wrap_audit_test.dart` for screens it does not cover yet;
@@ -396,6 +409,7 @@ Full requirements and priorities: [features/mcp-lab/feature-specification.md](fe
 Build plan (S1 by layer, S2–S4 outline): [features/mcp-lab/implementation-plan.md](features/mcp-lab/implementation-plan.md).
 
 **Before S1**
+
 - ~~Stitch designs~~ Done 2026-11-15: screens #14–#22 and a light variant ([stitch-mvp-progress.md](design/stitch-mvp-progress.md)).
 - ~~Acceptance criteria~~ Done 2026-11-15: [features/mcp-lab/s1-acceptance-criteria.md](features/mcp-lab/s1-acceptance-criteria.md).
 - ~~macOS distribution (Q16)~~ Resolved: notarized build outside the App Store, without the App Sandbox (stdio works).
@@ -403,6 +417,7 @@ Build plan (S1 by layer, S2–S4 outline): [features/mcp-lab/implementation-plan
 - CIMD hosting (Q13) — needed for **S2**, not S1. Draft JSON in spec Appendix D; **waiting for owner:** domain or GitHub Pages URL.
 
 **S1 — Core lab**
+
 - Add `mcp_dart` to `pubspec.yaml` and the Core Stack table.
 - `modules/mcp_lab`: connection repository contract wrapping `mcp_dart` with frame recording; stdio launcher (login-shell `PATH`, Windows `.cmd` shims, env allow-list, process-tree kill, shutdown sequence); Streamable HTTP via the shared proxy settings (FR-CON-09 precedence).
 - `mcp_servers` migration + RLS + `DATA_MODEL.md`; catalog repository; per-device command approval stored locally; secrets under `mcp-server-secrets:<server id>`.
@@ -427,15 +442,15 @@ Build plan (S1 by layer, S2–S4 outline): [features/mcp-lab/implementation-plan
 
 From the "Next steps" in [design/stitch-mvp-progress.md](design/stitch-mvp-progress.md):
 
-| Design task | Needed before |
-| --- | --- |
-| Token handoff (`ColorScheme` + `ThemeExtension` values) | Phase 1 |
-| Verify screens #5–#9 (Error & Loading, autocomplete, Collections, Welcome, Environments) | Phases 1–4 |
-| Nit fixes on #1, #4, #11 | Phases 2 and 5 |
-| Avatar at the bottom of the nav rail (shell standard update) | Phase 1 |
+| Design task                                                                                                 | Needed before   |
+| ----------------------------------------------------------------------------------------------------------- | --------------- |
+| Token handoff (`ColorScheme` + `ThemeExtension` values)                                                     | Phase 1         |
+| Verify screens #5–#9 (Error & Loading, autocomplete, Collections, Welcome, Environments)                    | Phases 1–4      |
+| Nit fixes on #1, #4, #11                                                                                    | Phases 2 and 5  |
+| Avatar at the bottom of the nav rail (shell standard update)                                                | Phase 1         |
 | New screen #13 "Account — Continue with GitHub" (being updated in Stitch from the email / password version) | Phase 6, Part A |
-| Light variants | Phase 6, Part B |
-| MCP Lab screens (shell, server list, tool call, monitors, pending-request dialog) | Phase 8 |
+| Light variants                                                                                              | Phase 6, Part B |
+| MCP Lab screens (shell, server list, tool call, monitors, pending-request dialog)                           | Phase 8         |
 
 The token values already in the design doc are enough to start Phase 1; the
 other design tasks can run in parallel with development.
@@ -444,13 +459,13 @@ other design tasks can run in parallel with development.
 
 ## 7. Testing Strategy
 
-| Layer | Test type | Tools |
-| --- | --- | --- |
-| Services, parsers, resolver | Unit tests | `flutter_test` |
-| Repositories | Unit tests with a mocked `SupabaseClient` / Dio | `mocktail` |
-| Providers | Unit tests with `ProviderContainer` and overrides | `flutter_riverpod` |
-| Key screens and widgets | Widget tests in dark and light themes | `flutter_test` |
-| RLS policies and the bootstrap trigger | Manual checks against local Supabase | `supabase start`, `supabase db reset` |
+| Layer                                  | Test type                                         | Tools                                 |
+| -------------------------------------- | ------------------------------------------------- | ------------------------------------- |
+| Services, parsers, resolver            | Unit tests                                        | `flutter_test`                        |
+| Repositories                           | Unit tests with a mocked `SupabaseClient` / Dio   | `mocktail`                            |
+| Providers                              | Unit tests with `ProviderContainer` and overrides | `flutter_riverpod`                    |
+| Key screens and widgets                | Widget tests in dark and light themes             | `flutter_test`                        |
+| RLS policies and the bootstrap trigger | Manual checks against local Supabase              | `supabase start`, `supabase db reset` |
 
 Tests mirror `lib/` under `test/`. Fixtures (cURL samples, Postman files,
 large JSON) go in `test/fixtures/`.
@@ -459,20 +474,20 @@ large JSON) go in `test/fixtures/`.
 
 ## 8. Risks
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Guest session lost on reinstall before signing up | Guest loses access to their data | Prompt guests to sign up (avatar badge / hint in the status bar) |
-| Guest data discarded when signing in to an existing account (D8) | Guest work is lost | Warning dialog before sign-in; merging is post-MVP |
-| OAuth redirect (custom URL scheme) is not delivered on one desktop platform (D9) | Sign-in never completes | Test on all three platforms; the Waiting state has Cancel; fall back to a loopback redirect if a scheme cannot be registered |
-| GitHub is the only sign-in method | Users without GitHub cannot create an account | Accepted for the MVP (developer audience); add other providers later |
-| Orphaned guest rows in the database | Storage grows | Scheduled cleanup of old anonymous users (post-MVP) |
-| Online-only | App is unusable without a network connection | Clear offline error state; revisit local cache (PRD Q2) |
-| Large responses | UI freezes | Background isolate parsing; virtualized editor (`re_editor`); test with 5 MB fixture |
-| Stitch designs still changing | Rework in UI | Build shell and shared widgets from the shell standard first; keep screens thin |
-| RLS mistakes | Data leaks between organizations | Policies written in Phase 1 and checked with two test users locally |
-| Secret values only on one device (D5) | A second computer sees "Not set on this device" | Accepted; the UI says so clearly and the variable stays unresolved |
-| Shared MCP catalog runs a command on another member's device (D11) | Remote code execution | Per-device approval of each command; re-approval on change |
-| `mcp_dart` hides raw frames or protocol steps (D10) | Transcript and MRTR UI not possible | Wrap the transport first in S1; fall back to an in-repo transport for one transport if needed |
+| Risk                                                                             | Impact                                          | Mitigation                                                                                                                   |
+| -------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Guest session lost on reinstall before signing up                                | Guest loses access to their data                | Prompt guests to sign up (avatar badge / hint in the status bar)                                                             |
+| Guest data discarded when signing in to an existing account (D8)                 | Guest work is lost                              | Warning dialog before sign-in; merging is post-MVP                                                                           |
+| OAuth redirect (custom URL scheme) is not delivered on one desktop platform (D9) | Sign-in never completes                         | Test on all three platforms; the Waiting state has Cancel; fall back to a loopback redirect if a scheme cannot be registered |
+| GitHub is the only sign-in method                                                | Users without GitHub cannot create an account   | Accepted for the MVP (developer audience); add other providers later                                                         |
+| Orphaned guest rows in the database                                              | Storage grows                                   | Scheduled cleanup of old anonymous users (post-MVP)                                                                          |
+| Online-only                                                                      | App is unusable without a network connection    | Clear offline error state; revisit local cache (PRD Q2)                                                                      |
+| Large responses                                                                  | UI freezes                                      | Background isolate parsing; virtualized editor (`re_editor`); test with 5 MB fixture                                         |
+| Stitch designs still changing                                                    | Rework in UI                                    | Build shell and shared widgets from the shell standard first; keep screens thin                                              |
+| RLS mistakes                                                                     | Data leaks between organizations                | Policies written in Phase 1 and checked with two test users locally                                                          |
+| Secret values only on one device (D5)                                            | A second computer sees "Not set on this device" | Accepted; the UI says so clearly and the variable stays unresolved                                                           |
+| Shared MCP catalog runs a command on another member's device (D11)               | Remote code execution                           | Per-device approval of each command; re-approval on change                                                                   |
+| `mcp_dart` hides raw frames or protocol steps (D10)                              | Transcript and MRTR UI not possible             | Wrap the transport first in S1; fall back to an in-repo transport for one transport if needed                                |
 
 ---
 

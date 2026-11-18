@@ -44,7 +44,7 @@ class _ShellSidebarState extends ConsumerState<ShellSidebar> {
     return Container(
       width: ShellSidebar.width,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: scheme.surfaceContainer,
         border: Border(right: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Column(
@@ -173,7 +173,7 @@ class _Header extends ConsumerWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   onPressed: () => showImportDialog(context),
-                  icon: const Icon(Icons.file_download_outlined, size: 16),
+                  icon: const Icon(Icons.file_upload_outlined, size: 16),
                   label: const Text('Import', maxLines: 1),
                 ),
               ),

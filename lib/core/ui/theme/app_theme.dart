@@ -4,33 +4,45 @@ import 'package:test_point/core/ui/theme/app_spacing.dart';
 import 'package:test_point/core/ui/theme/http_colors.dart';
 
 /// Material 3 themes seeded from the teal brand color. Dark is the primary theme.
+
 abstract final class AppTheme {
-  static const Color seed = Color(0xFF0F9D8A);
+  static const Color seed = Color(0xFFFF6A00);
+  static const Color darkBackground = Color(0xFF1F1B2E);
 
   static final ThemeData dark = _build(
-    ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark).copyWith(
-      primary: const Color(0xFF0F9D8A),
-      // White on this teal is only 3.4:1; dark text passes WCAG AA.
-      onPrimary: const Color(0xFF00201B),
-      surface: const Color(0xFF0E1513),
-      surfaceContainer: const Color(0xFF161D1B),
-      surfaceContainerHigh: const Color(0xFF1E2624),
-      outline: const Color(0xFF3F4946),
+    ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: seed,
+      onPrimary: const Color(0xFF1F1B2E),
+      surface: darkBackground,
+      onSurface: const Color(0xFFF5F2FA),
+      surfaceContainer: const Color(0xFF292537),
+      surfaceContainerHigh: const Color(0xFF343043),
+      surfaceContainerHighest: const Color(0xFF403B50),
+      outline: const Color(0xFF777184),
     ),
     HttpColors.dark,
-    inputBorder: const Color(0xFF76827E),
+    inputBorder: const Color(0xFF938C9F),
   );
 
   static final ThemeData light = _build(
-    ColorScheme.fromSeed(seedColor: seed).copyWith(
-      primary: const Color(0xFF006B5E),
-      surface: const Color(0xFFF5FBF8),
-      surfaceContainer: const Color(0xFFEAF2EF),
-      surfaceContainerHigh: const Color(0xFFE0EAE6),
-      outline: const Color(0xFFBFC9C5),
+    ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: const Color(0xFFB84D00),
+      onPrimary: Colors.white,
+      surface: const Color(0xFFFFFAF7),
+      onSurface: darkBackground,
+      surfaceContainer: const Color(0xFFF7EEE9),
+      surfaceContainerHigh: const Color(0xFFF0E5DF),
+      surfaceContainerHighest: const Color(0xFFE9DBD4),
+      outline: const Color(0xFF85766F),
     ),
     HttpColors.light,
-    inputBorder: const Color(0xFF6F7A77),
+    inputBorder: const Color(0xFF776960),
   );
 
   static ThemeData _build(
@@ -43,7 +55,9 @@ abstract final class AppTheme {
       colorScheme: scheme,
       fontFamily: AppFonts.ui,
     );
+
     final text = base.textTheme;
+
     return base.copyWith(
       scaffoldBackgroundColor: scheme.surface,
       textTheme: text.copyWith(
@@ -75,8 +89,6 @@ abstract final class AppTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        // WCAG 1.4.11: input boundaries need 3:1 against the surface, which
-        // the subtle divider colour `outline` does not give.
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
           borderSide: BorderSide(color: inputBorder),
@@ -87,13 +99,13 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.dialog),
         ),
       ),
-      // Floating, on theme surfaces; the Material default is a full-width bar
-      // in the inverse colours that covers the status bar.
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         width: 480,
         backgroundColor: scheme.surfaceContainerHighest,
-        contentTextStyle: text.bodyMedium?.copyWith(color: scheme.onSurface),
+        contentTextStyle: text.bodyMedium?.copyWith(
+          color: scheme.onSurface,
+        ),
         actionTextColor: scheme.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),

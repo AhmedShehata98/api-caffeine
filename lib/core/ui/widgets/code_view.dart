@@ -36,7 +36,7 @@ class CodeView extends StatelessWidget {
         style: CodeEditorStyle(
           fontFamily: AppFonts.mono,
           fontSize: 13,
-          backgroundColor: theme.colorScheme.surfaceContainerLow,
+          backgroundColor: theme.colorScheme.surfaceContainer,
           textColor: theme.colorScheme.onSurface,
           codeTheme: highlightJson
               ? CodeHighlightTheme(

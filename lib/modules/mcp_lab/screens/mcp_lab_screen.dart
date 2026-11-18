@@ -370,72 +370,89 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
             (monitor != null && (_view == 'protocol' || _view == transportView))
         ? _view
         : 'settings';
+    final segments = <({String value, String label})>[
+      (value: 'settings', label: 'Settings'),
+      if (services?.supports('tools') ?? false)
+        (value: 'tools', label: 'Tools'),
+      if (services?.supports('prompts') ?? false)
+        (value: 'prompts', label: 'Prompts'),
+      if (services?.supports('resources') ?? false)
+        (value: 'resources', label: 'Resources'),
+      if (monitor != null) ...[
+        (value: 'protocol', label: 'Protocol'),
+        (
+          value: transportView,
+          label: transportView == 'console' ? 'Console' : 'Network',
+        ),
+      ],
+    ];
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (view != 'settings')
-                Expanded(
-                  child: Text(
-                    server.draft.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SegmentedButton<String>(
-                    segments: [
-                      const ButtonSegment(
-                        value: 'settings',
-                        label: Text('Settings'),
+              if (view != 'settings') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        server.draft.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      if (services?.supports('tools') ?? false)
-                        const ButtonSegment(
-                          value: 'tools',
-                          label: Text('Tools'),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton.icon(
+                      onPressed: _busy.contains(server.id)
+                          ? null
+                          : () => _disconnect(server.id),
+                      icon: const Icon(Icons.link_off),
+                      label: const Text('Disconnect'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth >= 720) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: SegmentedButton<String>(
+                        segments: [
+                          for (final segment in segments)
+                            ButtonSegment(
+                              value: segment.value,
+                              label: Text(segment.label),
+                            ),
+                        ],
+                        selected: {view},
+                        onSelectionChanged: (selection) =>
+                            setState(() => _view = selection.single),
+                      ),
+                    );
+                  }
+                  return DropdownMenu<String>(
+                    key: ValueKey(view),
+                    initialSelection: view,
+                    width: constraints.maxWidth,
+                    label: const Text('View'),
+                    onSelected: (value) {
+                      if (value != null) setState(() => _view = value);
+                    },
+                    dropdownMenuEntries: [
+                      for (final segment in segments)
+                        DropdownMenuEntry(
+                          value: segment.value,
+                          label: segment.label,
                         ),
-                      if (services?.supports('prompts') ?? false)
-                        const ButtonSegment(
-                          value: 'prompts',
-                          label: Text('Prompts'),
-                        ),
-                      if (services?.supports('resources') ?? false)
-                        const ButtonSegment(
-                          value: 'resources',
-                          label: Text('Resources'),
-                        ),
-                      if (monitor != null) ...[
-                        const ButtonSegment(
-                          value: 'protocol',
-                          label: Text('Protocol'),
-                        ),
-                        ButtonSegment(
-                          value: transportView,
-                          label: Text(
-                            transportView == 'console' ? 'Console' : 'Network',
-                          ),
-                        ),
-                      ],
                     ],
-                    selected: {view},
-                    onSelectionChanged: (selection) =>
-                        setState(() => _view = selection.single),
-                  ),
-                ),
+                  );
+                },
               ),
-              if (view != 'settings')
-                IconButton(
-                  tooltip: 'Disconnect',
-                  onPressed: _busy.contains(server.id)
-                      ? null
-                      : () => _disconnect(server.id),
-                  icon: const Icon(Icons.link_off),
-                ),
             ],
           ),
         ),
@@ -505,33 +522,36 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
     final draft = server.draft;
     final scheme = Theme.of(context).colorScheme;
     Widget section(String title, List<(String, String)> fields) => Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 20),
-            for (final field in fields)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      field.$1,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    SelectableText(
-                      maskMcpServerText(server, field.$2),
-                      style: const TextStyle(fontFamily: AppFonts.mono),
-                    ),
-                  ],
+      child: ColoredBox(
+        color: scheme.surfaceContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 20),
+              for (final field in fields)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        field.$1,
+                        maxLines: 1,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        maskMcpServerText(server, field.$2),
+                        style: const TextStyle(fontFamily: AppFonts.mono),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

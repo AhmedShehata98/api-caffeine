@@ -475,6 +475,7 @@ class _McpToolsViewState extends ConsumerState<McpToolsView> {
                     value: call.result.structuredContent,
                     copyLabel: 'Copy structured content',
                   ),
+                  const SizedBox(height: 14),
                 ],
                 McpJsonResult(value: call.raw),
               ],
