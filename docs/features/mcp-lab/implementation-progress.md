@@ -12,9 +12,9 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 models (§3.2) | Implemented; unit-tested | Extend as connection implementation requires |
 | S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Stdio platform gaps and remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
-| S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, text/list/object templates, explicit resource/prompt argument completion and Protocol/Network/Console monitors with separate HTTP bodies implemented | Monitor pin/export, preferences, native save-dialog/full desktop review |
-| S1 integration and exit (§3.7) | Seven stdio + twenty HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
+| S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state, monitor actions, persisted Lab preferences and 60-second access-revocation discovery implemented | Native window-close validation; revocation delay includes poll and request time |
+| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, text/list/object templates, explicit resource/prompt argument completion, Protocol/Network/Console monitors, sanitized export and pinned monitor preference implemented | Native save-dialog/full desktop review |
+| S1 integration and exit (§3.7) | Seven stdio + twenty HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, Windows early-parent descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
 | S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
@@ -63,11 +63,10 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Finish monitor pin/export and preferences while the Windows helper approach is blocked.
-2. Revisit Windows descendant cleanup with an approved native execution route; close remaining stdio platform/lifecycle gaps.
-3. Finish wider account/security and remaining S1 fixture-matrix acceptance; remote database deployment remains separate.
-4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
-5. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
+1. Close safe stdio process-lifecycle gaps and widen protocol/account fixture acceptance; Windows early-parent cleanup needs an approved native execution route.
+2. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
+3. Finish wider account/security acceptance; remote database deployment remains separate.
+4. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
 
 ## Protocol negotiation follow-up
 
@@ -1089,6 +1088,13 @@ through direct Process.start invocation, and retains process-group signaling
 during shutdown. Systems without an executable setsid still fail closed with a
 clear setup message. Analysis passes; native macOS/Linux execution was not
 available in this Windows workspace, so those platform checks remain open.
+
+## Progress tracker correction
+
+Updated the phase table and next-step order to include the already-completed
+monitor pin/export, persisted Lab preferences, 60-second access-revocation
+discovery and POSIX `setsid` PATH lookup. Remaining window/native and Windows
+early-parent process-tree gates are still open.
 
 ## Monitor pin and export
 
