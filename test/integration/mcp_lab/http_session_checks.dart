@@ -24,6 +24,7 @@ Future<void> main() async {
   final repository = McpHttpConnectionRepository(
     isAuthorized: (_, _) => authorized,
     clientVersion: '1.0.0-test',
+    listenForLegacyNotifications: false,
   );
   Future<McpSession> connect(McpHttpPeer peer, {bool modern = false}) async {
     final server = McpServer(

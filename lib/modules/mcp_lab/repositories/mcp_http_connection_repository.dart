@@ -33,10 +33,12 @@ class McpHttpConnectionRepository implements McpConnectionRepository {
   McpHttpConnectionRepository({
     required this.isAuthorized,
     required this.clientVersion,
+    this.listenForLegacyNotifications = true,
     McpHttpClientFactory? createClient,
   }) : _createClient = createClient ?? _client;
   final bool Function(McpAccessContext, String serverId) isAuthorized;
   final String clientVersion;
+  final bool listenForLegacyNotifications;
   final McpHttpClientFactory _createClient;
 
   @override
@@ -121,6 +123,7 @@ class McpHttpConnectionRepository implements McpConnectionRepository {
           timeout: target.timeout,
           clientVersion: clientVersion,
           isAuthorized: isAuthorized,
+          listenForLegacyNotifications: listenForLegacyNotifications,
         ),
       );
     } on Object {
@@ -223,6 +226,7 @@ class _HttpSession implements McpSession {
     required this.timeout,
     required this.clientVersion,
     required this.isAuthorized,
+    required this.listenForLegacyNotifications,
   }) : _client = client,
        _mapper = McpErrorMapper(_sanitizer),
        _frames = McpRpcDiagnostics(_sanitizer);
@@ -237,6 +241,9 @@ class _HttpSession implements McpSession {
   final Duration timeout;
   final String clientVersion;
   final bool Function(McpAccessContext, String) isAuthorized;
+  final bool listenForLegacyNotifications;
+  _HttpOperation? _notificationOperation;
+  bool _notificationsAttempted = false;
   final _operations = <_HttpOperation>{};
   final _tasks = <Future<void>>{};
   final _issued = <Object>{};
@@ -316,7 +323,11 @@ class _HttpSession implements McpSession {
     }
     _era = era;
     _version = version;
-    if (era == NegotiatedEra.modern) _sessionId = null;
+    if (era == NegotiatedEra.modern) {
+      _sessionId = null;
+      final listener = _notificationOperation;
+      if (listener != null) _finish(listener, Result.failure(_cancelled));
+    }
     _current = ConnectionStatus.connected(era: era, serverInfo: _serverInfo);
     _status.add(_current);
     return const Result.success(null);
@@ -385,12 +396,156 @@ class _HttpSession implements McpSession {
     }
     final result = await _run(method, params, duration: timeout);
     if (result.isSuccess && method == 'notifications/initialized') {
+      if (!_active()) return Result.failure(_inactive);
       _initialized = true;
+      if (listenForLegacyNotifications && !_notificationsAttempted) {
+        return _openNotificationStream();
+      }
     }
     return result.when(
       success: (_) => const Result.success(null),
       failure: Result.failure,
     );
+  }
+
+  Future<Result<void>> _openNotificationStream() {
+    _notificationsAttempted = true;
+    final operation = _HttpOperation(null, 'notifications/listen');
+    _notificationOperation = operation;
+    final ready = Completer<Result<void>>();
+    final task = _listenForNotifications(operation, ready);
+    _tasks.add(task);
+    unawaited(task.whenComplete(() => _tasks.remove(task)));
+    return ready.future;
+  }
+
+  void _notificationWarning(String message) {
+    if (_closing || _disposed || !isAuthorized(context, serverId)) return;
+    _console.add(ConsoleLine(timestamp: DateTime.now().toUtc(), text: message));
+  }
+
+  Future<void> _listenForNotifications(
+    _HttpOperation operation,
+    Completer<Result<void>> ready,
+  ) async {
+    final headers = _requestHeaders('GET', {})
+      ..remove('content-type')
+      ..['accept'] = 'text/event-stream';
+    final watch = Stopwatch()..start();
+    final body = McpHttpDiagnosticBody();
+    int? status;
+    Map<String, List<String>> responseHeaders = {};
+    McpCoded? terminal;
+    Result<void> outcome = const Result.success(null);
+    // Only header establishment has a request deadline. An established stream
+    // may idle until the session closes; request calls keep their own deadlines.
+    final openingTimer = Timer(timeout, () {
+      if (ready.isCompleted) return;
+      if (!_active()) {
+        ready.complete(Result.failure(_inactive));
+        _finish(operation, Result.failure(_inactive));
+        return;
+      }
+      _notificationWarning(
+        'Optional notification stream opening timed out. Request calls remain available.',
+      );
+      ready.complete(const Result.success(null));
+      _finish(operation, Result.failure(_cancelled));
+    });
+    try {
+      final response = await _client!.get<ResponseBody>(
+        _url.toString(),
+        cancelToken: operation.token,
+        options: Options(
+          responseType: ResponseType.stream,
+          receiveTimeout: Duration.zero,
+          followRedirects: false,
+          validateStatus: (_) => true,
+          headers: headers,
+        ),
+      );
+      openingTimer.cancel();
+      if (!_live(operation)) {
+        await response.data!.stream.listen((_) {}).cancel();
+        return;
+      }
+      status = response.statusCode;
+      responseHeaders = response.headers.map;
+      _sanitizer.headers(responseHeaders);
+      if (status == 401 || status == 403 || status == 404) {
+        final failure = _mapper.http(status!);
+        terminal = failure as McpCoded;
+        outcome = Result.failure(failure);
+        if (status == 404) _sessionId = null;
+        await response.data!.stream.listen((_) {}).cancel();
+      } else if (status == 405) {
+        await response.data!.stream.listen((_) {}).cancel();
+      } else if (status != 200 ||
+          response.headers
+                  .value('content-type')
+                  ?.split(';')
+                  .first
+                  .trim()
+                  .toLowerCase() !=
+              'text/event-stream') {
+        body.truncated = true;
+        _notificationWarning(
+          'Optional notification stream is unavailable. Request calls remain available.',
+        );
+        await response.data!.stream.listen((_) {}).cancel();
+      } else {
+        if (!ready.isCompleted) ready.complete(const Result.success(null));
+        await for (final event in mcpSseEvents(
+          _body(response.data!, operation),
+        )) {
+          if (!_live(operation)) break;
+          final data = event.data;
+          if (data == null || data.isEmpty) continue;
+          final result = await _acceptFrame(
+            data,
+            operation,
+            body,
+            allowResponse: false,
+          );
+          if (result != null && !result.isSuccess) {
+            _notificationWarning(
+              'Could not answer a server request on the optional notification stream.',
+            );
+          }
+        }
+        if (_live(operation)) {
+          _notificationWarning(
+            'Optional notification stream ended. Request calls remain available.',
+          );
+        }
+      }
+    } on Object {
+      body.truncated = true;
+      if (_live(operation)) {
+        _notificationWarning(
+          'Optional notification stream failed. Request calls remain available.',
+        );
+      }
+    } finally {
+      openingTimer.cancel();
+      _captureNetwork(
+        method: 'GET',
+        requestHeaders: headers,
+        responseHeaders: responseHeaders,
+        status: status,
+        body: body,
+        duration: watch.elapsed,
+      );
+      body.clear();
+      _finish(operation, Result.failure(_cancelled));
+      if (identical(_notificationOperation, operation)) {
+        _notificationOperation = null;
+      }
+      if (terminal != null) _disconnect(terminal);
+      if (!ready.isCompleted) {
+        ready.complete(!_active() ? Result.failure(_inactive) : outcome);
+      }
+    }
   }
 
   Future<Result<Map<String, dynamic>>> _run(
@@ -1021,8 +1176,9 @@ class _HttpSession implements McpSession {
   Future<Result<Map<String, dynamic>>?> _acceptFrame(
     String wire,
     _HttpOperation operation,
-    McpHttpDiagnosticBody body,
-  ) async {
+    McpHttpDiagnosticBody body, {
+    bool allowResponse = true,
+  }) async {
     try {
       final value = jsonDecode(wire);
       if (value is! Map<String, dynamic> || value['jsonrpc'] != '2.0') {
@@ -1046,6 +1202,16 @@ class _HttpSession implements McpSession {
           };
         }
         body.add(_frames.record(wire, RpcDirection.incoming));
+        return null;
+      }
+      if (!allowResponse) {
+        body.add(
+          _frames.record(
+            'Ignored a response on the optional notification stream.',
+            RpcDirection.incoming,
+            warning: true,
+          ),
+        );
         return null;
       }
       if (value['id'] is! String && value['id'] is! int) {
@@ -1113,6 +1279,20 @@ class _HttpSession implements McpSession {
     int? status;
     Map<String, List<String>> responseHeaders = {};
     var responseBodyOmitted = false;
+    final replyTimer = identical(_notificationOperation, operation)
+        ? Timer(
+            timeout,
+            () => _finish(
+              operation,
+              Result.failure(
+                McpNetworkFailure(
+                  'The server-request reply timed out.',
+                  code: McpErrorCode.unreachable,
+                ),
+              ),
+            ),
+          )
+        : null;
     Result<void> result;
     try {
       if (!_live(operation)) return Result.failure(_inactive);
@@ -1142,6 +1322,7 @@ class _HttpSession implements McpSession {
             const UnexpectedFailure('MCP client response failed.'),
       );
     } finally {
+      replyTimer?.cancel();
       if (!_disposed && !_closing && isAuthorized(context, serverId)) {
         _sanitizer.headers(responseHeaders);
         final requestBody = McpHttpDiagnosticBody()
@@ -1176,6 +1357,8 @@ class _HttpSession implements McpSession {
   Future<Result<void>> close() => _closeFuture ??= _close();
   Future<Result<void>> _close() async {
     _closing = true;
+    final listener = _notificationOperation;
+    if (listener != null) _finish(listener, Result.failure(_inactive));
     for (final operation in _operations.toList()) {
       _finish(operation, Result.failure(_inactive));
     }

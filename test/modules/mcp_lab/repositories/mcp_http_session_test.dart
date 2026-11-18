@@ -100,6 +100,7 @@ void main() {
     final repository = McpHttpConnectionRepository(
       isAuthorized: (_, _) => authorized?.call() ?? true,
       clientVersion: '1',
+      listenForLegacyNotifications: false,
       createClient: (_, _) => (client ?? Dio())..httpClientAdapter = adapter,
     );
     final result = await repository.connect(

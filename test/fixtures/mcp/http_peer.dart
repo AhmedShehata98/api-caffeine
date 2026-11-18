@@ -25,6 +25,12 @@ class McpHttpPeer {
   int resumeStatus = 200;
   final resumeHeaders = <Map<String, String>>[];
   final _resumeMessages = <String, String>{};
+  bool notificationStream = false;
+  int notificationStatus = 200;
+  final notificationHeaders = <Map<String, String>>[];
+  final notificationOpened = Completer<void>();
+  final notificationReply = Completer<int>();
+  HttpResponse? _notificationResponse;
   String? largeText;
   bool holdCalls = false;
   bool holdDelete = false;
@@ -53,6 +59,27 @@ class McpHttpPeer {
       }
       if (request.method == 'GET') {
         gets++;
+        if (request.headers.value('last-event-id') == null) {
+          final observed = <String, String>{};
+          request.headers.forEach(
+            (key, values) => observed[key] = values.join(','),
+          );
+          notificationHeaders.add(observed);
+          if (notificationStream) {
+            response.statusCode = notificationStatus;
+            if (notificationStatus != 200) {
+              await response.close();
+              return;
+            }
+            response.bufferOutput = false;
+            response.headers.contentType = ContentType('text', 'event-stream');
+            response.add(utf8.encode(': ready\n\n'));
+            await response.flush();
+            _notificationResponse = response;
+            if (!notificationOpened.isCompleted) notificationOpened.complete();
+            return;
+          }
+        }
         if (resumeStreams) {
           final observed = <String, String>{};
           request.headers.forEach(
@@ -85,6 +112,14 @@ class McpHttpPeer {
         (name, values) => observedHeaders[name] = values.join(','),
       );
       headers.add(observedHeaders);
+      if (body['id'] == 'optional-ask' && body['error'] is Map) {
+        if (!notificationReply.isCompleted) {
+          notificationReply.complete(body['error']['code'] as int);
+        }
+        response.statusCode = 202;
+        await response.close();
+        return;
+      }
       if (body['id'] == 'server-request' && body['error'] is Map) {
         response.statusCode = 202;
         await response.close();
@@ -200,6 +235,18 @@ class McpHttpPeer {
     }
   }
 
+  Future<void> sendNotification(Map<String, dynamic> message) async {
+    await notificationOpened.future;
+    _notificationResponse!.add(utf8.encode('data: ${jsonEncode(message)}\n\n'));
+    await _notificationResponse!.flush();
+  }
+
+  Future<void> finishNotifications() async {
+    final response = _notificationResponse;
+    _notificationResponse = null;
+    await response?.close();
+  }
+
   Future<void> close() async {
     if (_disposed) return;
     _disposed = true;
@@ -208,5 +255,6 @@ class McpHttpPeer {
     _held.clear();
     _waitingStream = null;
     _resumeMessages.clear();
+    _notificationResponse = null;
   }
 }

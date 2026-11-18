@@ -625,3 +625,17 @@ slice. It does not add repeated polling, handshake resumption, an independent
 optional GET notification listener or deprecated HTTP+SSE transport. Next: optional
 GET/405 notification-stream compatibility. Windows early-parent descendant cleanup
 and the remaining native/database/S1 gates stay open.
+
+### Optional legacy notification GET progress
+
+Added one optional GET after legacy initialized, enabled by default with a
+request-only repository opt-out. GET 405 is tolerated; terminal auth/session
+statuses invalidate the connection. Notifications use sanitized diagnostics,
+unsupported server requests receive bounded method-not-found replies, and
+unsolicited responses cannot satisfy POST calls. Idle/header deadlines, close,
+protocol switching and access revocation are covered without automatic polling.
+
+All 345 selected tests, five new real notification HTTP groups, seven existing
+HTTP groups, three real 20 MiB checks and analysis pass. This completes the
+optional GET/405 compatibility slice; S3 subscriptions/stream controls and other
+S1 native/database/platform acceptance remain open. Next: deprecated HTTP+SSE.
