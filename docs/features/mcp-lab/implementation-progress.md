@@ -1090,3 +1090,14 @@ access fails, a bounded selectable preview remains available for manual copy.
 Exports cap retained preview text at 64 KiB per capture and stop above 1 MiB;
 the message asks the user to narrow the filter. Full bodies are not implicitly
 loaded into the export.
+
+## Workspace access-revocation discovery
+
+The app lifecycle now refreshes the active workspace's MCP catalog every 60
+seconds. A successful catalog response remains authoritative: server IDs removed
+by RLS are reconciled through the session owner, which revokes operations,
+clears drafts/results/diagnostics, and closes connected or opening sessions.
+Refresh failures do not treat an unavailable database as a revocation. The timer
+stops when the provider is disposed or the account/workspace scope is lost; manual
+refresh remains available. This bounds discovery delay to roughly one minute
+while the app is active, plus the catalog request duration.

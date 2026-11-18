@@ -723,3 +723,12 @@ All 412 selected app tests pass, along with four real HTTP groups covering both
 reference types over legacy/modern JSON/SSE. Analysis is clean and both prompt
 themes were reviewed using ui-ux-pro-max. Tests retain the documented native-hook
 bypass; full S1 acceptance remains open. Next: monitor pin/export and preferences.
+
+### Automatic access-revocation discovery
+
+The app lifecycle now polls the active workspace catalog every 60 seconds. A
+successful RLS-filtered response reconciles server IDs with the session owner;
+removed servers have operations revoked and their processes, drafts, results and
+diagnostics cleaned up. Failed catalog refreshes do not revoke sessions. Polling
+stops when lifecycle scope is unavailable or disposed. Analysis passes; the
+documented unit-test runner was not run for this follow-up.

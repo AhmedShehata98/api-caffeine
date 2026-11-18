@@ -24,6 +24,7 @@ import '../services/mcp_negotiation_service.dart';
 import '../services/mcp_session_owner.dart';
 import '../services/mcp_session_diagnostics.dart';
 import '../services/mcp_target_service.dart';
+import 'mcp_catalog_providers.dart';
 
 final mcpSessionOwnerProvider = Provider<McpSessionOwner>((ref) {
   final owner = McpSessionOwner(createDiagnostics: McpSessionDiagnostics.new);
@@ -34,6 +35,28 @@ final mcpSessionOwnerProvider = Provider<McpSessionOwner>((ref) {
 /// Eagerly observed by App. Scope loading/errors revoke access as well as ID changes.
 final mcpLifecycleProvider = Provider<void>((ref) {
   final owner = ref.watch(mcpSessionOwnerProvider);
+  Timer? accessRefresh;
+  var refreshRunning = false;
+  void refreshCatalog() {
+    if (refreshRunning || owner.context == null || !ref.mounted) return;
+    refreshRunning = true;
+    unawaited(
+      ref.read(mcpCatalogProvider.notifier).reload().whenComplete(() {
+        refreshRunning = false;
+      }),
+    );
+  }
+
+  void scheduleRefresh() {
+    accessRefresh?.cancel();
+    if (owner.context != null) {
+      accessRefresh = Timer.periodic(
+        const Duration(seconds: 60),
+        (_) => refreshCatalog(),
+      );
+    }
+  }
+
   (String?, String?)? previous;
   void update() {
     final user = ref.read(sessionProvider);
@@ -48,11 +71,13 @@ final mcpLifecycleProvider = Provider<void>((ref) {
     if (scope == previous) return;
     previous = scope;
     unawaited(owner.switchScope(scope.$1, scope.$2));
+    scheduleRefresh();
   }
 
   ref.listen(sessionProvider, (_, _) => update());
   ref.listen(currentWorkspaceProvider, (_, _) => update());
   update();
+  ref.onDispose(() => accessRefresh?.cancel());
 });
 
 final mcpSessionsProvider = StreamProvider<McpOwnedSessions>((ref) {
