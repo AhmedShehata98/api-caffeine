@@ -688,3 +688,20 @@ app's bundled monospace font. Analysis is clean and both form themes were review
 with ui-ux-pro-max. This completes the composite-input slice; resource-template
 server completion is the next separate capability-gated slice. Monitor/preferences,
 Windows/native and other S1 acceptance gaps remain open.
+
+### Resource-template completion progress
+
+Added explicit capability-gated Suggest actions for included Text template
+arguments. Requests retain the original `ref/resource` template and send the
+current text plus other included Text values as completion context. Composite
+values remain editable but are not coerced into string completion arguments.
+Bounded result decoding preserves ordering/total/hasMore and maps malformed
+results to failures. Choosing a suggestion updates the URI preview without
+reading; any argument edit or session/template disposal discards old suggestions.
+
+All 396 selected app tests, four real legacy/modern HTTP JSON/SSE completion cases,
+seven existing HTTP session groups and five notification groups pass; static
+analysis is clean. Both themes and keyboard selection were reviewed with
+ui-ux-pro-max. Tests retain the documented native-hook bypass. See the progress
+tracker for exact bounds and limitations. Prompt-argument completion is next,
+followed by monitor pin/export and preferences; full S1 acceptance remains open.

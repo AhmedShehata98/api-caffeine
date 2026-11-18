@@ -25,6 +25,7 @@ class _Session implements McpSession {
   String binaryMime = 'application/octet-stream';
   String blob = 'AID/AA==';
   String uriTemplate = 'weather://{city}';
+  Future<Result<Map<String, dynamic>>> Function()? complete;
   @override
   Future<Result<Map<String, dynamic>>> request(
     String method,
@@ -33,6 +34,17 @@ class _Session implements McpSession {
     Duration? timeout,
   }) async {
     calls.add((method, params));
+    if (method == 'completion/complete') {
+      return complete == null
+          ? const Result.success({
+              'completion': {
+                'values': ['Lisbon', 'Lille'],
+                'total': 10,
+                'hasMore': true,
+              },
+            })
+          : complete!();
+    }
     if (method == 'resources/list') {
       return Result.success(
         params['cursor'] == null
@@ -382,6 +394,314 @@ void main() {
     await tester.tap(find.text('Include x'));
     await tester.pumpAndSettle();
   }
+
+  Future<void> enableCompletions() async {
+    await owner.disconnect('s');
+    await owner.run(
+      's',
+      (_) async => Result.success(
+        McpConnected(
+          session,
+          McpNegotiation(
+            era: NegotiatedEra.legacy,
+            version: '2025-11-25',
+            discovery: {
+              'capabilities': {'resources': {}, 'completions': {}},
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> suggest(WidgetTester tester, {bool settle = true}) async {
+    final button = find.text('Suggest x');
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
+  }
+
+  for (final light in [false, true]) {
+    testWidgets(
+      '${light ? 'light' : 'dark'} explicit completion selects text without reading',
+      (tester) async {
+        await enableCompletions();
+        session.uriTemplate = 'weather://{x}';
+        await pump(tester, light: light);
+        await tester.tap(find.text('Templates (1)'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('City template'));
+        await tester.pump();
+        await tester.tap(find.text('Include x'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.widgetWithText(TextFormField, 'x'), 'Li');
+        await tester.pump();
+        expect(
+          session.calls.where((c) => c.$1 == 'completion/complete'),
+          isEmpty,
+        );
+        await suggest(tester);
+        expect(find.text('2 suggestions of 10'), findsOneWidget);
+        expect(
+          find.textContaining('More matches are available.'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        if (const bool.fromEnvironment('MCP_UI_SCREENSHOTS')) {
+          await tester.runAsync(() async {
+            final rendered =
+                await (boundary.currentContext!.findRenderObject()
+                        as RenderRepaintBoundary)
+                    .toImage();
+            final bytes = await rendered.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            await File(
+              '.dart_tool/mcp_completion_${light ? 'light' : 'dark'}.png',
+            ).writeAsBytes(bytes!.buffer.asUint8List());
+            rendered.dispose();
+          });
+        }
+        // Suggestion rows are keyboard reachable as well as clickable.
+        await tester.ensureVisible(find.text('Lisbon'));
+        if (light) {
+          await tester.tap(find.text('Lisbon'));
+        } else {
+          Focus.of(tester.element(find.text('Lisbon'))).requestFocus();
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        }
+        await tester.pumpAndSettle();
+        expect(find.text('2 suggestions of 10'), findsNothing);
+        expect(
+          tester
+              .widget<TextField>(find.widgetWithText(TextField, 'Resource URI'))
+              .controller!
+              .text,
+          'weather://Lisbon',
+        );
+        expect(
+          tester
+              .widget<TextFormField>(find.widgetWithText(TextFormField, 'x'))
+              .controller!
+              .text,
+          'Lisbon',
+        );
+        expect(
+          owner.workFor('s')!.resourceTemplate.state.draft!.values['x']!.text,
+          'Lisbon',
+        );
+        expect(session.calls.where((c) => c.$1 == 'resources/read'), isEmpty);
+        await read(tester);
+        expect(session.calls.last.$1, 'resources/read');
+        expect(session.calls.last.$2, {'uri': 'weather://Lisbon'});
+      },
+    );
+  }
+
+  testWidgets(
+    'unsupported servers and composite fields do not offer completion',
+    (tester) async {
+      await templateInput(tester, 'weather://{x}');
+      expect(find.text('Suggest x'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await enableCompletions();
+      await pump(tester);
+      await tester.tap(find.text('Templates (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('City template'));
+      await tester.pump();
+      await tester.tap(find.text('Include x'));
+      await tester.pumpAndSettle();
+      expect(find.text('Suggest x'), findsOneWidget);
+      await chooseType(tester, 'List');
+      expect(find.text('Suggest x'), findsNothing);
+      expect(
+        session.calls.where((c) => c.$1 == 'completion/complete'),
+        isEmpty,
+      );
+    },
+  );
+
+  testWidgets('completion shows failure and empty results and supports retry', (
+    tester,
+  ) async {
+    await enableCompletions();
+    await templateInput(tester, 'weather://{x}');
+    session.complete = () async =>
+        const Result.failure(NetworkFailure('Completion unavailable.'));
+    await suggest(tester);
+    expect(find.text('Completion unavailable.'), findsOneWidget);
+    session.complete = () async => const Result.success({
+      'completion': {'values': []},
+    });
+    await suggest(tester);
+    expect(find.text('Completion unavailable.'), findsNothing);
+    expect(find.text('No suggestions returned.'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, 'x'), 'new');
+    await tester.pump();
+    expect(find.text('No suggestions returned.'), findsNothing);
+  });
+
+  testWidgets(
+    'editing another argument discards pending suggestions and sends fresh context',
+    (tester) async {
+      await enableCompletions();
+      await templateInput(tester, 'weather://{x}{?country}');
+      await tester.tap(find.text('Include country'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'country'),
+        'Portugal',
+      );
+      await tester.pump();
+      final pending = Completer<Result<Map<String, dynamic>>>();
+      session.complete = () => pending.future;
+      await suggest(tester, settle: false);
+      expect(find.text('Loading suggestions…'), findsOneWidget);
+      expect(session.calls.last.$2['context'], {
+        'arguments': {'country': 'Portugal'},
+      });
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'country'),
+        'France',
+      );
+      await tester.pump();
+      pending.complete(
+        const Result.success({
+          'completion': {
+            'values': ['stale suggestion'],
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('stale suggestion'), findsNothing);
+      session.complete = null;
+      await suggest(tester);
+      expect(session.calls.last.$2['context'], {
+        'arguments': {'country': 'France'},
+      });
+      expect(find.text('Lisbon'), findsOneWidget);
+    },
+  );
+
+  testWidgets('typing while completion is pending drops its late response', (
+    tester,
+  ) async {
+    await enableCompletions();
+    await templateInput(tester, 'weather://{x}');
+    final pending = Completer<Result<Map<String, dynamic>>>();
+    session.complete = () => pending.future;
+    await suggest(tester, settle: false);
+    await tester.enterText(find.widgetWithText(TextFormField, 'x'), 'fresh');
+    await tester.pump();
+    pending.complete(
+      const Result.success({
+        'completion': {
+          'values': ['old value'],
+        },
+      }),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('old value'), findsNothing);
+    expect(find.text('Loading suggestions…'), findsNothing);
+    expect(
+      owner.workFor('s')!.resourceTemplate.state.draft!.values['x']!.text,
+      'fresh',
+    );
+  });
+
+  testWidgets(
+    'suggestions are transient while text drafts survive remounting',
+    (tester) async {
+      await enableCompletions();
+      await templateInput(tester, 'weather://{x}');
+      await tester.enterText(find.widgetWithText(TextFormField, 'x'), 'Li');
+      await tester.pump();
+      await suggest(tester);
+      expect(find.text('Lisbon'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await pump(tester);
+      expect(find.text('Lisbon'), findsNothing);
+      expect(
+        tester
+            .widget<TextFormField>(find.widgetWithText(TextFormField, 'x'))
+            .controller!
+            .text,
+        'Li',
+      );
+      expect(
+        session.calls.where((c) => c.$1 == 'completion/complete'),
+        hasLength(1),
+      );
+    },
+  );
+
+  testWidgets(
+    'manual URI editing disposes pending completion without changing the URI',
+    (tester) async {
+      await enableCompletions();
+      await templateInput(tester, 'weather://{x}');
+      final pending = Completer<Result<Map<String, dynamic>>>();
+      session.complete = () => pending.future;
+      await suggest(tester, settle: false);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Resource URI'),
+        'weather://manual',
+      );
+      await tester.pump();
+      pending.complete(
+        const Result.success({
+          'completion': {
+            'values': ['late value'],
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('late value'), findsNothing);
+      expect(find.text('Suggest x'), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.widgetWithText(TextField, 'Resource URI'))
+            .controller!
+            .text,
+        'weather://manual',
+      );
+      expect(session.calls.where((c) => c.$1 == 'resources/read'), isEmpty);
+    },
+  );
+
+  testWidgets('scope changes dispose visible and pending completion data', (
+    tester,
+  ) async {
+    await enableCompletions();
+    await templateInput(tester, 'weather://{x}');
+    await suggest(tester);
+    expect(find.text('Lisbon'), findsOneWidget);
+    final pending = Completer<Result<Map<String, dynamic>>>();
+    session.complete = () => pending.future;
+    await suggest(tester, settle: false);
+    await tester.runAsync(
+      () => owner.switchScope('another-user', 'another-workspace'),
+    );
+    await tester.pump();
+    pending.complete(
+      const Result.success({
+        'completion': {
+          'values': ['private city'],
+        },
+      }),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('private city'), findsNothing);
+    expect(find.text('Lisbon'), findsNothing);
+    expect(find.text('Suggest x'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'list template input expands repeated query values and only Read sends',

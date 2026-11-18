@@ -49,6 +49,237 @@ void main() {
       isAuthorized: () => current,
     );
   });
+  McpPrimitiveServices completions({
+    NegotiatedEra era = NegotiatedEra.legacy,
+  }) => McpPrimitiveServices(
+    session,
+    McpNegotiation(
+      era: era,
+      version: era == NegotiatedEra.legacy ? '2025-11-25' : '2026-07-28',
+      discovery: {
+        'capabilities': {'completions': {}},
+      },
+    ),
+    isAuthorized: () => current,
+  );
+
+  test(
+    'resource completion requires an advertised capability before sending',
+    () async {
+      final result = await services.resources.completeTemplate(
+        'weather://{city}',
+        'city',
+        {'city': const McpUriTemplateInput('Li')},
+      );
+      expect(
+        (result.failureOrNull as McpCoded).code,
+        McpErrorCode.missingCapability,
+      );
+      expect(session.calls, isEmpty);
+    },
+  );
+  for (final era in NegotiatedEra.values) {
+    test(
+      '$era resource completion uses the template reference and text context',
+      () async {
+        final input = <String, McpUriTemplateInput>{
+          'city': const McpUriTemplateInput('Li'),
+          'country': const McpUriTemplateInput('Portugal'),
+          'blank': const McpUriTemplateInput(''),
+          'tags': const McpUriTemplateInput(
+            '["warm"]',
+            kind: McpUriTemplateInputKind.list,
+          ),
+        };
+        session.respond = (_, _) async => Result.success({
+          if (era == NegotiatedEra.modern) 'resultType': 'complete',
+          'completion': {
+            'values': ['Lisbon', 'Lille', ''],
+            'total': 10,
+            'hasMore': true,
+          },
+        });
+        final result = await completions(era: era).resources.completeTemplate(
+          'weather://{city}{?country,blank,tags*}',
+          'city',
+          input,
+        );
+        expect(result.valueOrNull!.values, ['Lisbon', 'Lille', '']);
+        expect(result.valueOrNull!.total, 10);
+        expect(result.valueOrNull!.hasMore, isTrue);
+        expect(
+          () => result.valueOrNull!.values.add('x'),
+          throwsUnsupportedError,
+        );
+        expect(session.calls.single.$1, 'completion/complete');
+        expect(session.calls.single.$2, {
+          'ref': {
+            'type': 'ref/resource',
+            'uri': 'weather://{city}{?country,blank,tags*}',
+          },
+          'argument': {'name': 'city', 'value': 'Li'},
+          'context': {
+            'arguments': {'country': 'Portugal', 'blank': ''},
+          },
+        });
+        input['country'] = const McpUriTemplateInput('changed');
+        expect(session.calls.single.$2['context'], {
+          'arguments': {'country': 'Portugal', 'blank': ''},
+        });
+      },
+    );
+  }
+  test('invalid completion inputs fail locally and never send', () async {
+    final resource = completions().resources;
+    for (final inputs in <Map<String, McpUriTemplateInput>>[
+      {},
+      {
+        'city': const McpUriTemplateInput(
+          '[]',
+          kind: McpUriTemplateInputKind.list,
+        ),
+      },
+      {'city': McpUriTemplateInput('x' * 4097)},
+      {'city': McpUriTemplateInput('雪' * 1400)},
+      {
+        'city': const McpUriTemplateInput(''),
+        'extra': const McpUriTemplateInput(''),
+      },
+      {
+        'city': const McpUriTemplateInput(''),
+        'tags': const McpUriTemplateInput(
+          '[',
+          kind: McpUriTemplateInputKind.list,
+        ),
+      },
+    ]) {
+      expect(
+        (await resource.completeTemplate(
+          'weather://{city}{?tags}',
+          'city',
+          inputs,
+        )).isSuccess,
+        isFalse,
+      );
+    }
+    expect(
+      (await resource.completeTemplate('weather://{city}', 'unknown', {
+        'unknown': const McpUriTemplateInput(''),
+      })).isSuccess,
+      isFalse,
+    );
+    expect(
+      (await resource.completeTemplate('weather://{', 'city', {
+        'city': const McpUriTemplateInput(''),
+      })).isSuccess,
+      isFalse,
+    );
+    expect(session.calls, isEmpty);
+  });
+  test(
+    'malformed or oversized completion results return typed failures',
+    () async {
+      for (final completion in <Object?>[
+        null,
+        [],
+        {},
+        {'values': 'x'},
+        {
+          'values': [1],
+        },
+        {'values': List.filled(101, 'x')},
+        {
+          'values': ['x' * 4097],
+        },
+        {
+          'values': ['雪' * 1400],
+        },
+        {'values': List.filled(17, 'x' * 4096)},
+        {'values': [], 'total': -1},
+        {'values': [], 'total': 1.5},
+        {'values': [], 'hasMore': 'true'},
+      ]) {
+        session.respond = (_, _) async =>
+            Result.success({'completion': completion});
+        final result = await completions().resources.completeTemplate(
+          'weather://{city}',
+          'city',
+          {'city': const McpUriTemplateInput('')},
+        );
+        expect(
+          (result.failureOrNull as McpCoded).code,
+          McpErrorCode.invalidParams,
+        );
+      }
+      session.respond = (_, _) async => const Result.success({
+        'resultType': 'input_required',
+        'completion': {'values': []},
+      });
+      expect(
+        (await completions().resources.completeTemplate(
+          'weather://{city}',
+          'city',
+          {'city': const McpUriTemplateInput('')},
+        )).isSuccess,
+        isFalse,
+      );
+    },
+  );
+  test(
+    'empty completion defaults and transport failures are preserved',
+    () async {
+      final resource = completions().resources;
+      session.respond = (_, _) async => const Result.success({
+        'completion': {'values': []},
+      });
+      final empty = (await resource.completeTemplate(
+        'weather://{city}',
+        'city',
+        {'city': const McpUriTemplateInput('')},
+      )).valueOrNull!;
+      expect(empty.values, isEmpty);
+      expect(empty.hasMore, isFalse);
+      expect(empty.total, isNull);
+      const failure = McpValidationFailure(
+        'Method not found',
+        code: McpErrorCode.invalidParams,
+      );
+      session.respond = (_, _) async => const Result.failure(failure);
+      expect(
+        (await resource.completeTemplate('weather://{city}', 'city', {
+          'city': const McpUriTemplateInput(''),
+        })).failureOrNull,
+        same(failure),
+      );
+    },
+  );
+  test(
+    'completion rejects stale requests and discards replies after revocation',
+    () async {
+      final pending = Completer<Result<Map<String, dynamic>>>();
+      session.respond = (_, _) => pending.future;
+      final resource = completions().resources;
+      final request = resource.completeTemplate('weather://{city}', 'city', {
+        'city': const McpUriTemplateInput(''),
+      });
+      current = false;
+      pending.complete(
+        const Result.success({
+          'completion': {
+            'values': ['private city'],
+          },
+        }),
+      );
+      expect((await request).isSuccess, isFalse);
+      expect(
+        (await resource.completeTemplate('weather://{city}', 'city', {
+          'city': const McpUriTemplateInput(''),
+        })).isSuccess,
+        isFalse,
+      );
+      expect(session.calls, hasLength(1));
+    },
+  );
   test(
     'schema-aware form calls block invalid fields and normalize before send',
     () async {

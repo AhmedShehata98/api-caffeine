@@ -13,8 +13,8 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Stdio platform gaps and remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, text/list/object templates and Protocol/Network/Console monitors with separate HTTP bodies implemented | Server argument completion, monitor pin/export, native save-dialog/full desktop review |
-| S1 integration and exit (§3.7) | Seven stdio + sixteen HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
+| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, text/list/object templates with explicit Text completion and Protocol/Network/Console monitors with separate HTTP bodies implemented | Prompt argument completion, monitor pin/export, native save-dialog/full desktop review |
+| S1 integration and exit (§3.7) | Seven stdio + twenty HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
 | S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
@@ -40,7 +40,7 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected app regression run passes **380** tests (374 MCP and six desktop shutdown cases), followed by 25 affected Resources widget checks after the final font adjustment. The preceding database slice passed 33 transactional pgTAP assertions and three real REST/repository tests against a fresh isolated stack. This URI/form slice does not change database or transport code. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected app regression run passes **396** tests (390 MCP and six desktop shutdown cases). Four new real HTTP completion cases cover both eras over JSON and SSE, and the existing seven HTTP session plus five notification groups pass with the extended fixture. The preceding database slice passed 33 transactional pgTAP assertions and three real REST/repository tests against a fresh isolated stack. This completion slice does not change database or production transport code. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **seven loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, large sanitized request/response captures over JSON/SSE, and legacy response resumption with concurrent cursor isolation/refusal recovery. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - `dart test/integration/mcp_lab/large_payload_checks.dart` passes three real stdio/HTTP JSON/SSE checks: a 20 MiB embedded binary result, bounded diagnostics, off-isolate preview metadata and decode, and byte-exact file export. Stdio framing overflow is also rejected. The exporter uses a test file destination, not a native dialog; native UI responsiveness remains unverified.
@@ -63,7 +63,7 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Add capability-gated resource-template completion and remaining monitor/preferences features while the Windows helper approach is blocked.
+1. Add prompt-argument completion and remaining monitor/preferences features while the Windows helper approach is blocked.
 2. Revisit Windows descendant cleanup with an approved native execution route; close remaining stdio platform/lifecycle gaps.
 3. Finish wider account/security and remaining S1 fixture-matrix acceptance; remote database deployment remains separate.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
@@ -1005,3 +1005,39 @@ draft blocking, manual fallback and scope cleanup. Both final dark/light form
 renders were reviewed using ui-ux-pro-max, with existing app colors and fonts.
 This completes composite template editing/expansion, not server-provided argument
 completion or full S1/native acceptance. Next: capability-gated template completion.
+
+## Explicit resource-template completion
+
+Included Text arguments now offer a Suggest action when the live server advertises
+`completions`. It sends `completion/complete` with a `ref/resource` pointing to the
+original template, the current argument text, and other included Text arguments
+as `context.arguments`. List/object values are not coerced into string context;
+invalid input shapes and exceeded input budgets fail locally. No completion RPC
+runs merely from typing, selecting a template, remounting, or connecting.
+
+Completion responses preserve server ordering, optional totals and `hasMore`, with
+at most 100 strings, 4 KiB UTF-8 per value and 64 KiB total retained suggestion
+text. Malformed results return a typed failure. A bounded, keyboard-accessible
+list shows loading/error/empty states and supports explicit retry. Choosing a
+suggestion updates the Text draft and URI preview; reading remains an explicit
+Read/Ctrl+Enter action. `hasMore` asks the user to refine the text, not paginate.
+
+Suggestions are field-local and memory-only. Any argument edit, type/include
+change, template/manual-URI change, remount or session/scope replacement clears
+them and invalidates pending responses. The service also checks authorization
+before sending and after receiving; no result is cached or automatically saved.
+
+Validation: all 396 selected app tests pass, including 16 new service/widget
+cases for capability gating, context, bounded decoding, stale authorization and
+edits, retry/empty states, keyboard selection, draft retention and disposal.
+Four real loopback HTTP cases verify legacy/modern completion over JSON/SSE,
+session/version or modern routing metadata, diagnostic redaction, rate limits and
+no implicit read/retry. The existing seven HTTP session and five notification
+groups still pass. Analysis is clean; dark/light screenshots were reviewed using
+ui-ux-pro-max. Unit/widget checks still use the documented native-hook bypass.
+
+Wire shapes follow the official [legacy completion specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-11-25/server/utilities/completion.mdx)
+and [modern completion specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2026-07-28/server/utilities/completion.mdx).
+Production transport code and database schema are unchanged. Prompt completion,
+monitor pin/export, preferences and the existing platform/security/native S1 exit
+gates remain open. Next: prompt-argument completion, then monitors/preferences.

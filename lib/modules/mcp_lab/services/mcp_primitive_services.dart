@@ -8,9 +8,50 @@ import 'package:test_point/core/error/result.dart';
 import '../models/mcp_failure.dart';
 import '../models/mcp_protocol_models.dart';
 import '../models/mcp_schema_form.dart';
+import '../models/mcp_uri_template_input.dart';
 import '../repositories/mcp_connection_repository.dart';
 import 'mcp_negotiation_service.dart';
 import 'schema_form_builder.dart';
+import 'mcp_uri_template.dart';
+
+class McpCompletion {
+  McpCompletion(List<String> values, {this.total, this.hasMore = false})
+    : values = List.unmodifiable(values);
+  final List<String> values;
+  final int? total;
+  final bool hasMore;
+
+  factory McpCompletion.fromJson(Map<String, dynamic> json) {
+    final completion = json['completion'];
+    if ((json['resultType'] != null && json['resultType'] != 'complete') ||
+        completion is! Map) {
+      throw const FormatException();
+    }
+    final values = completion['values'];
+    final total = completion['total'];
+    final hasMore = completion['hasMore'];
+    if (values is! List ||
+        values.length > 100 ||
+        (total != null && (total is! int || total < 0)) ||
+        (hasMore != null && hasMore is! bool)) {
+      throw const FormatException();
+    }
+    var bytes = 0;
+    for (final value in values) {
+      if (value is! String || value.length > 4096) {
+        throw const FormatException();
+      }
+      final size = utf8.encode(value).length;
+      bytes += size;
+      if (size > 4096 || bytes > 64 * 1024) throw const FormatException();
+    }
+    return McpCompletion(
+      values.cast<String>(),
+      total: total as int?,
+      hasMore: hasMore as bool? ?? false,
+    );
+  }
+}
 
 class McpPage<T> {
   McpPage(List<T> items, this.nextCursor) : items = List.unmodifiable(items);
@@ -244,6 +285,44 @@ class McpToolService {
 class McpResourceService {
   McpResourceService._(this._client);
   final _PrimitiveClient _client;
+
+  /// Completion is explicit and never reads a resource. Only included text
+  /// arguments can be represented by the protocol's string-valued context.
+  Future<Result<McpCompletion>> completeTemplate(
+    String source,
+    String name,
+    Map<String, McpUriTemplateInput> inputs,
+  ) async {
+    final template = McpUriTemplate.parse(source).valueOrNull;
+    final input = inputs[name];
+    if (template == null ||
+        !template.variables.contains(name) ||
+        input == null ||
+        input.kind != McpUriTemplateInputKind.text ||
+        inputs.keys.any((key) => !template.variables.contains(key))) {
+      return const Result.failure(_invalidCompletion);
+    }
+    final arguments = <String, String>{};
+    for (final entry in inputs.entries) {
+      if (!McpUriTemplate.parseInput(entry.value).isSuccess) {
+        return const Result.failure(_invalidCompletion);
+      }
+      if (entry.key != name &&
+          entry.value.kind == McpUriTemplateInputKind.text) {
+        arguments[entry.key] = entry.value.text;
+      }
+    }
+    return _client.request('completions', 'completion/complete', {
+      'ref': {'type': 'ref/resource', 'uri': source},
+      'argument': {'name': name, 'value': input.text},
+      if (arguments.isNotEmpty) 'context': {'arguments': arguments},
+    }, McpCompletion.fromJson);
+  }
+
+  static const _invalidCompletion = McpValidationFailure(
+    'Choose an included Text argument and provide valid template inputs before requesting suggestions.',
+    code: McpErrorCode.invalidParams,
+  );
   Future<Result<McpPage<McpResource>>> list({String? cursor}) => _client.page(
     'resources',
     'resources/list',

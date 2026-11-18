@@ -19,6 +19,7 @@ class McpHttpPeer {
   Object? _waitingId;
   bool expired = false;
   bool sse = false;
+  bool completionSupport = false;
   bool cutStream = false;
   bool malformed = false;
   bool resumeStreams = false;
@@ -154,14 +155,23 @@ class McpHttpPeer {
         response.headers.set('mcp-session-id', 'fixture-session');
         result = {
           'protocolVersion': '2025-11-25',
-          'capabilities': {},
+          'capabilities': {if (completionSupport) 'completions': {}},
           'serverInfo': {'name': 'http-peer', 'version': '1'},
         };
       } else if (method == 'server/discover') {
         result = {
           'supportedVersions': ['2026-07-28'],
-          'capabilities': {},
+          'capabilities': {if (completionSupport) 'completions': {}},
           'serverInfo': {'name': 'http-peer', 'version': '1'},
+        };
+      } else if (method == 'completion/complete' && completionSupport) {
+        result = {
+          if (body['params']['_meta'] != null) 'resultType': 'complete',
+          'completion': {
+            'values': ['Lisbon', '雪', secret],
+            'total': 5,
+            'hasMore': true,
+          },
         };
       } else {
         if (holdCalls) {

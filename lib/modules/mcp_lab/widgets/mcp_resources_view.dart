@@ -266,6 +266,10 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
             const SizedBox(height: 24),
             if (_template case final template?)
               McpUriTemplateForm(
+                key: ObjectKey(
+                  ref.watch(mcpSessionWorkProvider(widget.serverId)),
+                ),
+                serverId: widget.serverId,
                 template: template,
                 values: _templateValues,
                 enabled: active && !running,

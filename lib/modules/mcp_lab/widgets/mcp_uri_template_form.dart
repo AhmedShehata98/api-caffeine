@@ -3,6 +3,7 @@ import 'package:test_point/core/ui/theme/app_fonts.dart';
 
 import '../services/mcp_uri_template.dart';
 import '../models/mcp_uri_template_input.dart';
+import 'mcp_template_text_input.dart';
 
 class McpUriTemplateForm extends StatelessWidget {
   const McpUriTemplateForm({
@@ -10,12 +11,14 @@ class McpUriTemplateForm extends StatelessWidget {
     required this.values,
     required this.onChanged,
     required this.enabled,
+    required this.serverId,
     super.key,
   });
   final McpUriTemplate template;
   final Map<String, McpUriTemplateInput> values;
   final ValueChanged<Map<String, McpUriTemplateInput>> onChanged;
   final bool enabled;
+  final String serverId;
   @override
   Widget build(BuildContext context) {
     final latest = Map<String, McpUriTemplateInput>.of(values);
@@ -107,30 +110,41 @@ class McpUriTemplateForm extends StatelessWidget {
                 },
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          key: ValueKey((template.source, name, input.kind)),
-          initialValue: input.text,
-          enabled: enabled,
-          maxLength: 4096,
-          style: input.kind == McpUriTemplateInputKind.text
-              ? null
-              : const TextStyle(fontFamily: AppFonts.mono),
-          minLines: input.kind == McpUriTemplateInputKind.text ? 1 : 2,
-          maxLines: input.kind == McpUriTemplateInputKind.text ? 1 : 4,
-          decoration: InputDecoration(
-            labelText: name,
-            helperText: switch (input.kind) {
-              McpUriTemplateInputKind.text => null,
-              McpUriTemplateInputKind.list =>
-                'JSON list, for example ["a", "b"].',
-              McpUriTemplateInputKind.object =>
-                'JSON object, for example {"key": "value"}.',
-            },
-            errorText: McpUriTemplate.parseInput(input).failureOrNull?.message,
+        if (input.kind == McpUriTemplateInputKind.text)
+          McpTemplateTextInput(
+            key: ValueKey((serverId, template.source, name)),
+            serverId: serverId,
+            template: template.source,
+            name: name,
+            inputs: values,
+            enabled: enabled,
+            onChanged: (text) => changed(McpUriTemplateInput(text)),
+          )
+        else
+          TextFormField(
+            key: ValueKey((template.source, name, input.kind)),
+            initialValue: input.text,
+            enabled: enabled,
+            maxLength: 4096,
+            style: const TextStyle(fontFamily: AppFonts.mono),
+            minLines: 2,
+            maxLines: 4,
+            decoration: InputDecoration(
+              labelText: name,
+              helperText: switch (input.kind) {
+                McpUriTemplateInputKind.text => null,
+                McpUriTemplateInputKind.list =>
+                  'JSON list, for example ["a", "b"].',
+                McpUriTemplateInputKind.object =>
+                  'JSON object, for example {"key": "value"}.',
+              },
+              errorText: McpUriTemplate.parseInput(input)
+                  .failureOrNull
+                  ?.message,
+            ),
+            onChanged: (value) =>
+                changed(McpUriTemplateInput(value, kind: input.kind)),
           ),
-          onChanged: (value) =>
-              changed(McpUriTemplateInput(value, kind: input.kind)),
-        ),
       ],
     );
   }
