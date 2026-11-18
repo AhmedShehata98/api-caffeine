@@ -170,7 +170,7 @@ Failure mapAuthError(Object error) {
   if (error is supabase.AuthException) {
     final text = '${error.code} ${error.statusCode} ${error.message}'
         .toLowerCase();
-    // The GitHub account (or its email) already belongs to a Test Point user.
+    // The GitHub account (or its email) already belongs to an API Caffeine user.
     if (text.contains('identity_already_exists') ||
         text.contains('already linked') ||
         text.contains('email_exists') ||

@@ -1,8 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Test Point
+Name=API Caffeine
 Comment=API integration and testing
 Exec=test_point %u
+Icon=com.example.test_point
 Terminal=false
 Categories=Development;
 MimeType=x-scheme-handler/testpoint;

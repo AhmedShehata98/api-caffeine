@@ -17,6 +17,7 @@ class ResizableSplitPane extends StatefulWidget {
     this.initialRatio = 0.55,
     this.minFirstSize = 0,
     this.minSecondSize = 0,
+    this.onRatioChanged,
     super.key,
   }) : assert(initialRatio > 0 && initialRatio < 1);
 
@@ -35,6 +36,7 @@ class ResizableSplitPane extends StatefulWidget {
   /// Smallest size, in logical pixels, of each panel along [axis].
   final double minFirstSize;
   final double minSecondSize;
+  final ValueChanged<double>? onRatioChanged;
 
   /// Thickness of the handle, which is also its interaction area.
   static const double handleThickness = 12;
@@ -77,6 +79,7 @@ class _ResizableSplitPaneState extends State<ResizableSplitPane> {
           setState(() {
             final current = (_ratio * available).clamp(min, max);
             _ratio = (current + delta).clamp(min, max) / available;
+            widget.onRatioChanged?.call(_ratio);
           });
         }
 
@@ -93,7 +96,10 @@ class _ResizableSplitPaneState extends State<ResizableSplitPane> {
             _Handle(
               axis: widget.axis,
               onDrag: dragBy,
-              onReset: () => setState(() => _ratio = widget.initialRatio),
+              onReset: () => setState(() {
+                _ratio = widget.initialRatio;
+                widget.onRatioChanged?.call(_ratio);
+              }),
             ),
             Expanded(child: widget.second),
           ],

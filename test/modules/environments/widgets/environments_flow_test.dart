@@ -221,6 +221,61 @@ void main() {
       ]);
     });
 
+    testWidgets('a secret set on another device says so', (tester) async {
+      final store = FakeStore(
+        environments: const [
+          Environment(
+            id: 'dev',
+            workspaceId: 'ws-1',
+            name: 'Dev',
+            variables: [EnvironmentVariable(key: 'token', secret: true)],
+          ),
+        ],
+      );
+      await open(tester, store);
+      await tester.tap(
+        find.descendant(of: find.byType(ListTile), matching: find.text('Dev')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.widgetWithText(TextField, 'Not set on this device'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('making a secret public asks first and then syncs it', (
+      tester,
+    ) async {
+      final store = _store();
+      await open(tester, store);
+      await tester.tap(
+        find.descendant(of: find.byType(ListTile), matching: find.text('Dev')),
+      );
+      await tester.pumpAndSettle();
+      // Loading moved the old plain-text secret to the device.
+      expect(store.environments.first.variables.last.value, isEmpty);
+
+      await tester.tap(find.byTooltip('Secret (on)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Secret (on)'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Secret (on)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Make public'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      expect(
+        store.environments.first.variables.last,
+        const EnvironmentVariable(key: 'token', value: 'abc123'),
+      );
+      expect(store.secrets, isEmpty);
+    });
+
     testWidgets('deleting asks for confirmation', (tester) async {
       final store = _store();
       await open(tester, store);

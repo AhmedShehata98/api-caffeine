@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test_point/app/di/app_overrides.dart';
 import 'package:test_point/app/router/app_router.dart';
 import 'package:test_point/core/ui/theme/app_theme.dart';
@@ -62,12 +63,14 @@ Future<ProviderContainer> pumpApp(
   tester.view.physicalSize = const Size(1280, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  SharedPreferences.setMockInitialValues({});
+  final preferences = await SharedPreferences.getInstance();
 
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         ...fakeBackend(store: store, settings: settings, auth: auth),
-        ...moduleWiring(),
+        ...appOverrides(preferences),
         ...extraOverrides,
       ],
       child: Consumer(

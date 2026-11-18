@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_point/app/router/app_router.dart';
 import 'package:test_point/core/ui/theme/app_theme.dart';
 import 'package:test_point/modules/settings/settings.dart';
+import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(mcpLifecycleProvider);
     return MaterialApp.router(
-      title: 'Test Point',
+      title: 'API Caffeine',
       debugShowCheckedModeBanner: false,
       themeMode: ref.watch(themeModeProvider),
       theme: AppTheme.light,

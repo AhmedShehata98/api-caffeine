@@ -113,7 +113,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(store.collections.map((c) => c.id), ['c1']);
-    expect(find.text('Welcome to Test Point'), findsOneWidget);
+    expect(find.text('Welcome to API Caffeine'), findsOneWidget);
     expect(find.text('Billing'), findsNothing);
   });
 
@@ -130,7 +130,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(store.collections, hasLength(2));
-    expect(find.text('Welcome to Test Point'), findsNothing);
+    expect(find.text('Welcome to API Caffeine'), findsNothing);
   });
 
   testWidgets('an empty collection says so', (tester) async {

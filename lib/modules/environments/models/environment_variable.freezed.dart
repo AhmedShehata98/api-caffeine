@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$EnvironmentVariable {
 
- String get key; String get value; bool get secret; bool get enabled;
+ String get key; String get value; bool get secret; bool get enabled;/// True for a secret row whose value is not stored on this device (for
+/// example it was set on another computer). Never synced.
+@JsonKey(includeFromJson: false, includeToJson: false) bool get missingOnDevice;
 /// Create a copy of EnvironmentVariable
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +32,20 @@ $EnvironmentVariableCopyWith<EnvironmentVariable> get copyWith => _$EnvironmentV
 @override
 bool operator ==(Object other) {
   final _this = this as EnvironmentVariable;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EnvironmentVariable&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.secret, _this.secret) || other.secret == _this.secret)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EnvironmentVariable&&(identical(other.key, _this.key) || other.key == _this.key)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.secret, _this.secret) || other.secret == _this.secret)&&(identical(other.enabled, _this.enabled) || other.enabled == _this.enabled)&&(identical(other.missingOnDevice, _this.missingOnDevice) || other.missingOnDevice == _this.missingOnDevice));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as EnvironmentVariable;
-  return Object.hash(runtimeType,_this.key,_this.value,_this.secret,_this.enabled);
+  return Object.hash(runtimeType,_this.key,_this.value,_this.secret,_this.enabled,_this.missingOnDevice);
 }
 
 @override
 String toString() {
   final _this = this as EnvironmentVariable;
-  return 'EnvironmentVariable(key: ${_this.key}, value: ${_this.value}, secret: ${_this.secret}, enabled: ${_this.enabled})';
+  return 'EnvironmentVariable(key: ${_this.key}, value: ${_this.value}, secret: ${_this.secret}, enabled: ${_this.enabled}, missingOnDevice: ${_this.missingOnDevice})';
 }
 
 
@@ -54,7 +56,7 @@ abstract mixin class $EnvironmentVariableCopyWith<$Res>  {
   factory $EnvironmentVariableCopyWith(EnvironmentVariable value, $Res Function(EnvironmentVariable) _then) = _$EnvironmentVariableCopyWithImpl;
 @useResult
 $Res call({
- String key, String value, bool secret, bool enabled
+ String key, String value, bool secret, bool enabled,@JsonKey(includeFromJson: false, includeToJson: false) bool missingOnDevice
 });
 
 
@@ -71,12 +73,13 @@ class _$EnvironmentVariableCopyWithImpl<$Res>
 
 /// Create a copy of EnvironmentVariable
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? value = null,Object? secret = null,Object? enabled = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? value = null,Object? secret = null,Object? enabled = null,Object? missingOnDevice = null,}) {
   return _then(EnvironmentVariable(
 key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
 as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as String,secret: null == secret ? _self.secret : secret // ignore: cast_nullable_to_non_nullable
 as bool,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,missingOnDevice: null == missingOnDevice ? _self.missingOnDevice : missingOnDevice // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -162,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  String value,  bool secret,  bool enabled)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  String value,  bool secret,  bool enabled, @JsonKey(includeFromJson: false, includeToJson: false)  bool missingOnDevice)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EnvironmentVariable() when $default != null:
-return $default(_that.key,_that.value,_that.secret,_that.enabled);case _:
+return $default(_that.key,_that.value,_that.secret,_that.enabled,_that.missingOnDevice);case _:
   return orElse();
 
 }
@@ -183,10 +186,10 @@ return $default(_that.key,_that.value,_that.secret,_that.enabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  String value,  bool secret,  bool enabled)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  String value,  bool secret,  bool enabled, @JsonKey(includeFromJson: false, includeToJson: false)  bool missingOnDevice)  $default,) {final _that = this;
 switch (_that) {
 case _EnvironmentVariable():
-return $default(_that.key,_that.value,_that.secret,_that.enabled);case _:
+return $default(_that.key,_that.value,_that.secret,_that.enabled,_that.missingOnDevice);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +206,10 @@ return $default(_that.key,_that.value,_that.secret,_that.enabled);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  String value,  bool secret,  bool enabled)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  String value,  bool secret,  bool enabled, @JsonKey(includeFromJson: false, includeToJson: false)  bool missingOnDevice)?  $default,) {final _that = this;
 switch (_that) {
 case _EnvironmentVariable() when $default != null:
-return $default(_that.key,_that.value,_that.secret,_that.enabled);case _:
+return $default(_that.key,_that.value,_that.secret,_that.enabled,_that.missingOnDevice);case _:
   return null;
 
 }
@@ -218,13 +221,16 @@ return $default(_that.key,_that.value,_that.secret,_that.enabled);case _:
 @JsonSerializable()
 
 class _EnvironmentVariable implements EnvironmentVariable {
-  const _EnvironmentVariable({this.key = '', this.value = '', this.secret = false, this.enabled = true});
+  const _EnvironmentVariable({this.key = '', this.value = '', this.secret = false, this.enabled = true, @JsonKey(includeFromJson: false, includeToJson: false) this.missingOnDevice = false});
   factory _EnvironmentVariable.fromJson(Map<String, dynamic> json) => _$EnvironmentVariableFromJson(json);
 
 @override@JsonKey() final  String key;
 @override@JsonKey() final  String value;
 @override@JsonKey() final  bool secret;
 @override@JsonKey() final  bool enabled;
+/// True for a secret row whose value is not stored on this device (for
+/// example it was set on another computer). Never synced.
+@override@JsonKey(includeFromJson: false, includeToJson: false) final  bool missingOnDevice;
 
 /// Create a copy of EnvironmentVariable
 /// with the given fields replaced by the non-null parameter values.
@@ -239,18 +245,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _EnvironmentVariable&&(identical(other.key, key) || other.key == key)&&(identical(other.value, value) || other.value == value)&&(identical(other.secret, secret) || other.secret == secret)&&(identical(other.enabled, enabled) || other.enabled == enabled));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _EnvironmentVariable&&(identical(other.key, key) || other.key == key)&&(identical(other.value, value) || other.value == value)&&(identical(other.secret, secret) || other.secret == secret)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.missingOnDevice, missingOnDevice) || other.missingOnDevice == missingOnDevice));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,key,value,secret,enabled);
+    return Object.hash(runtimeType,key,value,secret,enabled,missingOnDevice);
 }
 
 @override
 String toString() {
-    return 'EnvironmentVariable(key: $key, value: $value, secret: $secret, enabled: $enabled)';
+    return 'EnvironmentVariable(key: $key, value: $value, secret: $secret, enabled: $enabled, missingOnDevice: $missingOnDevice)';
 }
 
 
@@ -261,7 +267,7 @@ abstract mixin class _$EnvironmentVariableCopyWith<$Res> implements $Environment
   factory _$EnvironmentVariableCopyWith(_EnvironmentVariable value, $Res Function(_EnvironmentVariable) _then) = __$EnvironmentVariableCopyWithImpl;
 @override @useResult
 $Res call({
- String key, String value, bool secret, bool enabled
+ String key, String value, bool secret, bool enabled,@JsonKey(includeFromJson: false, includeToJson: false) bool missingOnDevice
 });
 
 
@@ -278,12 +284,13 @@ class __$EnvironmentVariableCopyWithImpl<$Res>
 
 /// Create a copy of EnvironmentVariable
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? value = null,Object? secret = null,Object? enabled = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? value = null,Object? secret = null,Object? enabled = null,Object? missingOnDevice = null,}) {
   return _then(_EnvironmentVariable(
 key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
 as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as String,secret: null == secret ? _self.secret : secret // ignore: cast_nullable_to_non_nullable
 as bool,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,missingOnDevice: null == missingOnDevice ? _self.missingOnDevice : missingOnDevice // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

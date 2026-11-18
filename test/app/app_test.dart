@@ -16,6 +16,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome to Test Point'), findsOneWidget);
+    expect(find.text('Welcome to API Caffeine'), findsOneWidget);
   });
 }

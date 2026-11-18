@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:test_point/app/app.dart';
 import 'package:test_point/app/di/app_overrides.dart';
+import 'package:test_point/app/services/desktop_close_handler.dart';
 import 'package:test_point/core/database/supabase_config.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -24,15 +25,17 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.anonKey,
   );
   final preferences = await SharedPreferences.getInstance();
-  runApp(
-    ProviderScope(overrides: appOverrides(preferences), child: const App()),
-  );
+  final container = ProviderContainer(overrides: appOverrides(preferences));
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    installDesktopCloseHandler(container);
+  }
+  runApp(UncontrolledProviderScope(container: container, child: const App()));
 }
 
 void _configureWindow() {
   final window = WindowManager.instance.getCurrent();
   if (window == null) return;
-  window.title = 'Test Point';
+  window.title = 'API Caffeine';
   window.minimumSize = const Size(1024, 640).toNative();
   window.setSize(const Size(1280, 800).toNative(), false);
   window.center();

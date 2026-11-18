@@ -64,6 +64,19 @@ maintained by a trigger). All tables have Row Level Security enabled.
 
 ## Tables
 
+### mcp_servers
+
+Workspace-scoped MCP Lab catalog, introduced by
+`20261116000000_mcp_servers.sql`.
+
+- `id`: UUID primary key; `workspace_id`: UUID foreign key with cascading deletion and an index.
+- `name`: nonblank text; `transport`: `stdio`, `http`, or deprecated `sse`.
+- `command`, `url`, `cwd`: nullable text. stdio requires a nonblank command and null URL; remote transports require an HTTP(S) URL without user-info and null command.
+- `args`: JSON string array; `env` and `headers`: JSON string maps; `secret_keys`: JSON string array; `settings`: JSON object (`protocolEra`, optional `timeoutSeconds`).
+- `position`: nullable integer; standard `created_at` / `updated_at` timestamps and update trigger.
+- Secret values are never synced: qualified keys such as `env.TOKEN` and `header.authorization` identify empty-string placeholders. Actual values stay in device secure storage. Header canonicalization and placeholder consistency are validated by the catalog service.
+- RLS permits authenticated workspace members through `is_workspace_member(workspace_id)` for both existing and proposed rows.
+
 ### users
 
 Profile row for every `auth.users` entry, created by the `on_auth_user_created` trigger.
@@ -95,6 +108,7 @@ Profile row for every `auth.users` entry, created by the `on_auth_user_created` 
 - `workspace_id`: UUID, Foreign Key -> `workspaces(id)`
 - `name`: VARCHAR(255)
 - `variables`: JSONB, `[{ "key", "value", "secret", "enabled" }]`, default `[]`
+  - For rows with `"secret": true`, `value` is always the placeholder `""`. The real value is stored only on the device, in OS secure storage under `environment-secrets:<environment id>` (a JSON map `{ key: value }`). A device without that value shows the row as "Not set on this device". Secrets that older app versions synced as plain text are moved to the device the first time they are loaded, and then replaced by the placeholder in this column.
 
 ### collections
 

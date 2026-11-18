@@ -44,8 +44,8 @@ class _ShellSidebarState extends ConsumerState<ShellSidebar> {
     return Container(
       width: ShellSidebar.width,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        border: Border(right: BorderSide(color: scheme.outline)),
+        color: scheme.surfaceContainer,
+        border: Border(right: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Column(
         children: [
@@ -146,7 +146,7 @@ class _Header extends ConsumerWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        'COLLECTIONS',
+                        'Collections',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -173,7 +173,7 @@ class _Header extends ConsumerWidget {
                     visualDensity: VisualDensity.compact,
                   ),
                   onPressed: () => showImportDialog(context),
-                  icon: const Icon(Icons.file_download_outlined, size: 16),
+                  icon: const Icon(Icons.file_upload_outlined, size: 16),
                   label: const Text('Import', maxLines: 1),
                 ),
               ),

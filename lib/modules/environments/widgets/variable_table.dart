@@ -68,6 +68,39 @@ class _VariableRowState extends State<_VariableRow> {
     super.dispose();
   }
 
+  /// Secret values stay on this device; turning the flag off syncs the
+  /// value as plain text, so that direction asks first.
+  Future<void> _toggleSecret() async {
+    final variable = widget.variable;
+    if (variable.secret && variable.value.isNotEmpty) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Stop keeping this value secret?'),
+          content: const Text(
+            'The value will be saved to your workspace in plain text and '
+            'shown to everyone who can open this environment.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Make public'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    setState(() => _revealed = false);
+    widget.onChanged(
+      variable.copyWith(secret: !variable.secret, missingOnDevice: false),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final variable = widget.variable;
@@ -96,7 +129,9 @@ class _VariableRowState extends State<_VariableRow> {
               style: mono,
               obscureText: variable.secret && !_revealed,
               decoration: InputDecoration(
-                hintText: 'Value',
+                hintText: variable.missingOnDevice
+                    ? 'Not set on this device'
+                    : 'Value',
                 isDense: true,
                 suffixIcon: variable.secret
                     ? IconButton(
@@ -111,17 +146,16 @@ class _VariableRowState extends State<_VariableRow> {
                       )
                     : null,
               ),
-              onChanged: (v) => widget.onChanged(variable.copyWith(value: v)),
+              onChanged: (v) => widget.onChanged(
+                variable.copyWith(value: v, missingOnDevice: false),
+              ),
             ),
           ),
           IconButton(
             tooltip: variable.secret ? 'Secret (on)' : 'Secret (off)',
             iconSize: 18,
             isSelected: variable.secret,
-            onPressed: () {
-              setState(() => _revealed = false);
-              widget.onChanged(variable.copyWith(secret: !variable.secret));
-            },
+            onPressed: _toggleSecret,
             icon: const Icon(Icons.lock_open_outlined),
             selectedIcon: const Icon(Icons.lock_outline),
           ),

@@ -20,6 +20,10 @@ const _proseStartsWith = [
   'Paste a cURL command',
   'Choose a Postman',
   'curl -X POST',
+  'Start testing an endpoint',
+  'Organize requests, pre-request scripts',
+  'From raw cURL',
+  'Connect to MCP servers',
 ];
 
 /// Number of lines the paragraph is laid out on (distinct vertical positions

@@ -138,6 +138,9 @@ After implementation:
 
 ## Core Stack
 
+- MCP protocol: `mcp_dart` for MCP client/server types and transport verification; production transport selection is gated by the MCP Lab Step 0 spike.
+- Cryptography: `crypto` for HMAC-SHA-256 device-local launch approval digests.
+
 - Language: Dart (null safety)
 - Framework: Flutter (stable channel), Material 3
 - Platforms: desktop first (Windows, macOS, Linux)
@@ -153,19 +156,20 @@ After implementation:
 
 The packages are chosen to support the MVP screens in [docs/design/stitch-mvp-progress.md](docs/design/stitch-mvp-progress.md). Add a package only when the module that needs it is built.
 
-| Concern     | Package                                            | UI/UX reason                                                                                                     |
-| ----------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| State       | `flutter_riverpod`                                 | Open request tabs, unsaved markers, active environment, theme mode                                               |
-| Routing     | `go_router`                                        | Nav rail sections (Collections, Environments, Settings) as routes                                                |
-| HTTP        | `dio`                                              | Send requests, cancel in-flight requests, proxy setting ("Proxy: Off"), timing and size for the response view    |
-| Database    | `supabase_flutter`                                 | Workspaces, collections, requests and environments stored in Supabase; Supabase Auth for users and organizations |
-| Models      | `freezed` + `json_serializable` (+ `build_runner`) | Immutable models; map Supabase rows (JSON) and Postman v2.1 import                                               |
-| Code editor | `re_editor` + `re_highlight`                       | JSON body editor and response viewer with syntax highlighting; stays fast on large responses                     |
-| Split panes | `multi_split_view`                                 | Resizable sidebar / request / response panes and the layout toggle                                               |
-| Window      | `window_manager`                                   | Desktop minimum window size and title                                                                            |
-| Import      | `file_picker`                                      | Choose a Postman v2.1 collection file in the Import dialog                                                       |
-| Preferences | `shared_preferences`                               | Theme mode, layout and proxy settings                                                                            |
-| Tests       | `mocktail` (dev)                                   | Mock repositories and services in unit tests                                                                     |
+| Concern     | Package                                            | UI/UX reason                                                                                                                                                                                                       |
+| ----------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| State       | `flutter_riverpod`                                 | Open request tabs, unsaved markers, active environment, theme mode                                                                                                                                                 |
+| Routing     | `go_router`                                        | Nav rail sections (Collections, Environments, Settings) as routes                                                                                                                                                  |
+| HTTP        | `dio`                                              | Send requests, cancel in-flight requests, proxy setting ("Proxy: Off"), timing and size for the response view                                                                                                      |
+| Database    | `supabase_flutter`                                 | Workspaces, collections, requests and environments stored in Supabase; Supabase Auth for users and organizations                                                                                                   |
+| Models      | `freezed` + `json_serializable` (+ `build_runner`) | Immutable models; map Supabase rows (JSON) and Postman v2.1 import                                                                                                                                                 |
+| Code editor | `re_editor` + `re_highlight`                       | JSON body editor and response viewer with syntax highlighting; stays fast on large responses                                                                                                                       |
+| Split panes | `multi_split_view`                                 | Resizable sidebar / request / response panes and the layout toggle                                                                                                                                                 |
+| Window      | `window_manager`                                   | Desktop minimum window size and title                                                                                                                                                                              |
+| Import      | `file_picker`                                      | Choose a Postman v2.1 collection file in the Import dialog                                                                                                                                                         |
+| Preferences | `shared_preferences`                               | Theme mode, layout and proxy settings                                                                                                                                                                              |
+| Secrets     | `flutter_secure_storage`                           | Secret values (environment secrets, later MCP Lab tokens) stay on the device in the OS keychain / credential store; Supabase only gets a placeholder. Linux builds need `libsecret-1-dev` and a keyring at runtime |
+| Tests       | `mocktail` (dev)                                   | Mock repositories and services in unit tests                                                                                                                                                                       |
 
 Use Flutter built-ins instead of packages for these:
 
@@ -177,7 +181,8 @@ Use Flutter built-ins instead of packages for these:
 
 ### UI rules
 
-- Theme lives in `lib/core/ui/theme/`: a `ColorScheme` seeded from teal `#0F9D8A`, plus a `ThemeExtension` for HTTP method colors and status colors (2xx green, 3xx blue, 4xx amber, 5xx red).
+- Theme lives in `lib/core/ui/theme/`: a `ColorScheme` seeded from orange `#FF6A00`, with dark primary `#FF6A00` and light primary `#B84D00`, plus a `ThemeExtension` for HTTP method colors and status colors (2xx green, 3xx blue, 4xx amber, 5xx red).
+- When project theme colors conflict with Stitch designs, use the values in `lib/core/ui/theme/`.
 - Dark theme is the primary theme; light theme must also work.
 - Fonts are bundled as assets (no runtime download): Google Sans Flex for headlines, Inter for UI text, JetBrains Mono for URLs and code.
 - Keyboard hints always say `Ctrl`, never `⌘` or `^`.

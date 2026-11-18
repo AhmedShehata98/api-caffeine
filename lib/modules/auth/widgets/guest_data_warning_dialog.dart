@@ -8,7 +8,7 @@ Future<bool> showGuestDataWarningDialog(BuildContext context) =>
       context,
       title: 'Sign in to an existing account?',
       message:
-          'This GitHub account already has a Test Point account. '
+          'This GitHub account already has an API Caffeine account. '
           'Your guest workspace will not be carried over.',
       confirmLabel: 'Sign in anyway',
       destructive: true,

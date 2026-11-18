@@ -126,3 +126,11 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Bundle the window icon and the standard desktop icon theme entry.
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/images/logo/linux/icons/app_icon_256.png"
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" RENAME "app_icon.png"
+  COMPONENT Runtime)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/images/logo/linux/icons/app_icon_256.png"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps"
+  RENAME "${APPLICATION_ID}.png" COMPONENT Runtime)
