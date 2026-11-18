@@ -674,3 +674,17 @@ clean. No migration or Dart changes were needed; the preceding 367 app tests rem
 the baseline. Applied supabase-postgres-best-practices. See the database verification
 note for reproducible commands and scope. Next: remaining resource-template and UI
 acceptance gaps; remote deployment and native/platform gates stay open.
+
+### Composite resource-template expansion progress
+
+Added explicit text/list/object inputs and bounded RFC 6570 composite expansion
+with explode modifiers. Raw typed drafts, including invalid JSON, remain memory-
+only across tab changes and clear at scope disposal. Invalid shapes, unsupported
+prefix/composite combinations and exceeded budgets block Read/Ctrl+Enter; editing
+the resolved URI still switches to manual mode. No read happens during editing.
+
+All 380 selected tests pass, followed by 25 affected widget checks after using the
+app's bundled monospace font. Analysis is clean and both form themes were reviewed
+with ui-ux-pro-max. This completes the composite-input slice; resource-template
+server completion is the next separate capability-gated slice. Monitor/preferences,
+Windows/native and other S1 acceptance gaps remain open.

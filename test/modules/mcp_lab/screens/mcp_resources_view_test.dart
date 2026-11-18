@@ -301,7 +301,10 @@ void main() {
         'private city',
       );
       final work = owner.workFor('s')!;
-      expect(work.resourceTemplate.state.draft!.values['city'], 'private city');
+      expect(
+        work.resourceTemplate.state.draft!.values['city']?.text,
+        'private city',
+      );
       await tester.runAsync(() => owner.switchScope('other', 'w'));
       await tester.pumpAndSettle();
       expect(find.text('Template arguments'), findsNothing);
@@ -358,11 +361,163 @@ void main() {
       expect(session.calls.last.$2, {'uri': 'weather://resolved'});
     },
   );
+  Future<void> chooseType(WidgetTester tester, String label) async {
+    final dropdown = find.byType(
+      DropdownButtonFormField<McpUriTemplateInputKind>,
+    );
+    await tester.ensureVisible(dropdown);
+    await tester.tap(dropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> templateInput(WidgetTester tester, String source) async {
+    session.uriTemplate = source;
+    await pump(tester);
+    await tester.tap(find.text('Templates (1)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('City template'));
+    await tester.pump();
+    await tester.tap(find.text('Include x'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'list template input expands repeated query values and only Read sends',
+    (tester) async {
+      await templateInput(tester, 'weather://city{?x*}');
+      await chooseType(tester, 'List');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'x'),
+        '["Lisbon","New York"]',
+      );
+      await tester.pump();
+      expect(
+        tester
+            .widget<TextField>(find.widgetWithText(TextField, 'Resource URI'))
+            .controller!
+            .text,
+        'weather://city?x=Lisbon&x=New%20York',
+      );
+      expect(
+        session.calls.where((call) => call.$1 == 'resources/read'),
+        isEmpty,
+      );
+      await read(tester);
+      expect(session.calls.last.$2, {
+        'uri': 'weather://city?x=Lisbon&x=New%20York',
+      });
+    },
+  );
+  testWidgets(
+    'object template input keeps entry values and its kind across remount',
+    (tester) async {
+      await templateInput(tester, 'weather://city{?x*}');
+      await chooseType(tester, 'Object');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'x'),
+        '{"region":"eu","unit":"metric"}',
+      );
+      await tester.pump();
+      expect(
+        tester
+            .widget<TextField>(find.widgetWithText(TextField, 'Resource URI'))
+            .controller!
+            .text,
+        'weather://city?region=eu&unit=metric',
+      );
+      await tester.pumpWidget(const SizedBox());
+      await pump(tester);
+      expect(
+        owner.workFor('s')!.resourceTemplate.state.draft!.values['x']!.kind,
+        McpUriTemplateInputKind.object,
+      );
+      expect(
+        tester
+            .widget<TextFormField>(find.widgetWithText(TextFormField, 'x'))
+            .initialValue,
+        '{"region":"eu","unit":"metric"}',
+      );
+    },
+  );
+  testWidgets(
+    'invalid composite draft restores, blocks Read and clears on scope change',
+    (tester) async {
+      await templateInput(tester, 'weather://city{?x*}');
+      await chooseType(tester, 'List');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'x'),
+        '["old"]',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'x'),
+        '["new",',
+      );
+      await tester.pump();
+      final button = find.widgetWithText(
+        FilledButton,
+        'Read resource · Ctrl+Enter',
+      );
+      expect(tester.widget<FilledButton>(button).onPressed, isNull);
+      expect(
+        tester
+            .widget<TextField>(find.widgetWithText(TextField, 'Resource URI'))
+            .controller!
+            .text,
+        '',
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      expect(
+        session.calls.where((call) => call.$1 == 'resources/read'),
+        isEmpty,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await pump(tester);
+      expect(
+        tester
+            .widget<TextFormField>(find.widgetWithText(TextFormField, 'x'))
+            .initialValue,
+        '["new",',
+      );
+      expect(tester.widget<FilledButton>(button).onPressed, isNull);
+      final work = owner.workFor('s')!;
+      await tester.runAsync(() => owner.switchScope('other', 'w'));
+      await tester.pumpAndSettle();
+      expect(work.resourceTemplate.state.draft, isNull);
+      expect(find.text('Template arguments'), findsNothing);
+    },
+  );
+  testWidgets('composite prefix failure offers explicit manual URI fallback', (
+    tester,
+  ) async {
+    await templateInput(tester, 'weather://city/{x:2}');
+    await chooseType(tester, 'List');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'x'),
+      '["Lisbon"]',
+    );
+    await tester.pump();
+    expect(
+      find.textContaining('Prefix modifiers apply only to text'),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Resource URI'),
+      'weather://manual',
+    );
+    await tester.pump();
+    expect(find.text('Template arguments'), findsNothing);
+    await read(tester);
+    expect(session.calls.last.$2, {'uri': 'weather://manual'});
+  });
   for (final light in [false, true]) {
     testWidgets(
       '${light ? 'light' : 'dark'} template form renders without overflow',
       (tester) async {
-        session.uriTemplate = 'weather://city/{city}{?units}';
+        session.uriTemplate = 'weather://city{?city*}';
         await pump(tester, light: light);
         await tester.tap(find.text('Templates (1)'));
         await tester.pumpAndSettle();
@@ -370,9 +525,10 @@ void main() {
         await tester.pump();
         await tester.tap(find.text('Include city'));
         await tester.pumpAndSettle();
+        await chooseType(tester, 'List');
         await tester.enterText(
           find.widgetWithText(TextFormField, 'city'),
-          'Lisbon',
+          '["Lisbon", "Zürich"]',
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);

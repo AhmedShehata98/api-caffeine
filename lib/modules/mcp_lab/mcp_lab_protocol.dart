@@ -19,3 +19,4 @@ export 'services/mcp_primitive_services.dart';
 export 'models/mcp_schema_form.dart';
 export 'services/schema_form_builder.dart';
 export 'services/mcp_uri_template.dart';
+export 'models/mcp_uri_template_input.dart';

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:test_point/core/ui/theme/app_fonts.dart';
 
 import '../services/mcp_uri_template.dart';
+import '../models/mcp_uri_template_input.dart';
 
 class McpUriTemplateForm extends StatelessWidget {
   const McpUriTemplateForm({
@@ -11,12 +13,12 @@ class McpUriTemplateForm extends StatelessWidget {
     super.key,
   });
   final McpUriTemplate template;
-  final Map<String, String> values;
-  final ValueChanged<Map<String, String>> onChanged;
+  final Map<String, McpUriTemplateInput> values;
+  final ValueChanged<Map<String, McpUriTemplateInput>> onChanged;
   final bool enabled;
   @override
   Widget build(BuildContext context) {
-    final latest = Map<String, String>.of(values);
+    final latest = Map<String, McpUriTemplateInput>.of(values);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -28,7 +30,7 @@ class McpUriTemplateForm extends StatelessWidget {
         Text(template.source, maxLines: 1, overflow: TextOverflow.ellipsis),
         const SizedBox(height: 8),
         const Text(
-          'Include a variable to set its string value. An included blank value is empty; unchecked variables are omitted.',
+          'Choose Text, List or Object. Lists and objects use JSON with string values. Unchecked variables and empty collections are omitted; included blank text is empty.',
         ),
         for (final name in template.variables) ...[
           CheckboxListTile(
@@ -43,7 +45,7 @@ class McpUriTemplateForm extends StatelessWidget {
                 ? null
                 : (include) {
                     if (include == true) {
-                      latest[name] = '';
+                      latest[name] = const McpUriTemplateInput('');
                     } else {
                       latest.remove(name);
                     }
@@ -53,20 +55,82 @@ class McpUriTemplateForm extends StatelessWidget {
           if (values.containsKey(name))
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: TextFormField(
-                key: ValueKey((template.source, name)),
-                initialValue: values[name],
-                enabled: enabled,
-                maxLength: 4096,
-                decoration: InputDecoration(labelText: name),
-                onChanged: (value) {
-                  latest[name] = value;
-                  onChanged(Map.of(latest));
-                },
-              ),
+              child: _input(name, values[name]!, (value) {
+                latest[name] = value;
+                onChanged(Map.of(latest));
+              }),
             ),
         ],
         const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _input(
+    String name,
+    McpUriTemplateInput input,
+    ValueChanged<McpUriTemplateInput> changed,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<McpUriTemplateInputKind>(
+          key: ValueKey((template.source, name, 'kind', input.kind)),
+          initialValue: input.kind,
+          isExpanded: true,
+          decoration: InputDecoration(labelText: '$name type'),
+          items: const [
+            DropdownMenuItem(
+              value: McpUriTemplateInputKind.text,
+              child: Text('Text', maxLines: 1),
+            ),
+            DropdownMenuItem(
+              value: McpUriTemplateInputKind.list,
+              child: Text('List', maxLines: 1),
+            ),
+            DropdownMenuItem(
+              value: McpUriTemplateInputKind.object,
+              child: Text('Object', maxLines: 1),
+            ),
+          ],
+          onChanged: !enabled
+              ? null
+              : (kind) {
+                  if (kind == null || kind == input.kind) return;
+                  changed(
+                    McpUriTemplateInput(switch (kind) {
+                      McpUriTemplateInputKind.text => '',
+                      McpUriTemplateInputKind.list => '[]',
+                      McpUriTemplateInputKind.object => '{}',
+                    }, kind: kind),
+                  );
+                },
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          key: ValueKey((template.source, name, input.kind)),
+          initialValue: input.text,
+          enabled: enabled,
+          maxLength: 4096,
+          style: input.kind == McpUriTemplateInputKind.text
+              ? null
+              : const TextStyle(fontFamily: AppFonts.mono),
+          minLines: input.kind == McpUriTemplateInputKind.text ? 1 : 2,
+          maxLines: input.kind == McpUriTemplateInputKind.text ? 1 : 4,
+          decoration: InputDecoration(
+            labelText: name,
+            helperText: switch (input.kind) {
+              McpUriTemplateInputKind.text => null,
+              McpUriTemplateInputKind.list =>
+                'JSON list, for example ["a", "b"].',
+              McpUriTemplateInputKind.object =>
+                'JSON object, for example {"key": "value"}.',
+            },
+            errorText: McpUriTemplate.parseInput(input).failureOrNull?.message,
+          ),
+          onChanged: (value) =>
+              changed(McpUriTemplateInput(value, kind: input.kind)),
+        ),
       ],
     );
   }

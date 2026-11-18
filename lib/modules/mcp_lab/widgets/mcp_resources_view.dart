@@ -6,6 +6,7 @@ import 'package:test_point/core/error/result.dart';
 import '../providers/mcp_resources_provider.dart';
 import '../providers/mcp_work_providers.dart';
 import '../services/mcp_uri_template.dart';
+import '../models/mcp_uri_template_input.dart';
 import '../services/mcp_session_work.dart';
 import 'mcp_uri_template_form.dart';
 import 'mcp_json_result.dart';
@@ -30,7 +31,7 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
   );
   bool _templates = false;
   McpUriTemplate? _template;
-  Map<String, String> _templateValues = {};
+  Map<String, McpUriTemplateInput> _templateValues = {};
   String? _templateError;
   @override
   void initState() {
@@ -47,7 +48,10 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
     _uri.addListener(_persist);
   }
 
-  void _selectTemplate(String source, {Map<String, String> values = const {}}) {
+  void _selectTemplate(
+    String source, {
+    Map<String, McpUriTemplateInput> values = const {},
+  }) {
     final parsed = McpUriTemplate.parse(source);
     _template = parsed.valueOrNull;
     _templateError = parsed.failureOrNull?.message;
@@ -63,7 +67,7 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
     }
   }
 
-  void _expand(Map<String, String> values) {
+  void _expand(Map<String, McpUriTemplateInput> values) {
     _templateValues = Map.of(values);
     ref
         .read(mcpSessionWorkProvider(widget.serverId))
@@ -71,7 +75,7 @@ class _McpResourcesViewState extends ConsumerState<McpResourcesView> {
         .setDraft(
           McpResourceTemplateDraft(template: _template!.source, values: values),
         );
-    final expanded = _template!.expand(values);
+    final expanded = _template!.expandInputs(values);
     _templateError = expanded.failureOrNull?.message;
     _uri.text = expanded.valueOrNull ?? '';
     _persist();

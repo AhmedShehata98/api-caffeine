@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:test_point/core/error/failure.dart';
 import 'package:test_point/core/error/result.dart';
 
-/// Bounded RFC 6570 expansion for string variables. Composite list/map editors
-/// belong to a later slice; scalar explode modifiers have no effect per RFC.
+import '../models/mcp_uri_template_input.dart';
+
+/// Bounded RFC 6570 expansion for text, string lists and string-keyed objects.
 class McpUriTemplate {
   McpUriTemplate._(this.source, this._parts, this.variables);
   final String source;
@@ -63,7 +64,9 @@ class McpUriTemplate {
         final specs = <_Variable>[];
         for (var spec in expression.split(',')) {
           int? prefix;
+          var explode = false;
           if (spec.endsWith('*')) {
+            explode = true;
             spec = spec.substring(0, spec.length - 1);
           } else if (spec.contains(':')) {
             final pair = spec.split(':');
@@ -77,7 +80,7 @@ class McpUriTemplate {
           if (!_name.hasMatch(spec)) throw const FormatException();
           names.add(spec);
           if (names.length > 64) throw const FormatException();
-          specs.add(_Variable(spec, prefix));
+          specs.add(_Variable(spec, prefix, explode));
         }
         parts.add(_Expression(operator, specs));
         index = end + 1;
@@ -98,18 +101,109 @@ class McpUriTemplate {
     }
   }
 
-  Result<String> expand(Map<String, String> values) {
+  static Result<Object> parseInput(McpUriTemplateInput input) {
+    if (input.text.length > 4096 || utf8.encode(input.text).length > 4096) {
+      return const Result.failure(
+        ValidationFailure('Template inputs must be at most 4 KiB each.'),
+      );
+    }
+    if (input.kind == McpUriTemplateInputKind.text) {
+      return Result.success(input.text);
+    }
+    try {
+      final value = jsonDecode(input.text);
+      final problem = _valueProblem(value);
+      if (problem == null &&
+          input.kind == McpUriTemplateInputKind.list &&
+          value is List) {
+        return Result.success(List<String>.unmodifiable(value.cast<String>()));
+      }
+      if (problem == null &&
+          input.kind == McpUriTemplateInputKind.object &&
+          value is Map) {
+        return Result.success(
+          Map<String, String>.unmodifiable(value.cast<String, String>()),
+        );
+      }
+      return Result.failure(
+        ValidationFailure(
+          problem ??
+              (input.kind == McpUriTemplateInputKind.list
+                  ? 'Enter a JSON list of strings.'
+                  : 'Enter a JSON object with string values.'),
+        ),
+      );
+    } on FormatException {
+      return Result.failure(
+        ValidationFailure(
+          input.kind == McpUriTemplateInputKind.list
+              ? 'Enter a JSON list of strings.'
+              : 'Enter a JSON object with string values.',
+        ),
+      );
+    }
+  }
+
+  Result<String> expandInputs(Map<String, McpUriTemplateInput> inputs) {
+    final values = <String, Object>{};
+    for (final entry in inputs.entries) {
+      final parsed = parseInput(entry.value);
+      if (!parsed.isSuccess) {
+        return Result.failure(
+          ValidationFailure('${entry.key}: ${parsed.failureOrNull!.message}'),
+        );
+      }
+      values[entry.key] = parsed.valueOrNull!;
+    }
+    return expand(values);
+  }
+
+  static String? _valueProblem(Object? value) {
+    Iterable<String> strings;
+    if (value is String) {
+      strings = [value];
+    } else if (value is List) {
+      if (value.length > 128) {
+        return 'Template lists must contain at most 128 items.';
+      }
+      if (value.any((item) => item is! String)) {
+        return 'Template lists must contain only strings.';
+      }
+      strings = value.cast<String>();
+    } else if (value is Map) {
+      if (value.length > 128) {
+        return 'Template objects must contain at most 128 entries.';
+      }
+      if (value.keys.any((key) => key is! String) ||
+          value.values.any((item) => item is! String)) {
+        return 'Template objects must contain string keys and string values.';
+      }
+      strings = value.entries.expand(
+        (entry) => [entry.key as String, entry.value as String],
+      );
+    } else {
+      return 'Use text, a list of strings or an object with string values; nested and non-string values are unsupported.';
+    }
+    var bytes = 0;
+    for (final text in strings) {
+      if (text.length > 4096) {
+        return 'Template values must be at most 4 KiB each.';
+      }
+      bytes += utf8.encode(text).length;
+      if (bytes > 4096) return 'Template values must be at most 4 KiB each.';
+    }
+    return null;
+  }
+
+  Result<String> expand(Map<String, Object?> values) {
     if (values.keys.any((key) => !variables.contains(key))) {
       return const Result.failure(
         ValidationFailure('Provide values only for this template’s variables.'),
       );
     }
-    if (values.values.any(
-      (value) => value.length > 4096 || utf8.encode(value).length > 4096,
-    )) {
-      return const Result.failure(
-        ValidationFailure('Template values must be at most 4 KiB each.'),
-      );
+    for (final value in values.values) {
+      final problem = _valueProblem(value);
+      if (problem != null) return Result.failure(ValidationFailure(problem));
     }
     final output = StringBuffer();
     for (final part in _parts) {
@@ -121,27 +215,29 @@ class McpUriTemplate {
         final segments = <String>[];
         var segmentLength = 0;
         for (final spec in expression.variables) {
-          final value = values[spec.name];
-          if (value == null) continue;
-          final limited = spec.prefix == null
-              ? value
-              : String.fromCharCodes(value.runes.take(spec.prefix!));
-          final encoded = _encode(limited, reserved: op == '+' || op == '#');
-          segmentLength += encoded.length + spec.name.length + 2;
-          if (output.length + segmentLength > 65536) {
-            return const Result.failure(
+          if (!values.containsKey(spec.name)) continue;
+          final value = values[spec.name]!;
+          if (value is! String &&
+              spec.prefix != null &&
+              !(value is List && value.isEmpty) &&
+              !(value is Map && value.isEmpty)) {
+            return Result.failure(
               ValidationFailure(
-                'The expanded resource URI exceeds the 64 KiB limit.',
+                '${spec.name}: Prefix modifiers apply only to text values.',
               ),
             );
           }
-          segments.add(
-            op == ';'
-                ? '${spec.name}${encoded.isEmpty ? '' : '=$encoded'}'
-                : op == '?' || op == '&'
-                ? '${spec.name}=$encoded'
-                : encoded,
-          );
+          for (final segment in _segments(spec, value, op)) {
+            segmentLength += segment.length + 1;
+            if (output.length + segmentLength > 65536) {
+              return const Result.failure(
+                ValidationFailure(
+                  'The expanded resource URI exceeds the 64 KiB limit.',
+                ),
+              );
+            }
+            segments.add(segment);
+          }
         }
         if (segments.isNotEmpty) {
           final prefix = op == '+' ? '' : op;
@@ -162,6 +258,51 @@ class McpUriTemplate {
       }
     }
     return Result.success(output.toString());
+  }
+
+  static Iterable<String> _segments(
+    _Variable spec,
+    Object value,
+    String op,
+  ) sync* {
+    final named = op == ';' || op == '?' || op == '&';
+    final query = op == '?' || op == '&';
+    String encode(String text) =>
+        _encode(text, reserved: op == '+' || op == '#');
+    String pair(String key, String text) =>
+        text.isEmpty && !query ? key : '$key=$text';
+    String composite(String text) => named ? '${spec.name}=$text' : text;
+    if (value is String) {
+      final limited = spec.prefix == null
+          ? value
+          : String.fromCharCodes(value.runes.take(spec.prefix!));
+      final encoded = encode(limited);
+      yield named ? pair(spec.name, encoded) : encoded;
+    } else if (value is List) {
+      if (value.isEmpty) return;
+      if (spec.explode) {
+        for (final item in value.cast<String>()) {
+          final encoded = encode(item);
+          yield named ? pair(spec.name, encoded) : encoded;
+        }
+      } else {
+        yield composite(value.cast<String>().map(encode).join(','));
+      }
+    } else if (value is Map) {
+      if (value.isEmpty) return;
+      final entries = value.cast<String, String>().entries;
+      if (spec.explode) {
+        for (final entry in entries) {
+          yield pair(encode(entry.key), encode(entry.value));
+        }
+      } else {
+        yield composite(
+          entries
+              .expand((entry) => [encode(entry.key), encode(entry.value)])
+              .join(','),
+        );
+      }
+    }
   }
 
   static String _encode(
@@ -201,9 +342,10 @@ class McpUriTemplate {
 }
 
 class _Variable {
-  const _Variable(this.name, this.prefix);
+  const _Variable(this.name, this.prefix, this.explode);
   final String name;
   final int? prefix;
+  final bool explode;
 }
 
 class _Expression {

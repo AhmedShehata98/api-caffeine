@@ -167,7 +167,7 @@ void main() {
     work.resourceTemplate.setDraft(
       McpResourceTemplateDraft(
         template: 'weather://{city}',
-        values: {'city': 'old'},
+        values: {'city': const McpUriTemplateInput('old')},
       ),
     );
     expect(

@@ -13,7 +13,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Stdio platform gaps and remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state and monitor actions implemented | Preferences, native window-close validation, automatic access-revocation discovery |
-| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, scalar templates and Protocol/Network/Console monitors with separate HTTP bodies implemented | Composite template inputs/completion, monitor pin/export, native save-dialog/full desktop review |
+| S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, text/list/object templates and Protocol/Network/Console monitors with separate HTTP bodies implemented | Server argument completion, monitor pin/export, native save-dialog/full desktop review |
 | S1 integration and exit (§3.7) | Seven stdio + sixteen HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
@@ -40,7 +40,7 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected app regression run passes **367** tests (361 MCP and six desktop shutdown cases), from the preceding transport slice. The current database-only slice passes 33 transactional pgTAP assertions and three real REST/repository tests against a fresh isolated stack; no Dart or migration SQL changed. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected app regression run passes **380** tests (374 MCP and six desktop shutdown cases), followed by 25 affected Resources widget checks after the final font adjustment. The preceding database slice passed 33 transactional pgTAP assertions and three real REST/repository tests against a fresh isolated stack. This URI/form slice does not change database or transport code. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **seven loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, large sanitized request/response captures over JSON/SSE, and legacy response resumption with concurrent cursor isolation/refusal recovery. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - `dart test/integration/mcp_lab/large_payload_checks.dart` passes three real stdio/HTTP JSON/SSE checks: a 20 MiB embedded binary result, bounded diagnostics, off-isolate preview metadata and decode, and byte-exact file export. Stdio framing overflow is also rejected. The exporter uses a test file destination, not a native dialog; native UI responsiveness remains unverified.
@@ -63,7 +63,7 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Complete remaining S1 resource-template composite inputs/completion and monitor/preferences gaps while the Windows helper approach is blocked.
+1. Add capability-gated resource-template completion and remaining monitor/preferences features while the Windows helper approach is blocked.
 2. Revisit Windows descendant cleanup with an approved native execution route; close remaining stdio platform/lifecycle gaps.
 3. Finish wider account/security and remaining S1 fixture-matrix acceptance; remote database deployment remains separate.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
@@ -971,3 +971,37 @@ supabase-postgres-best-practices and its RLS guidance. This closes local fresh-r
 and these broader catalog-RLS cases, not remote deployment, automatic app-side
 revocation discovery, every table/account flow or full S1/native acceptance.
 Next: resource-template composite inputs/completion and remaining S1 UI gaps.
+
+## Composite resource-template inputs
+
+Resource-template expansion now accepts text, lists of strings and string-key/value
+objects. Explode modifiers are retained and expanded across all eight operators,
+with deterministic object entry order, reserved/percent encoding and Unicode
+handling. Empty collections are omitted; empty members remain defined. Nonempty
+composite values reject prefix modifiers instead of truncating or stringifying
+them. Expansion follows the supported shapes in
+[RFC 6570 variable expansion](https://www.rfc-editor.org/rfc/rfc6570.html#section-3.2.1).
+
+The form offers explicit Text, List and Object input kinds. List/object editors
+accept JSON with strings only and use the bundled monospace font. Text that looks
+like JSON remains text. Malformed JSON, wrong root types, nested/non-string values
+and exceeded budgets show validation errors, clear the derived URI and block both
+Read and Ctrl+Enter. Switching type starts an empty value of that type; nothing
+reads automatically. Manual URI editing still explicitly replaces template mode.
+
+Unsubmitted drafts retain input kind and raw editable text, including invalid
+JSON, so switching tabs cannot restore an older valid value and silently enable
+Read. Their maps are immutable and memory-only, and account/workspace disposal
+clears them. The service permits at most 128 list items/object entries and 4 KiB
+of combined decoded strings per argument; raw editor inputs are also limited to
+4 KiB. Existing 16 KiB template, 128-expression, 64-variable and 64 KiB final URI
+limits remain in place. No new dependency or database field was introduced.
+
+All 380 selected tests pass, followed by all 25 Resources widget tests after a
+font-family adjustment; static analysis is clean. Thirteen added cases cover RFC
+operator examples, empty values, Unicode/percent encoding, prefix/type/size errors,
+immutable typed parsing, explicit Read, object/list draft restoration, invalid
+draft blocking, manual fallback and scope cleanup. Both final dark/light form
+renders were reviewed using ui-ux-pro-max, with existing app colors and fonts.
+This completes composite template editing/expansion, not server-provided argument
+completion or full S1/native acceptance. Next: capability-gated template completion.

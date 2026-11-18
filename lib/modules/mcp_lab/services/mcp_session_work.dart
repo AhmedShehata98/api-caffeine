@@ -5,6 +5,7 @@ import 'package:test_point/core/error/result.dart';
 
 import '../models/mcp_failure.dart';
 import '../models/mcp_protocol_models.dart';
+import '../models/mcp_uri_template_input.dart';
 import 'mcp_primitive_services.dart';
 
 class McpToolDraft {
@@ -30,10 +31,10 @@ class McpPromptDraft {
 class McpResourceTemplateDraft {
   McpResourceTemplateDraft({
     this.template,
-    Map<String, String> values = const {},
+    Map<String, McpUriTemplateInput> values = const {},
   }) : values = Map.unmodifiable(values);
   final String? template;
-  final Map<String, String> values;
+  final Map<String, McpUriTemplateInput> values;
 }
 
 /// Memory-only UI state. Submitted input remains distinct from later edits.
