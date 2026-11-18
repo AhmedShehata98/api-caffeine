@@ -12,6 +12,7 @@ import 'package:test_point/core/ui/widgets/confirm_dialog.dart';
 import '../models/mcp_schema_form.dart';
 import '../models/mcp_protocol_models.dart';
 import '../providers/mcp_tools_provider.dart';
+import '../providers/mcp_lab_preferences_provider.dart';
 import '../providers/mcp_work_providers.dart';
 import '../services/mcp_session_work.dart';
 import '../services/schema_form_builder.dart';
@@ -179,7 +180,8 @@ class _McpToolsViewState extends ConsumerState<McpToolsView> {
         ?.tools
         .state
         .draft;
-    if (tool.annotations?.destructiveHint == true) {
+    if (tool.annotations?.destructiveHint == true &&
+        ref.read(mcpLabPreferencesProvider).confirmDestructiveTools) {
       final allowed = await showConfirmDialog(
         context,
         title: 'Call destructive tool?',

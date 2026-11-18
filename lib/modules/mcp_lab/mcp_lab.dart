@@ -20,4 +20,5 @@ export 'providers/mcp_resource_export_provider.dart';
 export 'providers/mcp_content_actions_provider.dart';
 export 'providers/mcp_resource_completion_provider.dart';
 export 'providers/mcp_prompt_completion_provider.dart';
+export 'providers/mcp_lab_preferences_provider.dart';
 export 'services/mcp_content_presentation.dart';

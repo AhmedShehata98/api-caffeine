@@ -17,6 +17,7 @@ import '../providers/mcp_catalog_providers.dart';
 import '../providers/mcp_session_providers.dart';
 import '../providers/mcp_connection_status_provider.dart';
 import '../providers/mcp_primitive_providers.dart';
+import '../providers/mcp_lab_preferences_provider.dart';
 import '../widgets/mcp_tools_view.dart';
 import '../widgets/mcp_prompts_view.dart';
 import '../widgets/mcp_resources_view.dart';
@@ -38,7 +39,6 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
   final _filterFocus = FocusNode();
   final _busy = <String>{};
   String _view = 'settings';
-  bool _monitorPinned = false;
   @override
   void dispose() {
     _filter.dispose();
@@ -334,6 +334,7 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
   }
 
   Widget _details(McpServer server) {
+    final preferences = ref.watch(mcpLabPreferencesProvider);
     final services = ref.watch(mcpPrimitiveServicesProvider(server.id));
     final monitor = ref
         .watch(mcpSessionsProvider)
@@ -424,6 +425,26 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
             ],
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Confirm destructive tool calls',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: const Text(
+              'Server annotations are hints; review each marked call before sending.',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            value: preferences.confirmDestructiveTools,
+            onChanged: (value) => ref
+                .read(mcpLabPreferencesProvider.notifier)
+                .setConfirmDestructiveTools(value),
+          ),
+        ),
         Expanded(
           child: switch (view) {
             'tools' => McpToolsView(
@@ -448,8 +469,10 @@ class _McpLabScreenState extends ConsumerState<McpLabScreen> {
                   : view == 'network'
                   ? McpMonitorKind.network
                   : McpMonitorKind.console,
-              pinned: _monitorPinned,
-              onPinChanged: (value) => setState(() => _monitorPinned = value),
+              pinned: preferences.monitorPinned,
+              onPinChanged: (value) => ref
+                  .read(mcpLabPreferencesProvider.notifier)
+                  .setMonitorPinned(value),
             ),
             _ => _settingsDetails(server),
           },
