@@ -1097,6 +1097,14 @@ panes retain usable space; double-clicking the divider resets and saves the
 standard 25% layout. This uses the existing device-local shared-preferences
 provider and adds no dependency. Static analysis passes; tests were not run.
 
+## Persisted tool editor mode
+
+The Tools Form/JSON choice now becomes the default for subsequently selected
+tools and is stored in device-local preferences. A live unsaved tool draft still
+restores its own editor mode. Schemas that cannot be represented as a form remain
+in JSON mode regardless of the saved preference. Static analysis passes; tests
+were not run.
+
 ## Progress tracker correction
 
 Updated the phase table and next-step order to include the already-completed

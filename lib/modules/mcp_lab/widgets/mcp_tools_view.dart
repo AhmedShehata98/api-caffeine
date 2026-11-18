@@ -53,7 +53,9 @@ class _McpToolsViewState extends ConsumerState<McpToolsView> {
       _select(
         draft!.tool!,
         existing: draft.arguments,
-        preferRaw: draft.rawEditor,
+        preferRaw:
+            draft.rawEditor ||
+            ref.read(mcpLabPreferencesProvider).rawToolEditor,
       );
     }
     _json.addListener(_changedJson);
@@ -136,6 +138,7 @@ class _McpToolsViewState extends ConsumerState<McpToolsView> {
       _errors = {};
     });
     _persist();
+    ref.read(mcpLabPreferencesProvider.notifier).setRawToolEditor(raw);
   }
 
   Future<void> _call() async {

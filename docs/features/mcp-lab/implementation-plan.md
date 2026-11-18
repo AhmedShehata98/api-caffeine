@@ -138,7 +138,7 @@ Tests: unit tests with mocktail mocks of the three repository contracts. `Schema
 | `mcpToolsProvider(serverId)`, `mcpResourcesProvider(serverId)`, `mcpPromptsProvider(serverId)` | `FutureProvider.family` | Re-run on reconnect |
 | `mcpToolCallProvider(serverId)` | `NotifierProvider.family` | Last call: args, running, result / failure, duration |
 | `mcpTranscriptProvider(serverId)`, `mcpNetworkProvider(serverId)`, `mcpConsoleProvider(serverId)` | `NotifierProvider.family` | Fed by session streams; clear |
-| `mcpLabPrefsProvider` | `NotifierProvider` on `shared_preferences` | Sidebar width, pinned monitor, form / JSON mode |
+| `mcpLabPrefsProvider` | `NotifierProvider` on `shared_preferences` | Sidebar width, pinned monitor, destructive-call confirmation and tool Form/JSON default |
 
 Add `FakeMcpServerRepository` and `FakeMcpConnectionRepository` (scripted sessions) to `test/support/fake_backend.dart` so `pumpApp` can render MCP Lab.
 

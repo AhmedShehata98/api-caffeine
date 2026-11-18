@@ -9,19 +9,23 @@ class McpLabPreferences {
     this.monitorPinned = false,
     this.confirmDestructiveTools = true,
     this.sidebarRatio = 0.25,
+    this.rawToolEditor = false,
   });
   final bool monitorPinned;
   final bool confirmDestructiveTools;
   final double sidebarRatio;
+  final bool rawToolEditor;
   McpLabPreferences copyWith({
     bool? monitorPinned,
     bool? confirmDestructiveTools,
     double? sidebarRatio,
+    bool? rawToolEditor,
   }) => McpLabPreferences(
     monitorPinned: monitorPinned ?? this.monitorPinned,
     confirmDestructiveTools:
         confirmDestructiveTools ?? this.confirmDestructiveTools,
     sidebarRatio: sidebarRatio ?? this.sidebarRatio,
+    rawToolEditor: rawToolEditor ?? this.rawToolEditor,
   );
 }
 
@@ -35,12 +39,14 @@ class McpLabPreferencesNotifier extends Notifier<McpLabPreferences> {
   static const _pinKey = 'mcp-lab.monitor-pinned.v1';
   static const _confirmKey = 'mcp-lab.confirm-destructive-tools.v1';
   static const _sidebarKey = 'mcp-lab.sidebar-ratio.v1';
+  static const _toolEditorKey = 'mcp-lab.tool-editor-json.v1';
 
   @override
   McpLabPreferences build() => McpLabPreferences(
     monitorPinned: _prefs.getBool(_pinKey) ?? false,
     confirmDestructiveTools: _prefs.getBool(_confirmKey) ?? true,
     sidebarRatio: (_prefs.getDouble(_sidebarKey) ?? 0.25).clamp(0.2, 0.55),
+    rawToolEditor: _prefs.getBool(_toolEditorKey) ?? false,
   );
 
   Future<Result<void>> _set(
@@ -68,6 +74,8 @@ class McpLabPreferencesNotifier extends Notifier<McpLabPreferences> {
       _set(_pinKey, value, state.copyWith(monitorPinned: value));
   Future<Result<void>> setConfirmDestructiveTools(bool value) =>
       _set(_confirmKey, value, state.copyWith(confirmDestructiveTools: value));
+  Future<Result<void>> setRawToolEditor(bool value) =>
+      _set(_toolEditorKey, value, state.copyWith(rawToolEditor: value));
 
   Future<Result<void>> setSidebarRatio(double value) {
     final ratio = value.clamp(0.2, 0.55);
