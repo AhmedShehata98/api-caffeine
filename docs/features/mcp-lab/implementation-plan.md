@@ -656,3 +656,21 @@ result), seven existing HTTP groups, five notification groups, three existing
 interaction change. This completes the explicit deprecated-transport slice;
 Windows descendant cleanup, native acceptance and remaining S1 gates stay open.
 Next unblocked work: isolated fresh migration replay and broader RLS fixtures.
+
+### Isolated migration replay and organization RLS progress
+
+Added a guarded Windows verifier that creates a separate Supabase project, replays
+all three migrations and the seed, runs transactional pgTAP tests and removes only
+its own containers/data. Unique project identity, scratch path, ports and nonzero
+test execution are checked; privileged CLI key output is never printed/logged.
+KeepRunning permits REST tests using ignored API/anon defines.
+
+Two isolated fresh replays and all 33 organization/RLS assertions pass. Three real
+catalog REST/repository tests pass against the first fresh API. Shared membership,
+cross-organization denial/transfers, multi-org membership, revocation and workspace
+cascades are covered, and SQL fixtures roll back. Busy-port refusal and automatic
+cleanup are verified; original database fingerprints remain unchanged. Analysis is
+clean. No migration or Dart changes were needed; the preceding 367 app tests remain
+the baseline. Applied supabase-postgres-best-practices. See the database verification
+note for reproducible commands and scope. Next: remaining resource-template and UI
+acceptance gaps; remote deployment and native/platform gates stay open.

@@ -8,7 +8,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | Phase | Status | Remaining work |
 |---|---|---|
 | Step 0 — transport feasibility | Complete | Production transports still belong to S1 |
-| S1 database (§3.1) | Local migration applied; catalog constraints/RLS and repository checks pass | Fresh full migration replay, broader organization fixtures and remote deployment |
+| S1 database (§3.1) | Fresh isolated migrations/seed replay, 33 organization/RLS assertions and three REST/repository checks pass | Remote deployment not performed; wider account/security acceptance remains |
 | S1 models (§3.2) | Implemented; unit-tested | Extend as connection implementation requires |
 | S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Stdio platform gaps and remaining lifecycle guarantees |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
@@ -40,7 +40,7 @@ the remaining live-session and UI work is substantially larger than the complete
 ## Validation and blockers
 
 - Four transport feasibility probes passed.
-- The latest selected regression run passes **367** tests (361 MCP and six desktop shutdown cases). Three real local Supabase catalog/RLS tests passed separately in the preceding database slice; this slice does not change the database. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
+- The latest selected app regression run passes **367** tests (361 MCP and six desktop shutdown cases), from the preceding transport slice. The current database-only slice passes 33 transactional pgTAP assertions and three real REST/repository tests against a fresh isolated stack; no Dart or migration SQL changed. Rich result and output-schema details are recorded in [the rich-content note](rich-content-progress.md).
 - `dart test/integration/mcp_lab/stdio_session_checks.dart` passes **seven real-process scenario groups** on Windows: legacy/native argv/env/diagnostics/timeouts, modern intermediate results, crashes, bounded stubborn-process shutdown, late diagnostic listeners, SDK interoperability/status replay, and stale-account checks. This is separate from mocked unit verification.
 - `dart test/integration/mcp_lab/http_session_checks.dart` passes **seven loopback scenario groups**: legacy JSON/SSE and diagnostics/DELETE, modern routing and explicit retry without replay, 404 cancellation of concurrent calls, bounded hanging DELETE, stale-account rejection, large sanitized request/response captures over JSON/SSE, and legacy response resumption with concurrent cursor isolation/refusal recovery. The stdio scenarios were rerun after sharing diagnostic code and still pass.
 - `dart test/integration/mcp_lab/large_payload_checks.dart` passes three real stdio/HTTP JSON/SSE checks: a 20 MiB embedded binary result, bounded diagnostics, off-isolate preview metadata and decode, and byte-exact file export. Stdio framing overflow is also rejected. The exporter uses a test file destination, not a native dialog; native UI responsiveness remains unverified.
@@ -50,7 +50,7 @@ the remaining live-session and UI work is substantially larger than the complete
 - Redaction tests cover nested values, credential headers, bearer/cookie echoes, query names/values, mixed-case percent encoding, malformed JSON/stderr, wire-format preservation and disposal. This does not certify unwritten transport/cache/UI paths.
 - Unit tests use a temporary `.dart_tool/mcp_unit_runner.dart` invoking Flutter's test command without native-plugin builds or asset bundling. This validates model/REST/mocked-storage behavior, not native plugins.
 - The normal Flutter test command stalls in the existing `cnativeapi` hook.
-- Docker Desktop's Linux engine and the existing local Supabase stack have been restarted. The pending additive MCP migration applied without a reset; catalog constraints, isolation and repository integration now pass. A fresh full migration replay and wider database acceptance are still pending.
+- Docker Desktop's Linux engine and the existing local Supabase stack have been restarted. All three migrations and the seed replay cleanly in separate fresh projects, and broader catalog organization/RLS checks pass. Temporary stacks are removed; checked auth/catalog/organization data in the original stack is unchanged. Remote deployment and wider account/security acceptance are not certified.
 - Stdio remains partial: Windows `.cmd`/`.bat` launch is explicitly rejected until quoting is implemented/tested; macOS process-group launch is not implemented (POSIX currently requires `/usr/bin/setsid`); Windows descendant cleanup after an early parent exit still needs work. Linux group/GUI-PATH behavior and platform shutdown guarantees remain unverified. No shell fallback weakens these gates.
 - A Windows Job Object helper prototype compiled, but local Application Control blocked its unsigned executable (Code Integrity event 3077). The owner confirmed no signing setup is available. The prototype is not part of the app build or default launcher; the existing direct launch path remains in use. This approach needs an approved execution/signing route or a different supported native integration before its cleanup guarantee can be validated.
 - HTTP remains partial: legacy Streamable HTTP supports one bounded response resume and an optional notification GET. Explicit deprecated HTTP+SSE targets now support fixed same-origin endpoint routing in legacy mode. Cross-origin announced endpoints, automatic transport fallback, continuous polling/reconnection and notification-stream UI controls are not implemented. Redirects are not followed; TLS proxy endpoints are explicitly rejected (an HTTP proxy can still tunnel an HTTPS MCP target). OAuth remains S2. No automatic POST replay or modern Last-Event-ID resumption is introduced.
@@ -63,9 +63,9 @@ Follow [the design handoff](../../design/stitch-mvp-progress.md#current-color-to
 
 ## Next implementation order
 
-1. Validate a fresh migration replay in an isolated environment and broaden organization/security fixtures while the Windows helper approach is blocked.
+1. Complete remaining S1 resource-template composite inputs/completion and monitor/preferences gaps while the Windows helper approach is blocked.
 2. Revisit Windows descendant cleanup with an approved native execution route; close remaining stdio platform/lifecycle gaps.
-3. Complete remaining S1 resource-template inputs/completion and monitor/preferences acceptance gaps.
+3. Finish wider account/security and remaining S1 fixture-matrix acceptance; remote database deployment remains separate.
 4. Complete normal Flutter/native-plugin, desktop/window/keychain and cross-platform/manual exit checks.
 5. Proceed through S2–S4 prerequisites and acceptance criteria; S4 remains independently possible after S1.
 
@@ -937,3 +937,37 @@ HTTP+SSE groups, seven existing HTTP groups, five notification groups, three exi
 receives a 20 MiB binary result and prepares metadata off-isolate. Native dialog,
 large-result Flutter responsiveness and remaining full S1 gates remain open.
 Next: isolated migration replay and broader database-security verification.
+
+## Isolated migration replay and broader organization RLS verification
+
+Added `tool/verify_mcp_database.ps1` and a 33-assertion transactional pgTAP suite.
+The verifier creates a unique ignored Supabase project on separate ports, copies
+only committed migrations/seed/tests, verifies the scratch path/project/ports
+before reset or cleanup, and requires a nonzero executed-test count. It never
+targets the original project or a remote database. Default cleanup removes only
+its temporary containers/data; KeepRunning supports additional REST verification.
+CLI key output is captured without logging it; only API/anon test defines are
+written to the ignored workdir. See [database verification](database-verification.md).
+
+All three migrations and the committed seed replayed successfully in two isolated
+fresh projects. The SQL suite verifies owner/shared-member access across two
+workspaces, foreign organization read/write/transfer denial, membership self-grant
+denial, explicit multi-organization access, partial/full membership revocation
+without changing the subject, anon-role restrictions and workspace cascades.
+Assertions use actual authenticated/anon database roles, not superuser reads for
+access checks. Fixtures and their auth-trigger-created profiles/organizations roll
+back; post-test metadata confirms no SQL fixture users or MCP catalog rows remain.
+
+The three existing REST/repository integration cases also pass against the first
+fresh isolated API: constraints, real CRUD/serialization, marked-secret stripping
+and outsider/anonymous denial. The second run verifies the final script's executed
+test count and automatic cleanup. A deliberately occupied-port run refused before
+starting or stopping anything. Original auth/user/organization/membership/workspace/
+MCP row fingerprints match, and only the original local stack remains running.
+
+Static analysis is clean. No Dart or migration SQL change was required, so the
+preceding 367 app regression results remain the app baseline. Applied
+supabase-postgres-best-practices and its RLS guidance. This closes local fresh-replay
+and these broader catalog-RLS cases, not remote deployment, automatic app-side
+revocation discovery, every table/account flow or full S1/native acceptance.
+Next: resource-template composite inputs/completion and remaining S1 UI gaps.
