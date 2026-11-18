@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:test_point/core/error/result.dart';
 import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
 import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_sanitizer.dart';
 import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_stream.dart';
@@ -18,6 +19,8 @@ class _Adapter implements HttpClientAdapter {
   final arrived = Completer<void>();
   int deleteStatus = 405;
   Map<String, dynamic> Function(String method)? resultFor;
+  ResponseBody Function(Map<String, dynamic>)? responseFor;
+  Future<ResponseBody> Function(RequestOptions)? getResponse;
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -28,6 +31,11 @@ class _Adapter implements HttpClientAdapter {
     if (options.method == 'DELETE') {
       return ResponseBody.fromString('', deleteStatus);
     }
+    if (options.method == 'GET') {
+      return getResponse == null
+          ? ResponseBody.fromString('', 405)
+          : getResponse!(options);
+    }
     final bytes = <int>[];
     if (requestStream != null) {
       await for (final chunk in requestStream) {
@@ -35,6 +43,9 @@ class _Adapter implements HttpClientAdapter {
       }
     }
     final body = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+    if (body['method'] == 'tools/call' && responseFor != null) {
+      return responseFor!(body);
+    }
     if (body['method'] == 'tools/call' && held != null) {
       if (!arrived.isCompleted) arrived.complete();
       return held!.future;
@@ -112,6 +123,280 @@ void main() {
     );
     return session;
   }
+
+  ResponseBody resumed(_Adapter adapter) {
+    final sent = jsonDecode(
+      adapter.requests.lastWhere((request) => request.method == 'POST').data
+          as String,
+    );
+    return ResponseBody.fromString(
+      'data: ${jsonEncode({
+        'jsonrpc': '2.0',
+        'id': sent['id'],
+        'result': {'resumed': true},
+      })}\n\n',
+      200,
+      headers: {
+        'content-type': ['text/event-stream'],
+      },
+    );
+  }
+
+  Future<Result<Map<String, dynamic>>> cutCall(
+    _Adapter adapter,
+    McpSession session, {
+    String fields = 'id: cursor-private\nretry: 0',
+    Duration? timeout,
+  }) async {
+    adapter.responseFor = (_) => ResponseBody.fromString(
+      '$fields\ndata:\n\ndata: {"unfinished"',
+      200,
+      headers: {
+        'content-type': ['text/event-stream'],
+      },
+    );
+    return session.request('tools/call', {'name': 'resume'}, timeout: timeout);
+  }
+
+  test('legacy GET resumes a primed stream once with deadline and sanitized diagnostics', () async {
+    final adapter = _Adapter();
+    final session = await open(adapter);
+    adapter.getResponse = (_) async => resumed(adapter);
+    final captures = <NetworkEntry>[];
+    final captured = Completer<NetworkEntry>();
+    final subscription = session.network.listen((entry) {
+      captures.add(entry);
+      if (entry.method == 'GET' && !captured.isCompleted) {
+        captured.complete(entry);
+      }
+    });
+    final watch = Stopwatch()..start();
+    final result = await cutCall(
+      adapter,
+      session,
+      fields: 'id: cursor-private\nretry: 40',
+    );
+    expect(result.valueOrNull, {'resumed': true});
+    expect(watch.elapsedMilliseconds, greaterThanOrEqualTo(40));
+    final get = adapter.requests.singleWhere(
+      (request) => request.method == 'GET',
+    );
+    expect(get.headers['last-event-id'], 'cursor-private');
+    expect(get.headers['mcp-session-id'], 'fake-session');
+    expect(get.headers['mcp-protocol-version'], '2025-11-25');
+    expect(get.headers['authorization'], 'Bearer canary');
+    expect(get.headers['accept'], 'text/event-stream');
+    expect(get.data, isNull);
+    final post = adapter.requests
+        .where((request) => request.method == 'POST')
+        .last;
+    expect(post.headers.containsKey('last-event-id'), isFalse);
+    final capture = await captured.future;
+    expect(capture.requestBody, isNull);
+    expect(capture.requestHeaders['last-event-id'], ['[REDACTED]']);
+    expect(captures[captures.indexOf(capture) - 1].truncated, isTrue);
+    expect(
+      adapter.requests.where((request) => request.method == 'POST'),
+      hasLength(3),
+    );
+    await session.close();
+    await subscription.cancel();
+  });
+
+  for (final fields in ['', 'id: first\n\nid:', 'id: 雪', 'id: ${'x' * 8193}']) {
+    test(
+      'legacy unsafe, missing or cleared cursor does not resume (${fields.length})',
+      () async {
+        final adapter = _Adapter();
+        final session = await open(adapter);
+        expect(
+          (await cutCall(adapter, session, fields: fields)).isSuccess,
+          isFalse,
+        );
+        expect(
+          adapter.requests.where((request) => request.method == 'GET'),
+          isEmpty,
+        );
+        await session.close();
+      },
+    );
+  }
+  test(
+    'modern streams never resume even when the server provides an event ID',
+    () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      session.configureProtocol(
+        era: NegotiatedEra.modern,
+        version: '2026-07-28',
+      );
+      expect((await cutCall(adapter, session)).isSuccess, isFalse);
+      expect(
+        adapter.requests.where((request) => request.method == 'GET'),
+        isEmpty,
+      );
+      await session.close();
+    },
+  );
+
+  for (final status in [401, 404, 405, 429]) {
+    test('resume GET $status is explicit and never replays the POST', () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      adapter.getResponse = (_) async => ResponseBody.fromString(
+        '',
+        status,
+        headers: {
+          'retry-after': ['2'],
+        },
+      );
+      final result = await cutCall(adapter, session);
+      expect(result.isSuccess, isFalse);
+      expect(
+        adapter.requests.where((request) => request.method == 'POST'),
+        hasLength(3),
+      );
+      expect(
+        adapter.requests.where((request) => request.method == 'GET'),
+        hasLength(1),
+      );
+      if (status == 401) expect(result.failureOrNull, isA<McpAuthFailure>());
+      if (status == 429) {
+        expect(
+          (result.failureOrNull as McpNetworkFailure).retryAfter,
+          const Duration(seconds: 2),
+        );
+      }
+      if (status == 401 || status == 404) {
+        expect((await session.request('tools/call', {})).isSuccess, isFalse);
+      }
+      await session.close();
+    });
+  }
+  test(
+    'a second stream interruption does not start another GET or POST',
+    () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      adapter.getResponse = (_) async => ResponseBody.fromString(
+        'id: second\ndata:\n\n',
+        200,
+        headers: {
+          'content-type': ['text/event-stream'],
+        },
+      );
+      expect((await cutCall(adapter, session)).isSuccess, isFalse);
+      expect(
+        adapter.requests.where((request) => request.method == 'GET'),
+        hasLength(1),
+      );
+      expect(
+        adapter.requests.where((request) => request.method == 'POST'),
+        hasLength(3),
+      );
+      await session.close();
+    },
+  );
+  test('retry delay cannot extend the original request deadline', () async {
+    final adapter = _Adapter();
+    final session = await open(adapter);
+    final watch = Stopwatch()..start();
+    expect(
+      (await cutCall(
+        adapter,
+        session,
+        fields: 'id: cursor\nretry: 5000',
+        timeout: const Duration(milliseconds: 50),
+      )).isSuccess,
+      isFalse,
+    );
+    expect(watch.elapsedMilliseconds, lessThan(1000));
+    expect(
+      adapter.requests.where((request) => request.method == 'GET'),
+      isEmpty,
+    );
+    await session.close();
+  });
+  test(
+    'closing while waiting to resume cancels the delay without a GET',
+    () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      final captured = session.network.firstWhere((entry) => entry.truncated);
+      final pending = cutCall(
+        adapter,
+        session,
+        fields: 'id: cursor\nretry: 10000',
+      );
+      await captured;
+      final watch = Stopwatch()..start();
+      expect((await session.close()).isSuccess, isTrue);
+      expect((await pending).isSuccess, isFalse);
+      expect(watch.elapsedMilliseconds, lessThan(1000));
+      expect(
+        adapter.requests.where((request) => request.method == 'GET'),
+        isEmpty,
+      );
+    },
+  );
+  test(
+    'revoked access rejects a late resumed payload before diagnostics',
+    () async {
+      var authorized = true;
+      final adapter = _Adapter();
+      final session = await open(adapter, authorized: () => authorized);
+      final arrived = Completer<void>();
+      final stream = StreamController<Uint8List>();
+      final frames = <RpcFrame>[];
+      final subscription = session.frames.listen(frames.add);
+      adapter.getResponse = (_) async {
+        arrived.complete();
+        return ResponseBody(
+          stream.stream,
+          200,
+          headers: {
+            'content-type': ['text/event-stream'],
+          },
+        );
+      };
+      final pending = cutCall(adapter, session);
+      await arrived.future;
+      authorized = false;
+      stream.add(
+        utf8.encode(
+          'data: {"jsonrpc":"2.0","id":2,"result":{"private":"revoked-payload"}}\n\n',
+        ),
+      );
+      expect((await pending).failureOrNull, isA<McpAuthFailure>());
+      expect(
+        frames.any((frame) => frame.rawJson.contains('revoked-payload')),
+        isFalse,
+      );
+      await session.close();
+      await subscription.cancel();
+      await stream.close();
+    },
+  );
+  test(
+    'resume GET must return SSE rather than silently accepting JSON',
+    () async {
+      final adapter = _Adapter();
+      final session = await open(adapter);
+      adapter.getResponse = (_) async => ResponseBody.fromString(
+        '{}',
+        200,
+        headers: {
+          'content-type': ['application/json'],
+        },
+      );
+      expect((await cutCall(adapter, session)).isSuccess, isFalse);
+      expect(
+        adapter.requests.where((request) => request.method == 'GET'),
+        hasLength(1),
+      );
+      await session.close();
+    },
+  );
 
   test(
     'large JSON network body retains sanitized full text behind the preview',

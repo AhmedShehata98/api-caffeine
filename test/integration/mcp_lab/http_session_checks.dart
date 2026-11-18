@@ -347,4 +347,118 @@ Future<void> main() async {
   stdout.writeln(
     'PASS: separate large JSON/SSE request and response diagnostics, redaction, preview, isolate loading and clear',
   );
+
+  final resumePeer = await McpHttpPeer.start()
+    ..resumeStreams = true;
+  final resumedSession = await connect(resumePeer);
+  final resumedNetwork = <NetworkEntry>[];
+  final resumedCaptured = Completer<void>();
+  final resumedFrames = <RpcFrame>[];
+  final resumedSubscription = resumedSession.network.listen((entry) {
+    resumedNetwork.add(entry);
+    if (resumedNetwork.where((entry) => entry.method == 'GET').length == 2 &&
+        !resumedCaptured.isCompleted) {
+      resumedCaptured.complete();
+    }
+  });
+  final resumedProtocol = resumedSession.frames.listen(resumedFrames.add);
+  try {
+    final results = await Future.wait([
+      resumedSession.request('tools/call', {'name': 'first', 'arguments': {}}),
+      resumedSession.request('tools/call', {'name': 'second', 'arguments': {}}),
+    ]);
+    await resumedCaptured.future.timeout(const Duration(seconds: 5));
+    check(
+      results.every(
+        (result) =>
+            result.valueOrNull?['content'][0]['text'] == McpHttpPeer.secret,
+      ),
+      'Legacy resumed operation result changed or was lost',
+    );
+    check(
+      resumePeer.gets == 2 &&
+          resumePeer.resumeHeaders
+                  .map((headers) => headers['last-event-id'])
+                  .toSet()
+                  .length ==
+              2,
+      'Concurrent requests shared a cursor or resumed more than once',
+    );
+    check(
+      resumePeer.resumeHeaders.every(
+        (headers) =>
+            headers['mcp-session-id'] == 'fixture-session' &&
+            headers['mcp-protocol-version'] == '2025-11-25' &&
+            headers['accept'] == 'text/event-stream',
+      ),
+      'Legacy resume headers missing',
+    );
+    check(
+      resumePeer.bodies
+              .where((body) => body['method'] == 'tools/call')
+              .length ==
+          2,
+      'Legacy response resumption replayed a tool call',
+    );
+    final diagnostics = jsonEncode({
+      'network': resumedNetwork.map((entry) => entry.toJson()).toList(),
+      'frames': resumedFrames.map((frame) => frame.toJson()).toList(),
+    });
+    check(
+      !diagnostics.contains(McpHttpPeer.secret),
+      'Resume diagnostics leaked a credential',
+    );
+    check(
+      resumedNetwork.where((entry) => entry.method == 'GET').length == 2,
+      'Resume GETs missing from network diagnostics',
+    );
+    resumePeer.resumeStatus = 405;
+    check(
+      !(await resumedSession.request('tools/call', {
+        'name': 'get-not-supported',
+      })).isSuccess,
+      'Refused resumption was hidden',
+    );
+    check(
+      resumePeer.gets == 3 &&
+          resumePeer.bodies
+                  .where((body) => body['method'] == 'tools/call')
+                  .length ==
+              3,
+      'Refused resumption replayed the POST',
+    );
+    resumePeer.resumeStreams = false;
+    check(
+      (await resumedSession.request('tools/call', {
+        'name': 'explicit-new-call',
+      })).isSuccess,
+      'A refused resume prevented an explicit new call',
+    );
+  } finally {
+    await resumedSession.close();
+    await resumedSubscription.cancel();
+    await resumedProtocol.cancel();
+    await resumePeer.close();
+  }
+  final modernResumePeer = await McpHttpPeer.start()
+    ..resumeStreams = true;
+  final modernResumeSession = await connect(modernResumePeer, modern: true);
+  try {
+    check(
+      !(await modernResumeSession.request('tools/call', {
+        'name': 'modern-cut',
+      })).isSuccess,
+      'Cut modern response unexpectedly succeeded',
+    );
+    check(
+      modernResumePeer.gets == 0 && modernResumePeer.bodies.length == 2,
+      'Modern response started a resume GET or replayed POST',
+    );
+  } finally {
+    await modernResumeSession.close();
+    await modernResumePeer.close();
+  }
+  stdout.writeln(
+    'PASS: legacy GET resumption, isolated concurrent cursors, no POST replay, refusal recovery and modern no-resumption',
+  );
 }

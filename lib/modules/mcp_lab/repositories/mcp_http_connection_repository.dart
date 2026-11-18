@@ -195,6 +195,8 @@ class _HttpOperation {
   final finished = Completer<void>();
   final token = CancelToken();
   Timer? timer;
+  String? lastEventId;
+  int retryMilliseconds = 0;
   bool get done => completion.isCompleted;
 }
 
@@ -458,6 +460,7 @@ class _HttpSession implements McpSession {
   void _finish(_HttpOperation operation, Result<Map<String, dynamic>> result) {
     if (operation.done) return;
     operation.timer?.cancel();
+    operation.lastEventId = null;
     _operations.remove(operation);
     operation.completion.complete(result);
     operation.finished.complete();
@@ -683,6 +686,22 @@ class _HttpSession implements McpSession {
     int? status;
     Result<Map<String, dynamic>> result;
     McpCoded? terminal;
+    var postCaptured = false;
+    void capturePost() {
+      if (postCaptured) return;
+      postCaptured = true;
+      _captureNetwork(
+        method: 'POST',
+        requestHeaders: requestHeaders,
+        responseHeaders: responseHeaders,
+        status: status,
+        body: body,
+        duration: watch.elapsed,
+        wire: wire,
+      );
+      body.clear();
+    }
+
     try {
       if (!_live(operation)) return;
       _frames.record(wire, RpcDirection.outgoing);
@@ -746,10 +765,11 @@ class _HttpSession implements McpSession {
           final bytes = _body(response.data!, operation);
           Result<Map<String, dynamic>>? matched;
           if (contentType == 'text/event-stream') {
-            await for (final frame in mcpSseFrames(bytes)) {
-              if (!_live(operation)) break;
-              matched = await _acceptFrame(frame, operation, body);
-              if (matched != null) break;
+            matched = await _readSse(bytes, operation, body);
+            if (matched == null) body.truncated = true;
+            if (matched == null && _canResume(operation)) {
+              capturePost();
+              matched = await _resumeSse(operation, params);
             }
           } else if (contentType == 'application/json') {
             final collected = BytesBuilder(copy: false);
@@ -803,39 +823,199 @@ class _HttpSession implements McpSession {
         );
       }
     } finally {
-      if (!_disposed && !_closing && isAuthorized(context, serverId)) {
-        final requestBody = McpHttpDiagnosticBody()
-          ..add(_sanitizer.frame(wire).text);
-        final entry = NetworkEntry(
-          method: 'POST',
-          url: _sanitizer.text(_url.toString()),
-          status: status,
-          requestHeaders: _sanitizer.headers({
-            for (final entry in requestHeaders.entries)
-              entry.key: [entry.value],
-          }),
-          responseHeaders: _sanitizer.headers(responseHeaders),
-          requestBody: requestBody.text,
-          requestTruncated: requestBody.truncated,
-          body: body.text,
-          truncated: body.truncated,
-          duration: watch.elapsed,
-        );
-        _network.add(
-          entry,
-          utf8.encode(entry.body ?? '').length +
-              utf8.encode(entry.requestBody ?? '').length +
-              1024,
-        );
-        requestBody.clear();
-      }
-      body.clear();
+      capturePost();
     }
     if (terminal != null) {
       _disconnect(terminal);
     } else {
       _finish(operation, result);
     }
+  }
+
+  void _captureNetwork({
+    required String method,
+    required Map<String, String> requestHeaders,
+    required Map<String, List<String>> responseHeaders,
+    required int? status,
+    required McpHttpDiagnosticBody body,
+    required Duration duration,
+    String? wire,
+  }) {
+    if (_disposed || _closing || !isAuthorized(context, serverId)) return;
+    final request = McpHttpDiagnosticBody();
+    if (wire != null) request.add(_sanitizer.frame(wire).text);
+    final entry = NetworkEntry(
+      method: method,
+      url: _sanitizer.text(_url.toString()),
+      status: status,
+      requestHeaders: _sanitizer.headers({
+        for (final entry in requestHeaders.entries) entry.key: [entry.value],
+      }),
+      responseHeaders: _sanitizer.headers(responseHeaders),
+      requestBody: wire == null ? null : request.text,
+      requestTruncated: request.truncated,
+      body: body.text,
+      truncated: body.truncated,
+      duration: duration,
+    );
+    _network.add(
+      entry,
+      utf8.encode(entry.body ?? '').length +
+          utf8.encode(entry.requestBody ?? '').length +
+          1024,
+    );
+    request.clear();
+  }
+
+  bool _canResume(_HttpOperation operation) =>
+      _live(operation) &&
+      _era == NegotiatedEra.legacy &&
+      operation.lastEventId != null &&
+      operation.lastEventId!.isNotEmpty;
+
+  Future<Result<Map<String, dynamic>>?> _readSse(
+    Stream<List<int>> bytes,
+    _HttpOperation operation,
+    McpHttpDiagnosticBody body,
+  ) async {
+    try {
+      await for (final event in mcpSseEvents(bytes)) {
+        if (!_live(operation)) break;
+        if (_era == NegotiatedEra.legacy) {
+          if (event.id case final id?) {
+            // SSE IDs cannot be re-encoded without changing the server cursor.
+            // Reject values that cannot safely be sent as an HTTP header.
+            operation.lastEventId =
+                id.length <= 8192 &&
+                    id.codeUnits.every((unit) => unit >= 32 && unit <= 126)
+                ? id
+                : null;
+          }
+          if (event.retryMilliseconds case final retry?) {
+            operation.retryMilliseconds = retry;
+          }
+        }
+        final data = event.data;
+        if (data == null || data.isEmpty) continue; // Includes priming events.
+        final matched = await _acceptFrame(data, operation, body);
+        if (matched != null) return matched;
+      }
+    } on Object catch (error) {
+      body.truncated = true;
+      if (error is! McpSseIncompleteEvent &&
+          error is! DioException &&
+          error is! SocketException &&
+          error is! HttpException) {
+        rethrow;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _waitToResume(_HttpOperation operation) {
+    final ready = Completer<bool>();
+    final timer = Timer(
+      Duration(milliseconds: operation.retryMilliseconds),
+      () {
+        if (!ready.isCompleted) ready.complete(_canResume(operation));
+      },
+    );
+    unawaited(
+      operation.finished.future.then((_) {
+        timer.cancel();
+        if (!ready.isCompleted) ready.complete(false);
+      }),
+    );
+    return ready.future;
+  }
+
+  // One GET attempt, under the original request's cancellation/deadline. This
+  // resumes its response stream; it never replays the original POST operation.
+  Future<Result<Map<String, dynamic>>?> _resumeSse(
+    _HttpOperation operation,
+    Map<String, dynamic> params,
+  ) async {
+    if (!await _waitToResume(operation) || !_canResume(operation)) return null;
+    final cursor = operation.lastEventId!;
+    _sanitizer.addSecrets([cursor]);
+    final headers = _requestHeaders(operation.method, params)
+      ..remove('content-type')
+      ..['accept'] = 'text/event-stream'
+      ..['last-event-id'] = cursor;
+    final watch = Stopwatch()..start();
+    final body = McpHttpDiagnosticBody();
+    int? status;
+    Map<String, List<String>> responseHeaders = {};
+    McpCoded? terminal;
+    Result<Map<String, dynamic>>? result;
+    try {
+      final response = await _client!.get<ResponseBody>(
+        _url.toString(),
+        cancelToken: operation.token,
+        options: Options(
+          responseType: ResponseType.stream,
+          followRedirects: false,
+          validateStatus: (_) => true,
+          headers: headers,
+        ),
+      );
+      if (!_live(operation)) {
+        await response.data!.stream.listen((_) {}).cancel();
+        return null;
+      }
+      status = response.statusCode;
+      responseHeaders = response.headers.map;
+      _sanitizer.headers(responseHeaders);
+      if (status != 200) {
+        final failure = _mapper.http(
+          status ?? 0,
+          retryAfter: response.headers.value('retry-after'),
+        );
+        result = Result.failure(failure);
+        if (status == 401 || status == 403 || status == 404) {
+          terminal = failure as McpCoded;
+          if (status == 404) _sessionId = null;
+        }
+        await response.data!.stream.listen((_) {}).cancel();
+      } else if (response.headers
+              .value('content-type')
+              ?.split(';')
+              .first
+              .trim()
+              .toLowerCase() !=
+          'text/event-stream') {
+        body.truncated = true;
+        await response.data!.stream.listen((_) {}).cancel();
+      } else {
+        result = await _readSse(
+          _body(response.data!, operation),
+          operation,
+          body,
+        );
+        if (result == null) body.truncated = true;
+      }
+    } on Object catch (error) {
+      body.truncated = true;
+      result = Result.failure(
+        _mapper.exception(error) ??
+            McpNetworkFailure(
+              'Stream lost. Retry with a new request ID.',
+              code: McpErrorCode.unreachable,
+            ),
+      );
+    } finally {
+      _captureNetwork(
+        method: 'GET',
+        requestHeaders: headers,
+        responseHeaders: responseHeaders,
+        status: status,
+        body: body,
+        duration: watch.elapsed,
+      );
+      body.clear();
+    }
+    if (terminal != null) _disconnect(terminal);
+    return result;
   }
 
   Future<Result<Map<String, dynamic>>?> _acceptFrame(

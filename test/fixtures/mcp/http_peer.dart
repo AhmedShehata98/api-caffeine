@@ -21,6 +21,10 @@ class McpHttpPeer {
   bool sse = false;
   bool cutStream = false;
   bool malformed = false;
+  bool resumeStreams = false;
+  int resumeStatus = 200;
+  final resumeHeaders = <Map<String, String>>[];
+  final _resumeMessages = <String, String>{};
   String? largeText;
   bool holdCalls = false;
   bool holdDelete = false;
@@ -49,6 +53,25 @@ class McpHttpPeer {
       }
       if (request.method == 'GET') {
         gets++;
+        if (resumeStreams) {
+          final observed = <String, String>{};
+          request.headers.forEach(
+            (key, values) => observed[key] = values.join(','),
+          );
+          resumeHeaders.add(observed);
+          final message = _resumeMessages.remove(
+            request.headers.value('last-event-id'),
+          );
+          response.statusCode = resumeStatus;
+          if (resumeStatus == 200 && message != null) {
+            response.headers.contentType = ContentType('text', 'event-stream');
+            response.add(utf8.encode('data: $message\n\n'));
+          } else if (resumeStatus == 200) {
+            response.statusCode = 400;
+          }
+          await response.close();
+          return;
+        }
         response.statusCode = 405;
         await response.close();
         return;
@@ -144,6 +167,14 @@ class McpHttpPeer {
         'result': result,
         'x-wire-extension': true,
       });
+      if (resumeStreams && method == 'tools/call') {
+        final cursor = 'resume-$id-$secret';
+        _resumeMessages[cursor] = message;
+        response.headers.contentType = ContentType('text', 'event-stream');
+        response.write('id: $cursor\nretry: 1\ndata:\n\ndata: {"cut"');
+        await response.close();
+        return;
+      }
       if (sse && method != 'initialize' && method != 'server/discover') {
         response.headers.contentType = ContentType('text', 'event-stream');
         if (cutStream) {
@@ -176,5 +207,6 @@ class McpHttpPeer {
     await _subscription.cancel();
     _held.clear();
     _waitingStream = null;
+    _resumeMessages.clear();
   }
 }

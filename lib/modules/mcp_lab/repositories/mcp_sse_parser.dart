@@ -3,8 +3,29 @@ import 'dart:typed_data';
 
 import 'mcp_frame_limits.dart';
 
-/// Decode complete SSE data events; an EOF never dispatches a partial event.
+class McpSseEvent {
+  const McpSseEvent({this.data, this.id, this.retryMilliseconds});
+  final String? data;
+  final String? id;
+  final int? retryMilliseconds;
+}
+
+class McpSseIncompleteEvent extends FormatException {
+  const McpSseIncompleteEvent() : super('Incomplete SSE event.');
+}
+
+/// Compatibility projection for consumers that only need JSON data frames.
 Stream<String> mcpSseFrames(
+  Stream<List<int>> bytes, {
+  int maxBytes = mcpMaxFrameBytes,
+}) async* {
+  await for (final event in mcpSseEvents(bytes, maxBytes: maxBytes)) {
+    if (event.data case final data?) yield data;
+  }
+}
+
+/// Only completed blocks publish metadata; partial events are never dispatched.
+Stream<McpSseEvent> mcpSseEvents(
   Stream<List<int>> bytes, {
   int maxBytes = mcpMaxFrameBytes,
 }) async* {
@@ -14,6 +35,8 @@ Stream<String> mcpSseFrames(
   var size = 0;
   var skipLf = false;
   var firstLine = true;
+  String? id;
+  int? retry;
   await for (final chunk in bytes) {
     final typed = chunk is Uint8List ? chunk : Uint8List.fromList(chunk);
     var start = 0;
@@ -39,17 +62,36 @@ Stream<String> mcpSseFrames(
       if (firstLine && text.startsWith('\uFEFF')) text = text.substring(1);
       firstLine = false;
       if (text.isEmpty) {
-        if (data.isNotEmpty) yield data.join('\n');
+        if (data.isNotEmpty || id != null || retry != null) {
+          yield McpSseEvent(
+            data: data.isEmpty ? null : data.join('\n'),
+            id: id,
+            retryMilliseconds: retry,
+          );
+        }
         data.clear();
+        id = null;
+        retry = null;
         size = 0;
       } else if (text == 'data' || text.startsWith('data:')) {
         final value = text == 'data' ? '' : text.substring(5);
         data.add(value.startsWith(' ') ? value.substring(1) : value);
+      } else if (text == 'id' || text.startsWith('id:')) {
+        final value = text == 'id' ? '' : text.substring(3);
+        if (!value.contains('\u0000')) {
+          id = value.startsWith(' ') ? value.substring(1) : value;
+        }
+      } else if (text.startsWith('retry:')) {
+        var value = text.substring(6);
+        if (value.startsWith(' ')) value = value.substring(1);
+        if (RegExp(r'^[0-9]+$').hasMatch(value)) {
+          retry = (int.tryParse(value) ?? 0x7fffffff).clamp(0, 0x7fffffff);
+        }
       }
     }
     if (start < typed.length) line.add(Uint8List.sublistView(typed, start));
   }
-  if (line.isNotEmpty || data.isNotEmpty) {
-    throw const FormatException('Incomplete SSE event.');
+  if (line.isNotEmpty || data.isNotEmpty || id != null || retry != null) {
+    throw const McpSseIncompleteEvent();
   }
 }

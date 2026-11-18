@@ -609,3 +609,19 @@ application policy and security block/removal errors. Five tests cover those
 codes, generic fallback, secret-safe messages and no retry. All 309 selected
 regression tests, seven real stdio scenario groups and analysis pass. Next
 unblocked work is HTTP legacy resumption/deprecated-SSE compatibility.
+
+### Bounded legacy response resumption progress
+
+Added request-local SSE event ID/retry parsing and one resume GET for an
+interrupted response after legacy protocol configuration. The original POST is
+never replayed; retry waits and the GET share its deadline and cancellation.
+Modern calls retain explicit no-resumption behavior. POST and GET Network entries
+remain separate and sanitized. Session invalidation, refusal/rate-limit handling,
+late revoked payload rejection and cursor isolation are verified.
+
+All 328 selected tests, seven real HTTP groups, three real 20 MiB transfer/export
+checks and static analysis pass. This completes the bounded response-resumption
+slice. It does not add repeated polling, handshake resumption, an independent
+optional GET notification listener or deprecated HTTP+SSE transport. Next: optional
+GET/405 notification-stream compatibility. Windows early-parent descendant cleanup
+and the remaining native/database/S1 gates stay open.
