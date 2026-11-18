@@ -10,7 +10,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | Step 0 — transport feasibility | Complete | Production transports still belong to S1 |
 | S1 database (§3.1) | Fresh isolated migrations/seed replay, 33 organization/RLS assertions and three REST/repository checks pass | Remote deployment not performed; wider account/security acceptance remains |
 | S1 models (§3.2) | Implemented; unit-tested | Extend as connection implementation requires |
-| S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Stdio platform gaps and remaining lifecycle guarantees |
+| S1 repositories (§3.3) | Catalog/trust, native stdio, Streamable HTTP, bounded legacy resumption, optional notification GET, deprecated HTTP+SSE and modern HTTP parameter mirroring implemented | Windows early-parent descendant cleanup; macOS/Linux process-group execution and shutdown still need native validation |
 | S1 services (§3.4) | Catalog, connect/negotiation, primitives, schema plans, output diagnostics and diagnostic buffers implemented | Remaining protocol gates and broader schema support |
 | S1 providers (§3.5) | Session ownership, DI/settings, lifecycle, catalog/selection, draft/result state, monitor actions, persisted preferences (sidebar width, monitor pin, confirmation and editor mode) and 60-second access-revocation discovery implemented | Native window-close validation; revocation delay includes poll and request time |
 | S1 UI (§3.6) | Server management, rich Tools/Prompts results, Resources reads/Save/raster previews, text/list/object templates, explicit resource/prompt argument completion, Protocol/Network/Console monitors, sanitized export and pinned monitor implemented | Native save-dialog/full desktop review |
@@ -51,10 +51,20 @@ the remaining live-session and UI work is substantially larger than the complete
 - Unit tests use a temporary `.dart_tool/mcp_unit_runner.dart` invoking Flutter's test command without native-plugin builds or asset bundling. This validates model/REST/mocked-storage behavior, not native plugins.
 - The normal Flutter test command stalls in the existing `cnativeapi` hook.
 - Docker Desktop's Linux engine and the existing local Supabase stack have been restarted. All three migrations and the seed replay cleanly in separate fresh projects, and broader catalog organization/RLS checks pass. Temporary stacks are removed; checked auth/catalog/organization data in the original stack is unchanged. Remote deployment and wider account/security acceptance are not certified.
-- Stdio remains partial: Windows `.cmd`/`.bat` launch is explicitly rejected until quoting is implemented/tested; macOS process-group launch is not implemented (POSIX currently requires `/usr/bin/setsid`); Windows descendant cleanup after an early parent exit still needs work. Linux group/GUI-PATH behavior and platform shutdown guarantees remain unverified. No shell fallback weakens these gates.
+- Stdio remains partial: Windows `.cmd`/`.bat` launch is explicitly rejected until quoting is implemented/tested; POSIX process-group launch discovers `setsid` in the approved environment PATH or standard locations, but native macOS/Linux availability, login-shell PATH, group signaling and shutdown remain unverified. Windows descendant cleanup after an early parent exit still needs work. No shell fallback weakens these gates.
 - A Windows Job Object helper prototype compiled, but local Application Control blocked its unsigned executable (Code Integrity event 3077). The owner confirmed no signing setup is available. The prototype is not part of the app build or default launcher; the existing direct launch path remains in use. This approach needs an approved execution/signing route or a different supported native integration before its cleanup guarantee can be validated.
 - HTTP remains partial: legacy Streamable HTTP supports one bounded response resume and an optional notification GET. Explicit deprecated HTTP+SSE targets now support fixed same-origin endpoint routing in legacy mode. Cross-origin announced endpoints, automatic transport fallback, continuous polling/reconnection and notification-stream UI controls are not implemented. Redirects are not followed; TLS proxy endpoints are explicitly rejected (an HTTP proxy can still tunnel an HTTPS MCP target). OAuth remains S2. No automatic POST replay or modern Last-Event-ID resumption is introduced.
 - Q13's CIMD hosting URL is needed for S2, not for continuing S1.
+
+S1 is **not closed**. The outstanding exit checks include the Windows `.cmd`/`.bat`
+argv safety decision, early-parent process-tree cleanup, native execution and
+window/keychain/save-dialog behavior on each target OS, the under-three-minute
+manual walkthrough on Windows/macOS/Linux, large-result responsiveness, and the
+remaining fixture/account-security matrix. The Windows helper prototype is
+blocked by local Application Control and no signing setup is available; this
+requires an approved native execution route or another supported implementation.
+Remote database deployment is separate from the already-passing isolated local
+replay and RLS checks.
 
 ## Design reference
 
