@@ -175,15 +175,18 @@ class McpStdioLauncher {
         return Result.failure(_failure('Executable not found.'));
       }
       final group = !Platform.isWindows;
-      if (group && !await File('/usr/bin/setsid').exists()) {
+      final groupLauncher = group
+          ? await _findGroupLauncher(snapshot.environment)
+          : null;
+      if (group && groupLauncher == null) {
         return Result.failure(
           _failure(
-            'Safe process-group launch is not available on this platform yet.',
+            'Safe process-group launch is unavailable. Install setsid and ensure it is on PATH.',
           ),
         );
       }
       final process = await _start(
-        group ? '/usr/bin/setsid' : snapshot.executable,
+        group ? groupLauncher! : snapshot.executable,
         group ? ['--', snapshot.executable, ...snapshot.args] : snapshot.args,
         workingDirectory: snapshot.cwd,
         environment: snapshot.environment,
@@ -206,6 +209,26 @@ class McpStdioLauncher {
         _failure('Could not start the MCP server process.'),
       );
     }
+  }
+
+  Future<String?> _findGroupLauncher(Map<String, String> environment) async {
+    final candidates = <String>[
+      '/usr/bin/setsid',
+      '/bin/setsid',
+      for (final directory in (environment['PATH'] ?? '').split(':'))
+        if (directory.isNotEmpty) '$directory/setsid',
+    ];
+    for (final candidate in candidates.toSet()) {
+      try {
+        final file = File(candidate);
+        if (await file.exists() && (await file.stat()).mode & 0x49 != 0) {
+          return await file.resolveSymbolicLinks();
+        }
+      } on Object {
+        // Continue only through explicitly named executable candidates.
+      }
+    }
+    return null;
   }
 
   McpNetworkFailure _failure(String message) =>

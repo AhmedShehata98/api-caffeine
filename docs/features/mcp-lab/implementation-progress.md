@@ -1080,6 +1080,16 @@ introduced. Normal native-plugin testing still has the documented hook blocker;
 Windows process cleanup and other platform/security/native S1 exit gates remain
 open. Next: monitor pin/export and preferences.
 
+## POSIX stdio launcher discovery
+
+POSIX stdio now locates an executable `setsid` through the approved launch
+environment PATH, after checking standard `/usr/bin` and `/bin` locations. It
+resolves the selected path before starting the server, keeps argument boundaries
+through direct Process.start invocation, and retains process-group signaling
+during shutdown. Systems without an executable setsid still fail closed with a
+clear setup message. Analysis passes; native macOS/Linux execution was not
+available in this Windows workspace, so those platform checks remain open.
+
 ## Monitor pin and export
 
 The selected monitor tab can be pinned or unpinned from its toolbar; the pin
