@@ -36,7 +36,10 @@ class ShellNavRail extends ConsumerWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: width,
-      color: scheme.surfaceContainer,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        border: Border(right: BorderSide(color: scheme.outlineVariant)),
+      ),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Column(
         children: [
@@ -76,42 +79,58 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = selected ? scheme.primary : scheme.onSurfaceVariant;
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.card),
-      onTap: () => context.go(item.path),
-      child: SizedBox(
-        width: ShellNavRail.width,
-        height: 60,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: selected
-                    ? scheme.primary.withValues(alpha: 0.16)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.dialog),
-              ),
-              child: Icon(item.icon, size: 22, color: color),
-            ),
-            const SizedBox(height: 2),
-            // Scales down instead of cutting "Environments" short.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  style: TextStyle(fontSize: 11, color: color),
+    return Tooltip(
+      message: item.label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: item.label,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          onTap: () => context.go(item.path),
+          child: SizedBox(
+            width: ShellNavRail.width,
+            height: 64,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg + 2,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? scheme.primaryContainer
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.dialog),
+                  ),
+                  child: Icon(
+                    item.icon,
+                    size: 21,
+                    color: selected ? scheme.onPrimaryContainer : color,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                // Scales down instead of cutting "Environments" short.
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      style: TextStyle(fontSize: 11, color: color),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

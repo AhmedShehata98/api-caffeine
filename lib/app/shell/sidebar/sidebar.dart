@@ -45,7 +45,7 @@ class _ShellSidebarState extends ConsumerState<ShellSidebar> {
       width: ShellSidebar.width,
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
-        border: Border(right: BorderSide(color: scheme.outline)),
+        border: Border(right: BorderSide(color: scheme.outlineVariant)),
       ),
       child: Column(
         children: [
@@ -146,7 +146,7 @@ class _Header extends ConsumerWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        'COLLECTIONS',
+                        'Collections',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(

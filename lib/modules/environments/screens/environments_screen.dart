@@ -120,17 +120,26 @@ class _EnvironmentsScreenState extends ConsumerState<EnvironmentsScreen> {
         return Row(
           children: [
             SizedBox(
-              width: 260,
-              child: _EnvironmentList(
-                environments: environments,
-                selectedId: selected?.id,
-                onSelect: _select,
-                onCreate: _create,
-                onRename: _rename,
-                onDelete: _delete,
+              width: 280,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  border: Border(
+                    right: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                ),
+                child: _EnvironmentList(
+                  environments: environments,
+                  selectedId: selected?.id,
+                  onSelect: _select,
+                  onCreate: _create,
+                  onRename: _rename,
+                  onDelete: _delete,
+                ),
               ),
             ),
-            const VerticalDivider(width: 1),
             Expanded(
               child: selected == null
                   ? const Center(child: Text('Select or create an environment'))
@@ -175,11 +184,24 @@ class _EnvironmentList extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'Environments',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Environments',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Text(
+                      '${environments.length} ${environments.length == 1 ? 'environment' : 'environments'}',
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(
@@ -197,6 +219,16 @@ class _EnvironmentList extends StatelessWidget {
                 ListTile(
                   dense: true,
                   selected: environment.id == selectedId,
+                  selectedTileColor: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withValues(alpha: 0.55),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   title: Text(
                     environment.name,
                     maxLines: 1,

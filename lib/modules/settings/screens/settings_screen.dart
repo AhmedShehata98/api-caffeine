@@ -84,87 +84,145 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
-    final titleStyle = Theme.of(context).textTheme.titleSmall;
+    final scheme = Theme.of(context).colorScheme;
 
     return Align(
-      alignment: Alignment.topLeft,
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
+        constraints: const BoxConstraints(maxWidth: 760),
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.xl),
           children: [
-            Text('Theme', style: titleStyle),
-            const SizedBox(height: AppSpacing.sm),
-            SegmentedButton<ThemeMode>(
-              segments: const [
-                ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
-                ButtonSegment(value: ThemeMode.light, label: Text('Light')),
-                ButtonSegment(value: ThemeMode.system, label: Text('System')),
-              ],
-              selected: {settings.themeMode},
-              onSelectionChanged: (modes) async {
-                final result = await notifier.setThemeMode(modes.first);
-                _report(result, () {});
-              },
+            Text('Settings', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Customize the workspace and request behavior.',
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.xl),
-            Text('Request defaults', style: titleStyle),
-            const SizedBox(height: AppSpacing.sm),
-            Focus(
-              onFocusChange: (hasFocus) {
-                if (!hasFocus) _applyTimeout();
-              },
-              child: TextField(
-                controller: _timeout,
-                keyboardType: TextInputType.number,
-                onSubmitted: (_) => _applyTimeout(),
-                decoration: const InputDecoration(
-                  labelText: 'Timeout (seconds)',
-                  helperText:
-                      'Between $minTimeoutSeconds and $maxTimeoutSeconds.',
-                  isDense: true,
-                ),
+            _SettingsGroup(
+              title: 'Appearance',
+              subtitle: 'Choose how API Caffeine looks.',
+              child: SegmentedButton<ThemeMode>(
+                segments: const [
+                  ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                  ButtonSegment(value: ThemeMode.light, label: Text('Light')),
+                  ButtonSegment(value: ThemeMode.system, label: Text('System')),
+                ],
+                selected: {settings.themeMode},
+                onSelectionChanged: (modes) async {
+                  final result = await notifier.setThemeMode(modes.first);
+                  _report(result, () {});
+                },
               ),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Follow redirects'),
-              value: settings.followRedirects,
-              onChanged: (value) async {
-                final result = await notifier.setFollowRedirects(value);
-                _report(result, () {});
-              },
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('Proxy', style: titleStyle),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Use a proxy'),
-              value: _proxyOn,
-              onChanged: _setProxyOn,
-            ),
-            if (_proxyOn)
-              Focus(
-                onFocusChange: (hasFocus) {
-                  if (!hasFocus) _applyProxy();
-                },
-                child: TextField(
-                  controller: _proxy,
-                  onSubmitted: (_) => _applyProxy(),
-                  style: const TextStyle(
-                    fontFamily: AppFonts.mono,
-                    fontSize: 14,
+            _SettingsGroup(
+              title: 'Request defaults',
+              subtitle: 'Applied when creating or sending requests.',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Focus(
+                    onFocusChange: (hasFocus) {
+                      if (!hasFocus) _applyTimeout();
+                    },
+                    child: TextField(
+                      controller: _timeout,
+                      keyboardType: TextInputType.number,
+                      onSubmitted: (_) => _applyTimeout(),
+                      decoration: const InputDecoration(
+                        labelText: 'Timeout (seconds)',
+                        helperText:
+                            'Between $minTimeoutSeconds and $maxTimeoutSeconds.',
+                        isDense: true,
+                      ),
+                    ),
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Proxy URL',
-                    hintText: 'http://127.0.0.1:8888',
-                    isDense: true,
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Follow redirects'),
+                    value: settings.followRedirects,
+                    onChanged: (value) async {
+                      final result = await notifier.setFollowRedirects(value);
+                      _report(result, () {});
+                    },
                   ),
-                ),
+                ],
               ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _SettingsGroup(
+              title: 'Network proxy',
+              subtitle: 'Route outgoing requests through a proxy server.',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Use a proxy'),
+                    value: _proxyOn,
+                    onChanged: _setProxyOn,
+                  ),
+                  if (_proxyOn)
+                    Focus(
+                      onFocusChange: (hasFocus) {
+                        if (!hasFocus) _applyProxy();
+                      },
+                      child: TextField(
+                        controller: _proxy,
+                        onSubmitted: (_) => _applyProxy(),
+                        style: const TextStyle(
+                          fontFamily: AppFonts.mono,
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Proxy URL',
+                          hintText: 'http://127.0.0.1:8888',
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+  });
+  final String title;
+  final String subtitle;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          child,
+        ],
+      ),
+    ),
+  );
 }
