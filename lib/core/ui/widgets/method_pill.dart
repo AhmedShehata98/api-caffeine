@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
 
 /// Fixed-width pill showing an HTTP method, colored by method.
 class MethodPill extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/app/shell/sidebar/sidebar_filter.dart';
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/app/shell/sidebar/sidebar_filter.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 Collection _col(String id, String name) =>
     Collection(id: id, workspaceId: 'ws', name: name);

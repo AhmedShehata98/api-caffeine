@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dio/dio.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/network/dio_failure_mapper.dart';
-import 'package:test_point/modules/requests/models/http_response_result.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/network/dio_failure_mapper.dart';
+import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
 
 /// Bodies above this size are decoded off the main isolate.
 const _isolateDecodeThreshold = 1024 * 1024;

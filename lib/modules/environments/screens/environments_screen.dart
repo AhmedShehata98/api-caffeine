@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/confirm_dialog.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
-import 'package:test_point/core/ui/widgets/name_dialog.dart';
-import 'package:test_point/modules/environments/models/environment.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
-import 'package:test_point/modules/environments/providers/environment_providers.dart';
-import 'package:test_point/modules/environments/widgets/variable_table.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/confirm_dialog.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/core/ui/widgets/name_dialog.dart';
+import 'package:api_caffeine/modules/environments/models/environment.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/modules/environments/providers/environment_providers.dart';
+import 'package:api_caffeine/modules/environments/widgets/variable_table.dart';
 
 /// Lists the workspace's environments and edits the selected one's variables.
 class EnvironmentsScreen extends ConsumerStatefulWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/auth/repositories/auth_repository_impl.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/auth/repositories/auth_repository_impl.dart';
 
 void main() {
   group('mapAuthError', () {

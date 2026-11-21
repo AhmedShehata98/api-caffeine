@@ -1,4 +1,4 @@
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// A request read from an import source, not yet stored anywhere.
 class ImportedRequest {

@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/auth/models/auth_user.dart';
-import 'package:test_point/modules/auth/models/github_account_exists_failure.dart';
-import 'package:test_point/modules/auth/repositories/auth_repository.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/auth/models/auth_user.dart';
+import 'package:api_caffeine/modules/auth/models/github_account_exists_failure.dart';
+import 'package:api_caffeine/modules/auth/repositories/auth_repository.dart';
 
 /// Where GitHub sends the browser back to. Registered as a URL scheme in the
 /// desktop runners and listed in Supabase's allowed redirect URLs.
-const authRedirectUrl = 'testpoint://auth-callback';
+const authRedirectUrl = 'api-caffeine://auth-callback';
 
 /// How long to wait for the user to finish in the browser.
 const _browserTimeout = Duration(minutes: 5);

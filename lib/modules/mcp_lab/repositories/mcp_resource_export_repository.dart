@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 abstract interface class McpResourceExportRepository {
   /// Opens the native save dialog; false means the user cancelled.

@@ -1,7 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/secrets/secret_store.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/secrets/secret_store.dart';
 
 /// [SecretStore] backed by the OS secure store: Keychain on macOS,
 /// Credential Manager + an encrypted file on Windows, libsecret on Linux.

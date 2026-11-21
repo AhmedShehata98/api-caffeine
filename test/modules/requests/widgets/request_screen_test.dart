@@ -6,14 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/widgets/status_chip.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/requests/screens/request_screen.dart';
-import 'package:test_point/modules/requests/widgets/response_viewer.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/widgets/status_chip.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/requests/screens/request_screen.dart';
+import 'package:api_caffeine/modules/requests/widgets/response_viewer.dart';
 
 import '../../../support/fake_backend.dart';
 

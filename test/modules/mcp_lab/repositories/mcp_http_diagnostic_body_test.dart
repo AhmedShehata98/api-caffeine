@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_http_diagnostic_body.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_http_diagnostic_body.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
 
 void main() {
   test('full capture retains more than a monitor preview', () {

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_editor/re_editor.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/code_view.dart';
-import 'package:test_point/core/ui/widgets/status_chip.dart';
-import 'package:test_point/modules/requests/models/http_response_result.dart';
-import 'package:test_point/modules/requests/models/send_state.dart';
-import 'package:test_point/modules/requests/providers/request_providers.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/core/ui/widgets/status_chip.dart';
+import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
+import 'package:api_caffeine/modules/requests/models/send_state.dart';
+import 'package:api_caffeine/modules/requests/providers/request_providers.dart';
 
 /// Response pane: idle, loading, error and the Body / Headers result views.
 class ResponseViewer extends ConsumerWidget {

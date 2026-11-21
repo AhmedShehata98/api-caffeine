@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/services/url_params_sync.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/services/url_params_sync.dart';
 
 void main() {
   group('paramsFromUrl', () {

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_resource_preview.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_resource_preview.dart';
 
 void main() {
   test(

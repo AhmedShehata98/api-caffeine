@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:test_point/app/shell/nav_rail.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/app/shell/sidebar/sidebar.dart';
-import 'package:test_point/app/shell/status_bar.dart';
-import 'package:test_point/app/shell/top_bar.dart';
-import 'package:test_point/app/shell/workspace_gate.dart';
+import 'package:api_caffeine/app/shell/nav_rail.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/app/shell/sidebar/sidebar.dart';
+import 'package:api_caffeine/app/shell/status_bar.dart';
+import 'package:api_caffeine/app/shell/top_bar.dart';
+import 'package:api_caffeine/app/shell/workspace_gate.dart';
 
 class _FocusFilterIntent extends Intent {
   const _FocusFilterIntent();

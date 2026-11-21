@@ -3,7 +3,7 @@ param([switch]$KeepRunning)
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $suffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
-$projectId = "test_point_mcp_replay_$suffix"
+$projectId = "api_caffeine_mcp_replay_$suffix"
 $replayRoot = [IO.Path]::GetFullPath((Join-Path $repoRoot ".dart_tool/mcp_db_replay_$suffix"))
 $supabaseRoot = Join-Path $replayRoot 'supabase'
 $cli = (Get-Command supabase -ErrorAction Stop).Source
@@ -35,7 +35,7 @@ function Assert-IsolatedProject {
     $config = [IO.File]::ReadAllText((Join-Path $supabaseRoot 'config.toml')).Replace("`r`n", "`n")
     if ($config -notmatch ('(?m)^project_id = "' + [Regex]::Escape($projectId) + '"$') -or
         $config -notmatch '(?m)^\[db\]\nport = 55322$' -or
-        $config -notmatch '(?m)^\[api\]\nport = 55321$' -or $projectId -eq 'test_point') {
+        $config -notmatch '(?m)^\[api\]\nport = 55321$' -or $projectId -eq 'api_caffeine') {
         throw 'Isolated project identity or database port changed; refusing reset/stop.'
     }
 }
@@ -49,10 +49,10 @@ foreach ($port in @(55320, 55321, 55322)) {
 }
 
 $baselineSql = "select md5(coalesce(string_agg(value, '|' order by value), '')) from (select 'auth:' || row_to_json(t)::text value from auth.users t union all select 'users:' || row_to_json(t)::text from public.users t union all select 'orgs:' || row_to_json(t)::text from public.organizations t union all select 'members:' || row_to_json(t)::text from public.organization_members t union all select 'ws:' || row_to_json(t)::text from public.workspaces t union all select 'mcp:' || row_to_json(t)::text from public.mcp_servers t) rows;"
-$mainRunning = Invoke-CapturedNative $docker @('container', 'inspect', '--format', '{{.State.Running}}', 'supabase_db_test_point')
+$mainRunning = Invoke-CapturedNative $docker @('container', 'inspect', '--format', '{{.State.Running}}', 'supabase_db_api_caffeine')
 $baseline = $null
 if ($mainRunning.Code -eq 0 -and ($mainRunning.Lines -join '') -eq 'true') {
-    $before = Invoke-CapturedNative $docker @('exec', 'supabase_db_test_point', 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-c', $baselineSql)
+    $before = Invoke-CapturedNative $docker @('exec', 'supabase_db_api_caffeine', 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-c', $baselineSql)
     Assert-Success $before 'Existing database fingerprint'
     $baseline = ($before.Lines -join '').Trim()
 }
@@ -119,7 +119,7 @@ try {
     [IO.File]::WriteAllText((Join-Path $replayRoot 'local_defines.json'), $defines, $utf8)
     $unchanged = $null
     if ($null -ne $baseline) {
-        $after = Invoke-CapturedNative $docker @('exec', 'supabase_db_test_point', 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-c', $baselineSql)
+        $after = Invoke-CapturedNative $docker @('exec', 'supabase_db_api_caffeine', 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-c', $baselineSql)
         Assert-Success $after 'Existing database recheck'
         $unchanged = ($after.Lines -join '').Trim() -eq $baseline
         if (!$unchanged) { throw 'Existing database fingerprint changed; investigate concurrent writes.' }

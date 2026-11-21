@@ -5,8 +5,8 @@ import 'dart:typed_data';
 
 import 'package:mcp_dart/mcp_dart.dart'
     show McpMetaKey, legacyProtocolVersions, stableProtocolVersion;
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_diagnostics.dart';
 import '../models/mcp_failure.dart';

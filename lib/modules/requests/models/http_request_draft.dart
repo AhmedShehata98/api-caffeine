@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
 
 part 'http_request_draft.freezed.dart';
 

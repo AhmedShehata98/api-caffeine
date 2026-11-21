@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
 
 enum _AuthKind {
   none('None'),

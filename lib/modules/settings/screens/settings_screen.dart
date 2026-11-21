@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
-import 'package:test_point/modules/settings/providers/settings_providers.dart';
-import 'package:test_point/modules/settings/services/settings_service.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/modules/settings/providers/settings_providers.dart';
+import 'package:api_caffeine/modules/settings/services/settings_service.dart';
 
 /// Theme, request defaults and proxy. Every change is stored and applied at
 /// once; text fields apply when submitted (Enter) or when they lose focus.

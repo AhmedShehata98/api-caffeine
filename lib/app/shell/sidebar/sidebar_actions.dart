@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/widgets/confirm_dialog.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
-import 'package:test_point/core/ui/widgets/name_dialog.dart';
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/widgets/confirm_dialog.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/core/ui/widgets/name_dialog.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// User flows for collections and saved requests: ask, call the provider,
 /// show a failure if there is one. Shared by the sidebar and overview screen.

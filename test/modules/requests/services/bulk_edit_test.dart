@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/services/bulk_edit.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/services/bulk_edit.dart';
 
 void main() {
   test('formats one row per line and marks disabled rows', () {

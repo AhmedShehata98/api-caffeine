@@ -45,7 +45,7 @@ Future<void> main() async {
     await request(101, 'initialize', {
       'protocolVersion': '2025-11-25',
       'capabilities': <String, dynamic>{},
-      'clientInfo': {'name': 'test-point-spike', 'version': '1.0.0'},
+      'clientInfo': {'name': 'api-caffeine-spike', 'version': '1.0.0'},
     });
     await transport.send(
       const JsonRpcNotification(method: 'notifications/initialized'),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
 
 /// Two panels separated by a draggable handle.
 ///

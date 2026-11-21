@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_failure.dart';
 import '../models/mcp_launch_trust.dart';
@@ -136,12 +136,12 @@ class McpStdioLauncher {
   Future<String?> _readLoginPath(Map<String, String> environment) async {
     final result = await Process.run(
       environment['SHELL'] ?? '/bin/sh',
-      ['-lc', r'''printf '\n__TEST_POINT_PATH__%s' "$PATH"'''],
+      ['-lc', r'''printf '\n__API_CAFFEINE_PATH__%s' "$PATH"'''],
       environment: environment,
       includeParentEnvironment: false,
     ).timeout(const Duration(seconds: 3));
     final output = result.stdout as String;
-    const marker = '__TEST_POINT_PATH__';
+    const marker = '__API_CAFFEINE_PATH__';
     final index = output.lastIndexOf(marker);
     return result.exitCode == 0 && index >= 0
         ? output.substring(index + marker.length).trim()

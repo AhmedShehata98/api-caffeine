@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/confirm_dialog.dart';
-import 'package:test_point/core/ui/widgets/method_pill.dart';
-import 'package:test_point/modules/requests/models/request_tab.dart';
-import 'package:test_point/modules/requests/providers/request_tabs_providers.dart';
-import 'package:test_point/modules/requests/requests_routes.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/confirm_dialog.dart';
+import 'package:api_caffeine/core/ui/widgets/method_pill.dart';
+import 'package:api_caffeine/modules/requests/models/request_tab.dart';
+import 'package:api_caffeine/modules/requests/providers/request_tabs_providers.dart';
+import 'package:api_caffeine/modules/requests/requests_routes.dart';
 
 /// Open request tabs (method pill, name, unsaved dot, close) and a "+" button.
 class RequestTabBar extends ConsumerWidget {

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/auth/auth.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
 
 void main() {
   testWidgets('shows a snackbar when a GitHub redirect fails', (tester) async {

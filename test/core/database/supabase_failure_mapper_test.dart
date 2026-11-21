@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/failure.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/failure.dart';
 
 void main() {
   test('maps AuthException to AuthFailure with its message', () {

@@ -107,7 +107,7 @@ Future<void> main() async {
     await request(101, 'initialize', {
       'protocolVersion': '2025-11-25',
       'capabilities': {},
-      'clientInfo': {'name': 'test-point-spike', 'version': '1.0.0'},
+      'clientInfo': {'name': 'api-caffeine-spike', 'version': '1.0.0'},
     });
     // The raw transport does not negotiate; its caller validates and sets this.
     transport.protocolVersion = '2025-11-25';
@@ -127,7 +127,7 @@ Future<void> main() async {
     await request(102, 'initialize', {
       'protocolVersion': '2025-11-25',
       'capabilities': {},
-      'clientInfo': {'name': 'test-point-spike', 'version': '1.0.0'},
+      'clientInfo': {'name': 'api-caffeine-spike', 'version': '1.0.0'},
     });
     expired = true;
     final before = methods.length;

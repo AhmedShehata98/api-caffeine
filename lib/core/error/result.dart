@@ -1,4 +1,4 @@
-import 'package:test_point/core/error/failure.dart';
+import 'package:api_caffeine/core/error/failure.dart';
 
 /// Outcome of an operation that can fail with an expected [Failure].
 sealed class Result<T> {

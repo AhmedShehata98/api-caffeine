@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_server_repository_impl.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_server_repository_impl.dart';
 
 import 'catalog_row_checks.dart' as row_checks;
 

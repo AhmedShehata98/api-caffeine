@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
-import 'package:test_point/modules/mcp_lab/mcp_lab_protocol.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_resource_preview.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab_protocol.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_resource_preview.dart';
 
 import '../../fixtures/mcp/deprecated_sse_peer.dart';
 import '../../fixtures/mcp/binary_payload.dart';

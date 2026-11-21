@@ -4,8 +4,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
 
 class _Adapter implements HttpClientAdapter {
   final requests = <RequestOptions>[];

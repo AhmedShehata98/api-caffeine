@@ -2,15 +2,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab_protocol.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_connection_repository.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_diagnostic_buffer.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_resource_export_service.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_resource_preview.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab_protocol.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_diagnostic_buffer.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_resource_export_service.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_resource_preview.dart';
 
 import '../../fixtures/mcp/binary_payload.dart';
 import '../../fixtures/mcp/http_peer.dart';

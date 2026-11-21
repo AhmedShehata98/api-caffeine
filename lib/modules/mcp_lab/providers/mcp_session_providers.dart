@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/database/supabase_client_provider.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/network/network_settings.dart';
-import 'package:test_point/core/secrets/secret_store.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/settings/settings.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/core/database/supabase_client_provider.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/network/network_settings.dart';
+import 'package:api_caffeine/core/secrets/secret_store.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 import '../models/mcp_failure.dart';
 import '../models/mcp_target_settings.dart';

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/secrets/secret_store.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/secrets/secret_store.dart';
 
 import '../models/mcp_failure.dart';
 import '../models/mcp_launch_trust.dart';

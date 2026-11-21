@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 /// Deduplicates native close requests and bounds the app's cleanup wait.
 class DesktopCloseCoordinator {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/app_logo.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/settings/settings.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/app_logo.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
 
 class NavDestination {
   const NavDestination(this.label, this.icon, this.path);

@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:re_editor/re_editor.dart';
-import 'package:test_point/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
 
 // Keep the isolate closure outside State: closures in a State method may also
 // capture its native editor controller through a shared closure context.

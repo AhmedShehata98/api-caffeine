@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 import '../../../support/fake_backend.dart';
 import '../../../support/pump_app.dart';

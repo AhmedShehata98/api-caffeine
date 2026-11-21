@@ -2,13 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/request_tab.dart';
-import 'package:test_point/modules/requests/models/saved_request.dart';
-import 'package:test_point/modules/requests/models/send_state.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository.dart';
-import 'package:test_point/modules/requests/services/url_params_sync.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/request_tab.dart';
+import 'package:api_caffeine/modules/requests/models/saved_request.dart';
+import 'package:api_caffeine/modules/requests/models/send_state.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
+import 'package:api_caffeine/modules/requests/services/url_params_sync.dart';
 
 const untitledRequestName = 'Untitled request';
 

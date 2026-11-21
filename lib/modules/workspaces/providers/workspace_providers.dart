@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/database/supabase_client_provider.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/workspaces/models/workspace.dart';
-import 'package:test_point/modules/workspaces/repositories/workspace_repository.dart';
-import 'package:test_point/modules/workspaces/repositories/workspace_repository_impl.dart';
+import 'package:api_caffeine/core/database/supabase_client_provider.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/workspaces/models/workspace.dart';
+import 'package:api_caffeine/modules/workspaces/repositories/workspace_repository.dart';
+import 'package:api_caffeine/modules/workspaces/repositories/workspace_repository_impl.dart';
 
 final workspaceRepositoryProvider = Provider<WorkspaceRepository>(
   (ref) => WorkspaceRepositoryImpl(ref.watch(supabaseClientProvider)),

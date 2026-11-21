@@ -19,7 +19,7 @@ evidence. CLI output containing keys is captured without being printed or logged
 only the isolated API URL and public anon key are written to ignored
 `local_defines.json` for optional REST checks. No service-role key is written.
 
-If the existing `supabase_db_test_point` container is running, fingerprints of its
+If the existing `supabase_db_api_caffeine` container is running, fingerprints of its
 auth users, public users, organizations, memberships, workspaces and MCP catalog
 must match before and after verification. The verifier never resets that project,
 copies linked-project state, or invokes a remote database command.

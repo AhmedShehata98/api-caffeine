@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
 
 /// Key / value / secret / enabled table. Secret values are masked.
 class VariableTable extends StatelessWidget {

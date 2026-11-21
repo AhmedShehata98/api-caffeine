@@ -1,14 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
-import 'package:test_point/modules/requests/services/request_builder.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/services/request_builder.dart';
 
 PreparedRequest _build(HttpRequestDraft draft) {
   final result = const RequestBuilder().build(draft);

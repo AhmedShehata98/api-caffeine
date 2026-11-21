@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/app/app.dart';
-import 'package:test_point/app/di/app_overrides.dart';
-import 'package:test_point/app/services/desktop_close_handler.dart';
-import 'package:test_point/core/database/supabase_config.dart';
+import 'package:api_caffeine/app/app.dart';
+import 'package:api_caffeine/app/di/app_overrides.dart';
+import 'package:api_caffeine/app/services/desktop_close_handler.dart';
+import 'package:api_caffeine/core/database/supabase_config.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> main() async {

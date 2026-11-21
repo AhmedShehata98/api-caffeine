@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/error/failure.dart';
+import 'package:api_caffeine/core/error/failure.dart';
 
 /// Maps an exception thrown by the Supabase client to a [Failure].
 /// Used by repository implementations so infrastructure errors never reach the UI.

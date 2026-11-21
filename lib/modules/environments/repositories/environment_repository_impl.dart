@@ -1,9 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/environments/models/environment.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
-import 'package:test_point/modules/environments/repositories/environment_repository.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/environments/models/environment.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/modules/environments/repositories/environment_repository.dart';
 
 class EnvironmentRepositoryImpl implements EnvironmentRepository {
   EnvironmentRepositoryImpl(this._client);

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/collections/collections.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
 
 /// What the user picked in [SaveRequestDialog]. Exactly one of
 /// [collectionId] / [newCollectionName] is set.

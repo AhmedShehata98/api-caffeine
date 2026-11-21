@@ -1,6 +1,6 @@
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/environments/models/environment.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/environments/models/environment.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
 
 abstract interface class EnvironmentRepository {
   Future<Result<List<Environment>>> list(String workspaceId);

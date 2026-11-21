@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
 
 /// A suggestion for the `{{variable}}` being typed: the whole text after
 /// accepting it, and where the cursor goes.

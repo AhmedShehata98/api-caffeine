@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/services/bulk_edit.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/services/bulk_edit.dart';
 
 /// Key / value / enabled table used by Params, Headers and form bodies.
 /// "Bulk Edit" swaps the rows for one `key: value` line per row.

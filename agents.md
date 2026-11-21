@@ -2,7 +2,7 @@
 
 ## Project
 
-**Test Point** is a Flutter app for API integration and testing.
+**API Caffeine** is a Flutter app for API integration and testing.
 
 Goal: make connecting, running, and validating API flows simple, fast, and reliable — with a focus on performance and a clean developer experience.
 

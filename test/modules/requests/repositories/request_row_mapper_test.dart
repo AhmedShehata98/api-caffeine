@@ -1,12 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
-import 'package:test_point/modules/requests/repositories/request_row_mapper.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/repositories/request_row_mapper.dart';
 
 /// What the database returns for a row written with [RequestRowMapper.toRow].
 Map<String, dynamic> _row(HttpRequestDraft draft) => {

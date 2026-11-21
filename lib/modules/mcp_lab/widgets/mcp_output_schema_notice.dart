@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
 
 import '../models/mcp_protocol_models.dart';
 import '../services/mcp_primitive_services.dart';

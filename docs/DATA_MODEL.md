@@ -155,5 +155,5 @@ Profile row for every `auth.users` entry, created by the `on_auth_user_created` 
 ## Local development
 
 `supabase db reset` re-runs the migrations and `supabase/seed.sql`, which adds a
-dev account (`dev@testpoint.local` / `password123`) with a sample collection and
+dev account (`dev@api-caffeine.local` / `password123`) with a sample collection and
 environment.

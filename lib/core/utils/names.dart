@@ -1,4 +1,4 @@
-import 'package:test_point/core/error/failure.dart';
+import 'package:api_caffeine/core/error/failure.dart';
 
 const maxNameLength = 255;
 

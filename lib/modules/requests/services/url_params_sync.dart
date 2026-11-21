@@ -1,4 +1,4 @@
-import 'package:test_point/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
 
 /// Keeps the URL query string and the Params table in sync. Works on the raw
 /// text (no URI parsing) so `{{variables}}` survive untouched.

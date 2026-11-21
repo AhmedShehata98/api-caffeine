@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
 
 /// Response status such as `200 OK`, colored by status class.
 class StatusChip extends StatelessWidget {

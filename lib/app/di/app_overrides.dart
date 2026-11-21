@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:test_point/core/network/network_settings.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/settings/settings.dart';
+import 'package:api_caffeine/core/network/network_settings.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
 
 /// App-level wiring between modules and `core`. Modules cannot import each
 /// other's internals, so the connections that need two of them live here.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/method_pill.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/method_pill.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
 
 /// HTTP method picker shown as a pill; opens a `MenuAnchor` list.
 class MethodMenu extends StatelessWidget {

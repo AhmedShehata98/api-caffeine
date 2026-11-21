@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:test_point/core/error/failure.dart';
+import 'package:api_caffeine/core/error/failure.dart';
 
 /// Maps a [DioException] to a [Failure] with a message safe to show in the UI.
 Failure mapDioError(DioException error) {

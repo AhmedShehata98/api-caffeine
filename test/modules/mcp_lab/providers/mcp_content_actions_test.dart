@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
 
 class _Session implements McpSession {
   @override

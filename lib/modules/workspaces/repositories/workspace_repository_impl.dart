@@ -1,9 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/workspaces/models/workspace.dart';
-import 'package:test_point/modules/workspaces/repositories/workspace_repository.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/workspaces/models/workspace.dart';
+import 'package:api_caffeine/modules/workspaces/repositories/workspace_repository.dart';
 
 /// Without a limit a blocked connection keeps the shell loading forever.
 const _requestTimeout = Duration(seconds: 20);

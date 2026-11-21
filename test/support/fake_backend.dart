@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/secrets/secret_store.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/settings/settings.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/secrets/secret_store.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 

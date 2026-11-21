@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
 
 void main() {
   group('HttpColors', () {

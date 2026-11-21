@@ -112,7 +112,7 @@ These requirements are listed under S2/S4 in §4.1, but S1 ships the catalog wit
 |---|---|---|---|---|
 | AC-PRO-01.1 | A legacy result without `resultType` | It is parsed | It is handled as `complete` | U |
 | AC-PRO-01.2 | A result with `resultType: "input_required"` or `"task"` in S1 | It arrives | The call ends with the notice "This server needs interaction support (coming in a later version)" and the raw result stays in the transcript; it does not crash | U |
-| AC-PRO-02.1 | A modern-era connection | Any request is sent | Its `_meta` carries `io.modelcontextprotocol/protocolVersion = 2026-07-28`, `clientCapabilities` and `clientInfo` (name `Test Point`, app version) | U, I |
+| AC-PRO-02.1 | A modern-era connection | Any request is sent | Its `_meta` carries `io.modelcontextprotocol/protocolVersion = 2026-07-28`, `clientCapabilities` and `clientInfo` (name `API Caffeine`, app version) | U, I |
 | AC-PRO-02.2 | A modern result with `_meta.serverInfo` | It is shown in the Protocol view | The request `_meta` and the result `serverInfo` are visible in the frame detail | W |
 | AC-PRO-03.1 | Modern era over Streamable HTTP, `tools/call` for `add` | The POST is sent | It carries `Mcp-Method: tools/call` and `Mcp-Name: add`; `x-mcp-header` arguments are mirrored as `Mcp-Param-*` | U, I |
 | AC-PRO-03.2 | Such a request in the Network view | The headers pane renders | `Mcp-*` headers are highlighted and sentinel values are decoded | W |

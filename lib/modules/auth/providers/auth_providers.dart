@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/database/supabase_client_provider.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/auth/models/auth_user.dart';
-import 'package:test_point/modules/auth/repositories/auth_repository.dart';
-import 'package:test_point/modules/auth/repositories/auth_repository_impl.dart';
+import 'package:api_caffeine/core/database/supabase_client_provider.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/auth/models/auth_user.dart';
+import 'package:api_caffeine/modules/auth/repositories/auth_repository.dart';
+import 'package:api_caffeine/modules/auth/repositories/auth_repository_impl.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepositoryImpl(ref.watch(supabaseClientProvider)),

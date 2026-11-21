@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:test_point/modules/environments/screens/environments_screen.dart';
+import 'package:api_caffeine/modules/environments/screens/environments_screen.dart';
 
 const environmentsPath = '/environments';
 

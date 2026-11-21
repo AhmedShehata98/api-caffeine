@@ -3,14 +3,14 @@ library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show SupabaseClient;
-import 'package:test_point/modules/collections/repositories/collection_repository_impl.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
-import 'package:test_point/modules/requests/repositories/saved_request_repository_impl.dart';
-import 'package:test_point/modules/workspaces/repositories/workspace_repository_impl.dart';
+import 'package:api_caffeine/modules/collections/repositories/collection_repository_impl.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/repositories/saved_request_repository_impl.dart';
+import 'package:api_caffeine/modules/workspaces/repositories/workspace_repository_impl.dart';
 
 /// Runs the real repositories against a local Supabase (`supabase start`).
 /// Skipped unless the connection is given:

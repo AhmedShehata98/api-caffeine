@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import 'mcp_resource_export_repository.dart';
 

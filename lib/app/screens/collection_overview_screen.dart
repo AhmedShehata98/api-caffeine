@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/app/shell/sidebar/sidebar_actions.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/method_pill.dart';
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/app/shell/sidebar/sidebar_actions.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/method_pill.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// Overview of one collection: its requests and the collection actions.
 class CollectionOverviewScreen extends ConsumerWidget {

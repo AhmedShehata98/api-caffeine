@@ -1,7 +1,7 @@
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/settings/models/app_settings.dart';
-import 'package:test_point/modules/settings/repositories/settings_repository.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/settings/models/app_settings.dart';
+import 'package:api_caffeine/modules/settings/repositories/settings_repository.dart';
 
 const minTimeoutSeconds = 1;
 const maxTimeoutSeconds = 300;

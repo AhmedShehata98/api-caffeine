@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:test_point/modules/mcp_lab/mcp_lab_protocol.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_connection_repository.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab_protocol.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
 
 Future<void> main() => runChecks();
 

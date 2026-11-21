@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:test_point/modules/mcp_lab/mcp_lab_protocol.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_target_repository_impl.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_diagnostic_buffer.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab_protocol.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_target_repository_impl.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_diagnostic_buffer.dart';
 
 import '../../fixtures/mcp/http_peer.dart';
 

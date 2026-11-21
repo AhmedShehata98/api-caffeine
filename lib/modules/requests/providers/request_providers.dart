@@ -1,17 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/network/dio_provider.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
-import 'package:test_point/modules/requests/models/send_state.dart';
-import 'package:test_point/modules/requests/providers/request_tabs_providers.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository_impl.dart';
-import 'package:test_point/modules/requests/services/send_request_service.dart';
-import 'package:test_point/modules/requests/services/url_params_sync.dart';
+import 'package:api_caffeine/core/network/dio_provider.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/models/send_state.dart';
+import 'package:api_caffeine/modules/requests/providers/request_tabs_providers.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository_impl.dart';
+import 'package:api_caffeine/modules/requests/services/send_request_service.dart';
+import 'package:api_caffeine/modules/requests/services/url_params_sync.dart';
 
 final httpRequestRepositoryProvider = Provider<HttpRequestRepository>(
   (ref) => HttpRequestRepositoryImpl(ref.watch(dioProvider)),

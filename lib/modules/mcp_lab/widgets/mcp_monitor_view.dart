@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_diagnostics.dart';
 import '../providers/mcp_diagnostic_providers.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/settings/models/app_settings.dart';
-import 'package:test_point/modules/settings/repositories/settings_repository.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/settings/models/app_settings.dart';
+import 'package:api_caffeine/modules/settings/repositories/settings_repository.dart';
 
 const _themeKey = 'settings.themeMode';
 const _timeoutKey = 'settings.timeoutSeconds';

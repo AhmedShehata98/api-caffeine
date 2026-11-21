@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/database/supabase_client_provider.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/collections/models/collection.dart';
-import 'package:test_point/modules/collections/repositories/collection_repository.dart';
-import 'package:test_point/modules/collections/repositories/collection_repository_impl.dart';
-import 'package:test_point/modules/collections/services/collection_service.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/core/database/supabase_client_provider.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/collections/models/collection.dart';
+import 'package:api_caffeine/modules/collections/repositories/collection_repository.dart';
+import 'package:api_caffeine/modules/collections/repositories/collection_repository_impl.dart';
+import 'package:api_caffeine/modules/collections/services/collection_service.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 final collectionRepositoryProvider = Provider<CollectionRepository>(
   (ref) => CollectionRepositoryImpl(ref.watch(supabaseClientProvider)),

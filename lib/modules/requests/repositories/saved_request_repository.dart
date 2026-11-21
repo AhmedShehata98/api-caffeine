@@ -1,6 +1,6 @@
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/saved_request.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/saved_request.dart';
 
 abstract interface class SavedRequestRepository {
   Future<Result<List<SavedRequest>>> listByCollections(

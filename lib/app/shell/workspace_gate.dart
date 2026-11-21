@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 /// Shows [child] once the guest session and default workspace are ready;
 /// otherwise a loading or error state with a retry button.

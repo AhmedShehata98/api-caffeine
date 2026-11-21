@@ -6,7 +6,7 @@ _Hand-off brief for an AI agent. Written 2026-11-15. Self-contained: read this f
 
 ## 1. Your task
 
-Test Point has 14 open product/engineering questions for its new **MCP Lab** feature, plus 4
+API Caffeine has 14 open product/engineering questions for its new **MCP Lab** feature, plus 4
 assumptions made in the S1 acceptance criteria. For each one:
 
 1. Read the background and the linked requirements.
@@ -20,7 +20,7 @@ owner has (for example a domain name). Write your recommendation and leave the q
 
 ## 2. Project context
 
-**Test Point** is a desktop API client (in the style of Postman or Insomnia) built with
+**API Caffeine** is a desktop API client (in the style of Postman or Insomnia) built with
 **Flutter**, desktop first (Windows, macOS, Linux).
 - **Stack:** Riverpod, go_router, Dio, Supabase (Postgres + Auth), freezed / json_serializable, and `flutter_secure_storage` for device-only secrets.
 - **Architecture:** a modular monolith. Each module is in `lib/modules/<name>/` and exposes a single public API file. Shared code is in `lib/core/`.
@@ -39,7 +39,7 @@ testing **Model Context Protocol (MCP)** servers, modelled on the official MCP I
 - **S1:** core lab: stdio + HTTP, both eras, tools / resources / prompts, monitors, Supabase catalog, failure model.
 - **S2:** OAuth for remote servers.
 - **S3:** interactions: subscriptions, elicitation, sampling, tasks, logs.
-- **S4:** Test Point integration: `{{variables}}`, saved calls, import/export.
+- **S4:** API Caffeine integration: `{{variables}}`, saved calls, import/export.
 
 **Decisions already made (do not reopen):**
 1. Use the `mcp_dart` library.
@@ -141,7 +141,7 @@ Each question lists: the background, the options, a recommendation (from the pre
 ### 4.3 Needed before S2
 
 **Q13: hosting the CIMD client metadata document [OWNER INPUT]**
-- **Background:** with OAuth Client ID Metadata Documents, the client ID *is* an https URL that serves a JSON document (client name, redirect URIs, `token_endpoint_auth_method: none`, and so on). Test Point needs one public, stable URL. The redirect is loopback: `http://127.0.0.1:<port>/oauth/callback` (FR-AUT-02).
+- **Background:** with OAuth Client ID Metadata Documents, the client ID *is* an https URL that serves a JSON document (client name, redirect URIs, `token_endpoint_auth_method: none`, and so on). API Caffeine needs one public, stable URL. The redirect is loopback: `http://127.0.0.1:<port>/oauth/callback` (FR-AUT-02).
 - **Recommendation:** host a static JSON file on the project website or GitHub Pages, for example `https://<domain>/oauth/client.json`. Draft the JSON in the spec as an appendix.
 - **Needed from the owner:** a domain or GitHub Pages site they control.
 - **Affects:** FR-AUT-01, S2.

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/app/shell/layout_toggle_button.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/import/import.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/settings/settings.dart';
+import 'package:api_caffeine/app/shell/layout_toggle_button.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/import/import.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
 
 /// 44 px top bar with the open request tabs, the environment dropdown, the
 /// layout toggle and the overflow menu.

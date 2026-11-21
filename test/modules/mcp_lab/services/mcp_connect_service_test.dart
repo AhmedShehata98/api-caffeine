@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_transport_repository.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_transport_repository.dart';
 
 class _Connections extends Mock implements McpConnectionRepository {}
 

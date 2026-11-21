@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/app/screens/collection_overview_screen.dart';
-import 'package:test_point/app/screens/welcome_screen.dart';
-import 'package:test_point/app/shell/app_shell.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/settings/settings.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/app/screens/collection_overview_screen.dart';
+import 'package:api_caffeine/app/screens/welcome_screen.dart';
+import 'package:api_caffeine/app/shell/app_shell.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
 
 final appRouterProvider = Provider<GoRouter>(
   (ref) => GoRouter(

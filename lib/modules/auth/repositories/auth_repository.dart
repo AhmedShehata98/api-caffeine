@@ -1,6 +1,6 @@
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/auth/models/auth_user.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/auth/models/auth_user.dart';
 
 abstract interface class AuthRepository {
   /// The user of the stored session, or `null` if there is none.

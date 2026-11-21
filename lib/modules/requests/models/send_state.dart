@@ -1,5 +1,5 @@
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/requests/models/http_response_result.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
 
 /// What the response pane shows.
 sealed class SendState {

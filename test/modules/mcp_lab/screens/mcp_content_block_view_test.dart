@@ -7,12 +7,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/widgets/code_view.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
-import 'package:test_point/modules/mcp_lab/widgets/mcp_content_block_view.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_resource_export_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/widgets/mcp_content_block_view.dart';
 
 import '../../../support/load_bundled_test_fonts.dart';
 

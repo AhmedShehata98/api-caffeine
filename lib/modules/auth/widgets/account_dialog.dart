@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/auth/models/github_account_exists_failure.dart';
-import 'package:test_point/modules/auth/providers/auth_providers.dart';
-import 'package:test_point/modules/auth/widgets/guest_data_warning_dialog.dart';
-import 'package:test_point/modules/auth/widgets/signed_in_dialog.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/auth/models/github_account_exists_failure.dart';
+import 'package:api_caffeine/modules/auth/providers/auth_providers.dart';
+import 'package:api_caffeine/modules/auth/widgets/guest_data_warning_dialog.dart';
+import 'package:api_caffeine/modules/auth/widgets/signed_in_dialog.dart';
 
 /// Opens the Account dialog over the workspace: Continue with GitHub for a
 /// guest, the account and Sign out for a signed-in user.

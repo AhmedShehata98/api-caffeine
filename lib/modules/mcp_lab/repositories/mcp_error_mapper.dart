@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:test_point/core/error/failure.dart';
+import 'package:api_caffeine/core/error/failure.dart';
 
 import '../models/mcp_failure.dart';
 import 'mcp_diagnostic_sanitizer.dart';

@@ -1,12 +1,12 @@
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/http_response_result.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository.dart';
-import 'package:test_point/modules/requests/services/draft_variable_resolver.dart';
-import 'package:test_point/modules/requests/services/json_formatter.dart';
-import 'package:test_point/modules/requests/services/request_builder.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
+import 'package:api_caffeine/modules/requests/services/draft_variable_resolver.dart';
+import 'package:api_caffeine/modules/requests/services/json_formatter.dart';
+import 'package:api_caffeine/modules/requests/services/request_builder.dart';
 
 /// Resolves variables, builds, sends and post-processes a request.
 class SendRequestService {

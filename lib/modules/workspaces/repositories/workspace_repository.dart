@@ -1,5 +1,5 @@
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/workspaces/models/workspace.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/workspaces/models/workspace.dart';
 
 abstract interface class WorkspaceRepository {
   /// The user's default workspace (the oldest one they can access).
