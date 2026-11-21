@@ -27,6 +27,8 @@ const testWorkspace = Workspace(
 MockAuthRepository stubAuth({AuthUser? user = guestUser}) {
   final repository = MockAuthRepository();
   when(() => repository.currentUser).thenReturn(user);
+  when(() => repository.restoreSession())
+      .thenAnswer((_) async => Result.success(repository.currentUser));
   when(() => repository.userChanges).thenAnswer((_) => const Stream.empty());
   when(() => repository.callbackErrors).thenAnswer((_) => const Stream.empty());
   when(() => repository.signInAnonymously())
@@ -366,6 +368,9 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   AuthUser? get currentUser => _user;
+
+  @override
+  Future<Result<AuthUser?>> restoreSession() async => Result.success(_user);
 
   @override
   Stream<AuthUser?> get userChanges => _changes.stream;

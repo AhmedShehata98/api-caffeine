@@ -243,7 +243,7 @@ class _ResponseResultState extends State<_ResponseResult> {
                   child: CodeView(
                     controller: _editor,
                     readOnly: true,
-                    highlightJson: _pretty && _hasPretty,
+                    highlightJson: _hasPretty,
                     hint: 'Empty response body',
                   ),
                 ),

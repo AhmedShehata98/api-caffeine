@@ -6,6 +6,10 @@ abstract interface class AuthRepository {
   /// The user of the stored session, or `null` if there is none.
   AuthUser? get currentUser;
 
+  /// Restores the stored user, refreshing an expired session before returning.
+  /// Returns null when there is no recoverable session.
+  Future<Result<AuthUser?>> restoreSession();
+
   /// Emits whenever the session user changes (sign in, sign out, link).
   Stream<AuthUser?> get userChanges;
 

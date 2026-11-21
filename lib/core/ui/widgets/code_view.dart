@@ -21,6 +21,16 @@ class CodeView extends StatelessWidget {
   final bool highlightJson;
   final String? hint;
 
+  // Atom One assigns the same color to JSON keys and numbers.
+  static final _darkJsonTheme = {
+    ...atomOneDarkTheme,
+    'attr': const TextStyle(color: Color(0xFF61AFEF)),
+  };
+  static final _lightJsonTheme = {
+    ...atomOneLightTheme,
+    'attr': const TextStyle(color: Color(0xFF245DA8)),
+  };
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -41,7 +51,7 @@ class CodeView extends StatelessWidget {
           codeTheme: highlightJson
               ? CodeHighlightTheme(
                   languages: {'json': CodeHighlightThemeMode(mode: langJson)},
-                  theme: dark ? atomOneDarkTheme : atomOneLightTheme,
+                  theme: dark ? _darkJsonTheme : _lightJsonTheme,
                 )
               : null,
         ),

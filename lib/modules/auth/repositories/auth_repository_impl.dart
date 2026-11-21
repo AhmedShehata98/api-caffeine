@@ -44,11 +44,36 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthUser? get currentUser => _toAuthUser(_client.auth.currentUser);
 
   @override
+  Future<Result<AuthUser?>> restoreSession() async {
+    if (_client.auth.currentSession?.isExpired == true) {
+      try {
+        await _client.auth.refreshSession().timeout(_requestTimeout);
+      } on Object catch (error) {
+        final session = _client.auth.currentSession;
+        // GoTrue clears rejected sessions before reporting the refresh error.
+        // A transient failure leaves the expired session available for retry.
+        if (session == null && error is supabase.AuthException) {
+          return const Result.success(null);
+        }
+        if (session?.isExpired != false) {
+          return Result.failure(_mapError(error));
+        }
+      }
+    }
+    return Result.success(currentUser);
+  }
+
+  @override
   Stream<AuthUser?> get userChanges => _client.auth.onAuthStateChange
       // Errors from the OAuth redirect arrive on this stream too. The pending
       // GitHub call in `_viaBrowser` reports them; here they are not user
       // changes, so drop them instead of leaving them unhandled.
       .handleError((Object _) {})
+      .where(
+        (state) =>
+            state.event == supabase.AuthChangeEvent.signedOut ||
+            state.session?.isExpired == false,
+      )
       .map((state) => _toAuthUser(state.session?.user))
       .distinct();
 
