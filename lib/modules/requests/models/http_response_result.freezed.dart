@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$HttpResponseResult {
 
- int get statusCode; Map<String, List<String>> get headers; String get body; Duration get duration; int get sizeBytes; String? get reason;/// Indented JSON, set when the body is valid JSON.
+ int get statusCode; Map<String, List<String>> get headers; String get body; Duration get duration; int get sizeBytes; String? get reason;/// Whether the original response bytes were valid UTF-8.
+ bool get validUtf8;/// Content-type-aware source, set when a Pretty view is available.
  String? get prettyBody;
 /// Create a copy of HttpResponseResult
 /// with the given fields replaced by the non-null parameter values.
@@ -28,20 +29,20 @@ $HttpResponseResultCopyWith<HttpResponseResult> get copyWith => _$HttpResponseRe
 @override
 bool operator ==(Object other) {
   final _this = this as HttpResponseResult;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HttpResponseResult&&(identical(other.statusCode, _this.statusCode) || other.statusCode == _this.statusCode)&&const DeepCollectionEquality().equals(other.headers, _this.headers)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.duration, _this.duration) || other.duration == _this.duration)&&(identical(other.sizeBytes, _this.sizeBytes) || other.sizeBytes == _this.sizeBytes)&&(identical(other.reason, _this.reason) || other.reason == _this.reason)&&(identical(other.prettyBody, _this.prettyBody) || other.prettyBody == _this.prettyBody));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HttpResponseResult&&(identical(other.statusCode, _this.statusCode) || other.statusCode == _this.statusCode)&&const DeepCollectionEquality().equals(other.headers, _this.headers)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.duration, _this.duration) || other.duration == _this.duration)&&(identical(other.sizeBytes, _this.sizeBytes) || other.sizeBytes == _this.sizeBytes)&&(identical(other.reason, _this.reason) || other.reason == _this.reason)&&(identical(other.validUtf8, _this.validUtf8) || other.validUtf8 == _this.validUtf8)&&(identical(other.prettyBody, _this.prettyBody) || other.prettyBody == _this.prettyBody));
 }
 
 
 @override
 int get hashCode {
   final _this = this as HttpResponseResult;
-  return Object.hash(runtimeType,_this.statusCode,const DeepCollectionEquality().hash(_this.headers),_this.body,_this.duration,_this.sizeBytes,_this.reason,_this.prettyBody);
+  return Object.hash(runtimeType,_this.statusCode,const DeepCollectionEquality().hash(_this.headers),_this.body,_this.duration,_this.sizeBytes,_this.reason,_this.validUtf8,_this.prettyBody);
 }
 
 @override
 String toString() {
   final _this = this as HttpResponseResult;
-  return 'HttpResponseResult(statusCode: ${_this.statusCode}, headers: ${_this.headers}, body: ${_this.body}, duration: ${_this.duration}, sizeBytes: ${_this.sizeBytes}, reason: ${_this.reason}, prettyBody: ${_this.prettyBody})';
+  return 'HttpResponseResult(statusCode: ${_this.statusCode}, headers: ${_this.headers}, body: ${_this.body}, duration: ${_this.duration}, sizeBytes: ${_this.sizeBytes}, reason: ${_this.reason}, validUtf8: ${_this.validUtf8}, prettyBody: ${_this.prettyBody})';
 }
 
 
@@ -52,7 +53,7 @@ abstract mixin class $HttpResponseResultCopyWith<$Res>  {
   factory $HttpResponseResultCopyWith(HttpResponseResult value, $Res Function(HttpResponseResult) _then) = _$HttpResponseResultCopyWithImpl;
 @useResult
 $Res call({
- int statusCode, Map<String, List<String>> headers, String body, Duration duration, int sizeBytes, String? reason, String? prettyBody
+ int statusCode, Map<String, List<String>> headers, String body, Duration duration, int sizeBytes, String? reason, bool validUtf8, String? prettyBody
 });
 
 
@@ -69,7 +70,7 @@ class _$HttpResponseResultCopyWithImpl<$Res>
 
 /// Create a copy of HttpResponseResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? statusCode = null,Object? headers = null,Object? body = null,Object? duration = null,Object? sizeBytes = null,Object? reason = freezed,Object? prettyBody = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? statusCode = null,Object? headers = null,Object? body = null,Object? duration = null,Object? sizeBytes = null,Object? reason = freezed,Object? validUtf8 = null,Object? prettyBody = freezed,}) {
   return _then(HttpResponseResult(
 statusCode: null == statusCode ? _self.statusCode : statusCode // ignore: cast_nullable_to_non_nullable
 as int,headers: null == headers ? _self.headers : headers // ignore: cast_nullable_to_non_nullable
@@ -77,7 +78,8 @@ as Map<String, List<String>>,body: null == body ? _self.body : body // ignore: c
 as String,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
 as Duration,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: cast_nullable_to_non_nullable
 as int,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
-as String?,prettyBody: freezed == prettyBody ? _self.prettyBody : prettyBody // ignore: cast_nullable_to_non_nullable
+as String?,validUtf8: null == validUtf8 ? _self.validUtf8 : validUtf8 // ignore: cast_nullable_to_non_nullable
+as bool,prettyBody: freezed == prettyBody ? _self.prettyBody : prettyBody // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -163,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int statusCode,  Map<String, List<String>> headers,  String body,  Duration duration,  int sizeBytes,  String? reason,  String? prettyBody)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int statusCode,  Map<String, List<String>> headers,  String body,  Duration duration,  int sizeBytes,  String? reason,  bool validUtf8,  String? prettyBody)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HttpResponseResult() when $default != null:
-return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.sizeBytes,_that.reason,_that.prettyBody);case _:
+return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.sizeBytes,_that.reason,_that.validUtf8,_that.prettyBody);case _:
   return orElse();
 
 }
@@ -184,10 +186,10 @@ return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int statusCode,  Map<String, List<String>> headers,  String body,  Duration duration,  int sizeBytes,  String? reason,  String? prettyBody)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int statusCode,  Map<String, List<String>> headers,  String body,  Duration duration,  int sizeBytes,  String? reason,  bool validUtf8,  String? prettyBody)  $default,) {final _that = this;
 switch (_that) {
 case _HttpResponseResult():
-return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.sizeBytes,_that.reason,_that.prettyBody);case _:
+return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.sizeBytes,_that.reason,_that.validUtf8,_that.prettyBody);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +206,10 @@ return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.s
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int statusCode,  Map<String, List<String>> headers,  String body,  Duration duration,  int sizeBytes,  String? reason,  String? prettyBody)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int statusCode,  Map<String, List<String>> headers,  String body,  Duration duration,  int sizeBytes,  String? reason,  bool validUtf8,  String? prettyBody)?  $default,) {final _that = this;
 switch (_that) {
 case _HttpResponseResult() when $default != null:
-return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.sizeBytes,_that.reason,_that.prettyBody);case _:
+return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.sizeBytes,_that.reason,_that.validUtf8,_that.prettyBody);case _:
   return null;
 
 }
@@ -219,7 +221,7 @@ return $default(_that.statusCode,_that.headers,_that.body,_that.duration,_that.s
 
 
 class _HttpResponseResult implements HttpResponseResult {
-  const _HttpResponseResult({required this.statusCode, required  Map<String, List<String>> headers, required this.body, required this.duration, required this.sizeBytes, this.reason, this.prettyBody}): _headers = headers;
+  const _HttpResponseResult({required this.statusCode, required  Map<String, List<String>> headers, required this.body, required this.duration, required this.sizeBytes, this.reason, this.validUtf8 = true, this.prettyBody}): _headers = headers;
   
 
 @override final  int statusCode;
@@ -234,7 +236,9 @@ class _HttpResponseResult implements HttpResponseResult {
 @override final  Duration duration;
 @override final  int sizeBytes;
 @override final  String? reason;
-/// Indented JSON, set when the body is valid JSON.
+/// Whether the original response bytes were valid UTF-8.
+@override@JsonKey() final  bool validUtf8;
+/// Content-type-aware source, set when a Pretty view is available.
 @override final  String? prettyBody;
 
 /// Create a copy of HttpResponseResult
@@ -247,18 +251,18 @@ _$HttpResponseResultCopyWith<_HttpResponseResult> get copyWith => __$HttpRespons
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HttpResponseResult&&(identical(other.statusCode, statusCode) || other.statusCode == statusCode)&&const DeepCollectionEquality().equals(other.headers, _headers)&&(identical(other.body, body) || other.body == body)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.prettyBody, prettyBody) || other.prettyBody == prettyBody));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HttpResponseResult&&(identical(other.statusCode, statusCode) || other.statusCode == statusCode)&&const DeepCollectionEquality().equals(other.headers, _headers)&&(identical(other.body, body) || other.body == body)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.sizeBytes, sizeBytes) || other.sizeBytes == sizeBytes)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.validUtf8, validUtf8) || other.validUtf8 == validUtf8)&&(identical(other.prettyBody, prettyBody) || other.prettyBody == prettyBody));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,statusCode,const DeepCollectionEquality().hash(_headers),body,duration,sizeBytes,reason,prettyBody);
+    return Object.hash(runtimeType,statusCode,const DeepCollectionEquality().hash(_headers),body,duration,sizeBytes,reason,validUtf8,prettyBody);
 }
 
 @override
 String toString() {
-    return 'HttpResponseResult(statusCode: $statusCode, headers: $headers, body: $body, duration: $duration, sizeBytes: $sizeBytes, reason: $reason, prettyBody: $prettyBody)';
+    return 'HttpResponseResult(statusCode: $statusCode, headers: $headers, body: $body, duration: $duration, sizeBytes: $sizeBytes, reason: $reason, validUtf8: $validUtf8, prettyBody: $prettyBody)';
 }
 
 
@@ -269,7 +273,7 @@ abstract mixin class _$HttpResponseResultCopyWith<$Res> implements $HttpResponse
   factory _$HttpResponseResultCopyWith(_HttpResponseResult value, $Res Function(_HttpResponseResult) _then) = __$HttpResponseResultCopyWithImpl;
 @override @useResult
 $Res call({
- int statusCode, Map<String, List<String>> headers, String body, Duration duration, int sizeBytes, String? reason, String? prettyBody
+ int statusCode, Map<String, List<String>> headers, String body, Duration duration, int sizeBytes, String? reason, bool validUtf8, String? prettyBody
 });
 
 
@@ -286,7 +290,7 @@ class __$HttpResponseResultCopyWithImpl<$Res>
 
 /// Create a copy of HttpResponseResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? statusCode = null,Object? headers = null,Object? body = null,Object? duration = null,Object? sizeBytes = null,Object? reason = freezed,Object? prettyBody = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? statusCode = null,Object? headers = null,Object? body = null,Object? duration = null,Object? sizeBytes = null,Object? reason = freezed,Object? validUtf8 = null,Object? prettyBody = freezed,}) {
   return _then(_HttpResponseResult(
 statusCode: null == statusCode ? _self.statusCode : statusCode // ignore: cast_nullable_to_non_nullable
 as int,headers: null == headers ? _self._headers : headers // ignore: cast_nullable_to_non_nullable
@@ -294,7 +298,8 @@ as Map<String, List<String>>,body: null == body ? _self.body : body // ignore: c
 as String,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
 as Duration,sizeBytes: null == sizeBytes ? _self.sizeBytes : sizeBytes // ignore: cast_nullable_to_non_nullable
 as int,reason: freezed == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
-as String?,prettyBody: freezed == prettyBody ? _self.prettyBody : prettyBody // ignore: cast_nullable_to_non_nullable
+as String?,validUtf8: null == validUtf8 ? _self.validUtf8 : validUtf8 // ignore: cast_nullable_to_non_nullable
+as bool,prettyBody: freezed == prettyBody ? _self.prettyBody : prettyBody // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

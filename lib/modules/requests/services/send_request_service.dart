@@ -5,7 +5,7 @@ import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
 import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
 import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
 import 'package:api_caffeine/modules/requests/services/draft_variable_resolver.dart';
-import 'package:api_caffeine/modules/requests/services/json_formatter.dart';
+import 'package:api_caffeine/modules/requests/services/response_body_formatter.dart';
 import 'package:api_caffeine/modules/requests/services/request_builder.dart';
 
 /// Resolves variables, builds, sends and post-processes a request.
@@ -42,19 +42,9 @@ class SendRequestService {
     final response = sent.valueOrNull;
     if (response == null) return sent;
 
-    return Result.success(await _withPrettyBody(response));
-  }
-
-  Future<HttpResponseResult> _withPrettyBody(
-    HttpResponseResult response,
-  ) async {
-    final contentType = response.headers.entries
-        .where((e) => e.key.toLowerCase() == 'content-type')
-        .expand((e) => e.value)
-        .firstOrNull;
-    if (!looksLikeJson(response.body, contentType: contentType)) {
-      return response;
-    }
-    return response.copyWith(prettyBody: await prettyPrintJson(response.body));
+    final pretty = await formatResponseBody(response);
+    return Result.success(
+      pretty == null ? response : response.copyWith(prettyBody: pretty),
+    );
   }
 }

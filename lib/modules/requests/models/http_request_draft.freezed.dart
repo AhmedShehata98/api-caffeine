@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$HttpRequestDraft {
 
- HttpMethod get method; String get url; List<KeyValue> get params; List<KeyValue> get headers; RequestAuth get auth; RequestBody get body;
+ HttpMethod get method; String get url; List<KeyValue> get params; List<KeyValue> get headers; RequestAuth get auth; RequestBody get body; bool get responseSchemaEnabled; String get responseSchemaSource;
 /// Create a copy of HttpRequestDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $HttpRequestDraftCopyWith<HttpRequestDraft> get copyWith => _$HttpRequestDraftCo
 @override
 bool operator ==(Object other) {
   final _this = this as HttpRequestDraft;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HttpRequestDraft&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&const DeepCollectionEquality().equals(other.params, _this.params)&&const DeepCollectionEquality().equals(other.headers, _this.headers)&&(identical(other.auth, _this.auth) || other.auth == _this.auth)&&(identical(other.body, _this.body) || other.body == _this.body));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HttpRequestDraft&&(identical(other.method, _this.method) || other.method == _this.method)&&(identical(other.url, _this.url) || other.url == _this.url)&&const DeepCollectionEquality().equals(other.params, _this.params)&&const DeepCollectionEquality().equals(other.headers, _this.headers)&&(identical(other.auth, _this.auth) || other.auth == _this.auth)&&(identical(other.body, _this.body) || other.body == _this.body)&&(identical(other.responseSchemaEnabled, _this.responseSchemaEnabled) || other.responseSchemaEnabled == _this.responseSchemaEnabled)&&(identical(other.responseSchemaSource, _this.responseSchemaSource) || other.responseSchemaSource == _this.responseSchemaSource));
 }
 
 
 @override
 int get hashCode {
   final _this = this as HttpRequestDraft;
-  return Object.hash(runtimeType,_this.method,_this.url,const DeepCollectionEquality().hash(_this.params),const DeepCollectionEquality().hash(_this.headers),_this.auth,_this.body);
+  return Object.hash(runtimeType,_this.method,_this.url,const DeepCollectionEquality().hash(_this.params),const DeepCollectionEquality().hash(_this.headers),_this.auth,_this.body,_this.responseSchemaEnabled,_this.responseSchemaSource);
 }
 
 @override
 String toString() {
   final _this = this as HttpRequestDraft;
-  return 'HttpRequestDraft(method: ${_this.method}, url: ${_this.url}, params: ${_this.params}, headers: ${_this.headers}, auth: ${_this.auth}, body: ${_this.body})';
+  return 'HttpRequestDraft(method: ${_this.method}, url: ${_this.url}, params: ${_this.params}, headers: ${_this.headers}, auth: ${_this.auth}, body: ${_this.body}, responseSchemaEnabled: ${_this.responseSchemaEnabled}, responseSchemaSource: ${_this.responseSchemaSource})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $HttpRequestDraftCopyWith<$Res>  {
   factory $HttpRequestDraftCopyWith(HttpRequestDraft value, $Res Function(HttpRequestDraft) _then) = _$HttpRequestDraftCopyWithImpl;
 @useResult
 $Res call({
- HttpMethod method, String url, List<KeyValue> params, List<KeyValue> headers, RequestAuth auth, RequestBody body
+ HttpMethod method, String url, List<KeyValue> params, List<KeyValue> headers, RequestAuth auth, RequestBody body, bool responseSchemaEnabled, String responseSchemaSource
 });
 
 
@@ -68,7 +68,7 @@ class _$HttpRequestDraftCopyWithImpl<$Res>
 
 /// Create a copy of HttpRequestDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? method = null,Object? url = null,Object? params = null,Object? headers = null,Object? auth = null,Object? body = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? method = null,Object? url = null,Object? params = null,Object? headers = null,Object? auth = null,Object? body = null,Object? responseSchemaEnabled = null,Object? responseSchemaSource = null,}) {
   return _then(HttpRequestDraft(
 method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
 as HttpMethod,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,9 @@ as String,params: null == params ? _self.params : params // ignore: cast_nullabl
 as List<KeyValue>,headers: null == headers ? _self.headers : headers // ignore: cast_nullable_to_non_nullable
 as List<KeyValue>,auth: null == auth ? _self.auth : auth // ignore: cast_nullable_to_non_nullable
 as RequestAuth,body: null == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
-as RequestBody,
+as RequestBody,responseSchemaEnabled: null == responseSchemaEnabled ? _self.responseSchemaEnabled : responseSchemaEnabled // ignore: cast_nullable_to_non_nullable
+as bool,responseSchemaSource: null == responseSchemaSource ? _self.responseSchemaSource : responseSchemaSource // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 /// Create a copy of HttpRequestDraft
@@ -179,10 +181,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( HttpMethod method,  String url,  List<KeyValue> params,  List<KeyValue> headers,  RequestAuth auth,  RequestBody body)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( HttpMethod method,  String url,  List<KeyValue> params,  List<KeyValue> headers,  RequestAuth auth,  RequestBody body,  bool responseSchemaEnabled,  String responseSchemaSource)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HttpRequestDraft() when $default != null:
-return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_that.body);case _:
+return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_that.body,_that.responseSchemaEnabled,_that.responseSchemaSource);case _:
   return orElse();
 
 }
@@ -200,10 +202,10 @@ return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( HttpMethod method,  String url,  List<KeyValue> params,  List<KeyValue> headers,  RequestAuth auth,  RequestBody body)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( HttpMethod method,  String url,  List<KeyValue> params,  List<KeyValue> headers,  RequestAuth auth,  RequestBody body,  bool responseSchemaEnabled,  String responseSchemaSource)  $default,) {final _that = this;
 switch (_that) {
 case _HttpRequestDraft():
-return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_that.body);case _:
+return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_that.body,_that.responseSchemaEnabled,_that.responseSchemaSource);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -220,10 +222,10 @@ return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( HttpMethod method,  String url,  List<KeyValue> params,  List<KeyValue> headers,  RequestAuth auth,  RequestBody body)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( HttpMethod method,  String url,  List<KeyValue> params,  List<KeyValue> headers,  RequestAuth auth,  RequestBody body,  bool responseSchemaEnabled,  String responseSchemaSource)?  $default,) {final _that = this;
 switch (_that) {
 case _HttpRequestDraft() when $default != null:
-return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_that.body);case _:
+return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_that.body,_that.responseSchemaEnabled,_that.responseSchemaSource);case _:
   return null;
 
 }
@@ -235,7 +237,7 @@ return $default(_that.method,_that.url,_that.params,_that.headers,_that.auth,_th
 
 
 class _HttpRequestDraft implements HttpRequestDraft {
-  const _HttpRequestDraft({this.method = HttpMethod.get, this.url = '',  List<KeyValue> params = const [],  List<KeyValue> headers = const [], this.auth = const RequestAuth.none(), this.body = const RequestBody()}): _params = params,_headers = headers;
+  const _HttpRequestDraft({this.method = HttpMethod.get, this.url = '',  List<KeyValue> params = const [],  List<KeyValue> headers = const [], this.auth = const RequestAuth.none(), this.body = const RequestBody(), this.responseSchemaEnabled = false, this.responseSchemaSource = ''}): _params = params,_headers = headers;
   
 
 @override@JsonKey() final  HttpMethod method;
@@ -256,6 +258,8 @@ class _HttpRequestDraft implements HttpRequestDraft {
 
 @override@JsonKey() final  RequestAuth auth;
 @override@JsonKey() final  RequestBody body;
+@override@JsonKey() final  bool responseSchemaEnabled;
+@override@JsonKey() final  String responseSchemaSource;
 
 /// Create a copy of HttpRequestDraft
 /// with the given fields replaced by the non-null parameter values.
@@ -267,18 +271,18 @@ _$HttpRequestDraftCopyWith<_HttpRequestDraft> get copyWith => __$HttpRequestDraf
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HttpRequestDraft&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&const DeepCollectionEquality().equals(other.params, _params)&&const DeepCollectionEquality().equals(other.headers, _headers)&&(identical(other.auth, auth) || other.auth == auth)&&(identical(other.body, body) || other.body == body));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HttpRequestDraft&&(identical(other.method, method) || other.method == method)&&(identical(other.url, url) || other.url == url)&&const DeepCollectionEquality().equals(other.params, _params)&&const DeepCollectionEquality().equals(other.headers, _headers)&&(identical(other.auth, auth) || other.auth == auth)&&(identical(other.body, body) || other.body == body)&&(identical(other.responseSchemaEnabled, responseSchemaEnabled) || other.responseSchemaEnabled == responseSchemaEnabled)&&(identical(other.responseSchemaSource, responseSchemaSource) || other.responseSchemaSource == responseSchemaSource));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,method,url,const DeepCollectionEquality().hash(_params),const DeepCollectionEquality().hash(_headers),auth,body);
+    return Object.hash(runtimeType,method,url,const DeepCollectionEquality().hash(_params),const DeepCollectionEquality().hash(_headers),auth,body,responseSchemaEnabled,responseSchemaSource);
 }
 
 @override
 String toString() {
-    return 'HttpRequestDraft(method: $method, url: $url, params: $params, headers: $headers, auth: $auth, body: $body)';
+    return 'HttpRequestDraft(method: $method, url: $url, params: $params, headers: $headers, auth: $auth, body: $body, responseSchemaEnabled: $responseSchemaEnabled, responseSchemaSource: $responseSchemaSource)';
 }
 
 
@@ -289,7 +293,7 @@ abstract mixin class _$HttpRequestDraftCopyWith<$Res> implements $HttpRequestDra
   factory _$HttpRequestDraftCopyWith(_HttpRequestDraft value, $Res Function(_HttpRequestDraft) _then) = __$HttpRequestDraftCopyWithImpl;
 @override @useResult
 $Res call({
- HttpMethod method, String url, List<KeyValue> params, List<KeyValue> headers, RequestAuth auth, RequestBody body
+ HttpMethod method, String url, List<KeyValue> params, List<KeyValue> headers, RequestAuth auth, RequestBody body, bool responseSchemaEnabled, String responseSchemaSource
 });
 
 
@@ -306,7 +310,7 @@ class __$HttpRequestDraftCopyWithImpl<$Res>
 
 /// Create a copy of HttpRequestDraft
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? method = null,Object? url = null,Object? params = null,Object? headers = null,Object? auth = null,Object? body = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? method = null,Object? url = null,Object? params = null,Object? headers = null,Object? auth = null,Object? body = null,Object? responseSchemaEnabled = null,Object? responseSchemaSource = null,}) {
   return _then(_HttpRequestDraft(
 method: null == method ? _self.method : method // ignore: cast_nullable_to_non_nullable
 as HttpMethod,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -314,7 +318,9 @@ as String,params: null == params ? _self._params : params // ignore: cast_nullab
 as List<KeyValue>,headers: null == headers ? _self._headers : headers // ignore: cast_nullable_to_non_nullable
 as List<KeyValue>,auth: null == auth ? _self.auth : auth // ignore: cast_nullable_to_non_nullable
 as RequestAuth,body: null == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
-as RequestBody,
+as RequestBody,responseSchemaEnabled: null == responseSchemaEnabled ? _self.responseSchemaEnabled : responseSchemaEnabled // ignore: cast_nullable_to_non_nullable
+as bool,responseSchemaSource: null == responseSchemaSource ? _self.responseSchemaSource : responseSchemaSource // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

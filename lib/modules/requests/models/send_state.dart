@@ -1,5 +1,6 @@
 import 'package:api_caffeine/core/error/failure.dart';
 import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
+import 'package:api_caffeine/modules/requests/models/schema_test_result.dart';
 
 /// What the response pane shows.
 sealed class SendState {
@@ -15,8 +16,9 @@ class SendLoading extends SendState {
 }
 
 class SendSuccess extends SendState {
-  const SendSuccess(this.response);
+  const SendSuccess(this.response, {this.schemaTest});
   final HttpResponseResult response;
+  final SchemaTestResult? schemaTest;
 }
 
 class SendFailed extends SendState {

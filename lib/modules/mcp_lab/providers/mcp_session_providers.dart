@@ -117,7 +117,7 @@ final mcpTargetServiceProvider = Provider<McpTargetService>((ref) {
 });
 
 /// Inject the build version here when release metadata is wired.
-final mcpClientVersionProvider = Provider<String>((ref) => '1.0.0');
+final mcpClientVersionProvider = Provider<String>((ref) => '1.2.1');
 
 final mcpConnectServiceProvider = Provider<McpConnectService>((ref) {
   final owner = ref.watch(mcpSessionOwnerProvider);

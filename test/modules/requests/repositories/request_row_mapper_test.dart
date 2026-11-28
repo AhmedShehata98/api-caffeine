@@ -63,6 +63,39 @@ void main() {
     }
   });
 
+  group('response schema', () {
+    test('new requests save with testing off and an empty source', () {
+      final row = RequestRowMapper.toRow(const HttpRequestDraft());
+
+      expect(row['response_schema_enabled'], isFalse);
+      expect(row['response_schema_source'], '');
+    });
+
+    test('round-trips the formatted source and the enabled flag', () {
+      const source = ' {\r\n  "type": "object"\r\n}\r\n ';
+      const enabled = HttpRequestDraft(
+        responseSchemaEnabled: true,
+        responseSchemaSource: source,
+      );
+
+      expect(_roundTrip(enabled), enabled);
+      final disabled = enabled.copyWith(responseSchemaEnabled: false);
+      expect(disabled, isNot(enabled));
+      final reopened = _roundTrip(disabled);
+      expect(reopened.responseSchemaEnabled, isFalse);
+      expect(reopened.responseSchemaSource, source);
+    });
+
+    test('preserves malformed schema text while testing is enabled', () {
+      const draft = HttpRequestDraft(
+        responseSchemaEnabled: true,
+        responseSchemaSource: '  { unfinished',
+      );
+
+      expect(_roundTrip(draft), draft);
+    });
+  });
+
   group('body', () {
     test('JSON and raw keep their text', () {
       for (final type in [BodyType.json, BodyType.raw]) {
@@ -118,6 +151,8 @@ void main() {
       ).draft;
 
       expect(draft, const HttpRequestDraft());
+      expect(draft.responseSchemaEnabled, isFalse);
+      expect(draft.responseSchemaSource, '');
     });
 
     test('a corrupt form body becomes no fields instead of crashing', () {

@@ -1,25 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/json.dart';
+import 'package:re_highlight/languages/xml.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
 import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
 
 /// Code editor / viewer with optional JSON highlighting and a `Ctrl+F` find bar.
+enum CodeSyntax { json, xml }
+
 class CodeView extends StatelessWidget {
   const CodeView({
     required this.controller,
     this.readOnly = false,
     this.highlightJson = false,
+    this.syntax,
+    this.findController,
+    this.scrollController,
+    this.shortcutOverrideActions,
     this.hint,
+    this.focusNode,
     super.key,
   });
 
   final CodeLineEditingController controller;
   final bool readOnly;
   final bool highlightJson;
+  final CodeSyntax? syntax;
+  final CodeFindController? findController;
+  final CodeScrollController? scrollController;
+  final Map<Type, Action<Intent>>? shortcutOverrideActions;
   final String? hint;
+  final FocusNode? focusNode;
 
   // Atom One assigns the same color to JSON keys and numbers.
   static final _darkJsonTheme = {
@@ -35,10 +48,15 @@ class CodeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
+    final language = syntax ?? (highlightJson ? CodeSyntax.json : null);
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: CodeEditor(
         controller: controller,
+        focusNode: focusNode,
+        scrollController: scrollController,
+        findController: findController,
+        shortcutOverrideActions: shortcutOverrideActions,
         readOnly: readOnly,
         autofocus: false,
         wordWrap: false,
@@ -48,15 +66,28 @@ class CodeView extends StatelessWidget {
           fontSize: 13,
           backgroundColor: theme.colorScheme.surfaceContainer,
           textColor: theme.colorScheme.onSurface,
-          codeTheme: highlightJson
+          codeTheme: language != null
               ? CodeHighlightTheme(
-                  languages: {'json': CodeHighlightThemeMode(mode: langJson)},
-                  theme: dark ? _darkJsonTheme : _lightJsonTheme,
+                  languages: switch (language) {
+                    CodeSyntax.json => {
+                      'json': CodeHighlightThemeMode(mode: langJson),
+                    },
+                    CodeSyntax.xml => {
+                      'xml': CodeHighlightThemeMode(mode: langXml),
+                    },
+                  },
+                  theme: switch (language) {
+                    CodeSyntax.json => dark ? _darkJsonTheme : _lightJsonTheme,
+                    CodeSyntax.xml =>
+                      dark ? atomOneDarkTheme : atomOneLightTheme,
+                  },
                 )
               : null,
         ),
-        findBuilder: (context, findController, readOnly) =>
-            _FindBar(controller: findController),
+        findBuilder: findController == null
+            ? (context, controller, readOnly) =>
+                  _FindBar(controller: controller)
+            : null,
       ),
     );
   }

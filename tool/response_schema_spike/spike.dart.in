@@ -1,0 +1,310 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:json_schema/json_schema.dart' as workiva;
+import 'package:json_schema_builder/json_schema_builder.dart' as builder;
+
+import 'fixtures.dart';
+
+enum Engine { workiva, builder }
+
+typedef RunValidation = Iterable<Object> Function(Object?);
+
+RunValidation compile(Engine engine, Object? schema, {bool first = false}) {
+  switch (engine) {
+    case Engine.workiva:
+      final compiled = workiva.JsonSchema.create(
+        schema ??
+            (throw FormatException('Expected an object or boolean schema')),
+        schemaVersion: workiva.SchemaVersion.draft7,
+      );
+      return (body) => workiva.Validator(compiled)
+          .validate(body, reportMultipleErrors: !first, validateFormats: false)
+          .errors;
+    case Engine.builder:
+      final compiled = switch (schema) {
+        final bool value => builder.Schema.fromBoolean(value),
+        final Map<String, Object?> value => builder.Schema.fromMap(value),
+        _ => throw FormatException('Expected an object or boolean schema'),
+      };
+      return (body) => compiled.validateSync(body).cast<Object>();
+  }
+}
+
+Map<String, Object?> rawDiagnostic(Object error) => switch (error) {
+  workiva.ValidationError() => {
+    'instancePath': error.instancePath,
+    'schemaPath': error.schemaPath,
+    'message': error.message,
+  },
+  _ => builderDiagnostic(error as Map<String, Object?>),
+};
+
+Map<String, Object?> builderDiagnostic(Map<String, Object?> raw) {
+  final error = builder.ValidationError.fromMap(raw);
+  return {
+    'path': error.path,
+    'error': error.error.name,
+    'details': error.details,
+  };
+}
+
+String displayPath(List<String> path, Object? root) {
+  final result = StringBuffer(r'$');
+  Object? parent = root;
+  for (final segment in path) {
+    if (parent is List) {
+      result.write('[$segment]');
+      parent = parent[int.parse(segment)];
+    } else if (parent is Map) {
+      if (RegExp(r'^[A-Za-z_][A-Za-z_0-9]*$').hasMatch(segment)) {
+        result.write('.$segment');
+      } else {
+        result.write('[${jsonEncode(segment)}]');
+      }
+      parent = parent[segment];
+    } else {
+      throw StateError('Diagnostic did not resolve to a body location');
+    }
+  }
+  return result.toString();
+}
+
+// Verify the pinned version's message contract without splitting on dots,
+// slashes or quotes inside a missing property name.
+Map<String, String> builderLocation(Map<String, Object?> raw, Object? body) {
+  final error = builder.ValidationError.fromMap(raw);
+  final anchor = displayPath(error.path, body);
+  if (error.error != builder.ValidationErrorType.requiredPropertyMissing) {
+    return {'path': anchor, 'anchor': anchor};
+  }
+  const prefix = 'Required property "';
+  const suffix = '" is missing';
+  final details = error.details;
+  if (details == null ||
+      !details.startsWith(prefix) ||
+      !details.endsWith(suffix)) {
+    throw StateError('Unexpected required-property diagnostic format');
+  }
+  final key = details.substring(prefix.length, details.length - suffix.length);
+  return {
+    'path': displayPath([...error.path, key], body),
+    'anchor': anchor,
+  };
+}
+
+void emit(Map<String, Object?> record) => stdout.writeln(jsonEncode(record));
+
+void main(List<String> args) {
+  if (args.length == 1 && args.first == 'fixtures') {
+    fixtures();
+    return;
+  }
+  if (args.length >= 4 && args.first == 'bench') {
+    final first = args.length == 5 && args.last == 'first';
+    benchmark(
+      Engine.values.byName(args[1]),
+      int.parse(args[2]),
+      args[3],
+      first,
+    );
+    return;
+  }
+  stderr.writeln(
+    'Usage: dart run spike.dart fixtures | bench <workiva|builder> <bytes> <pass|sparse|dense> [first]',
+  );
+  exitCode = 64;
+}
+
+void fixtures() {
+  var fileAttempts = 0;
+  var httpAttempts = 0;
+  // Guard construction and validation. The reference targets are never opened.
+  for (final engine in Engine.values) {
+    for (final fixture in cases) {
+      fileAttempts = 0;
+      httpAttempts = 0;
+      String stage = 'schema JSON';
+      Object? outcome;
+      List<Map<String, String>>? locations;
+      try {
+        final schema = jsonDecode(fixture.schema);
+        stage = 'response JSON';
+        final body = jsonDecode(fixture.body);
+        outcome = IOOverrides.runZoned(
+          () => HttpOverrides.runZoned(
+            () {
+              stage = 'construction';
+              final run = compile(engine, schema);
+              stage = 'validation';
+              final raw = run(body).map(rawDiagnostic).toList();
+              if (engine == Engine.builder) {
+                stage = 'diagnostic mapping';
+                locations = raw
+                    .map((error) => builderLocation(error, body))
+                    .toList();
+              }
+              return raw;
+            },
+            createHttpClient: (_) {
+              httpAttempts++;
+              throw StateError('HTTP client prohibited during validation');
+            },
+          ),
+          createFile: (_) {
+            fileAttempts++;
+            throw StateError('File access prohibited during validation');
+          },
+        );
+      } catch (error) {
+        outcome = {
+          'stage': stage,
+          'exception': error.runtimeType.toString(),
+          'message': '$error',
+        };
+      }
+      emit({
+        'engine': engine.name,
+        'case': fixture.name,
+        'expected': fixture.expected,
+        'result': outcome,
+        if (locations != null) 'locations': locations,
+        'fileAttempts': fileAttempts,
+        'httpAttempts': httpAttempts,
+      });
+      if (fileAttempts != 0 ||
+          httpAttempts != 0 ||
+          (engine == Engine.builder &&
+              !builderFixtureMatches(fixture, locations))) {
+        exitCode = 1;
+      }
+    }
+  }
+
+  final malformed = [0x22, 0xff, 0x22];
+  try {
+    utf8.decode(malformed);
+    exitCode = 1;
+  } on FormatException catch (error) {
+    emit({
+      'case': 'malformed UTF-8 in JSON string',
+      'strict': error.message,
+      'lossyThenJsonDecode': jsonDecode(
+        utf8.decode(malformed, allowMalformed: true),
+      ),
+    });
+  }
+}
+
+bool builderFixtureMatches(
+  Fixture fixture,
+  List<Map<String, String>>? locations,
+) {
+  const empty = <String, String>{};
+  final expected = switch (fixture.name) {
+    'Stitch mismatch' => const {
+      r'$.user.name': r'$.user',
+      r'$.user.id': r'$.user.id',
+    },
+    'Stitch pass' => empty,
+    'nested arrays, missing siblings and dotted/slashed names' => const {
+      r'$[0][0]["first.name"]': r'$[0][0]',
+      r'$[0][0]["a/b"]': r'$[0][0]',
+      r'$[0][0]["til~de"]': r'$[0][0]',
+      r'$[0][0]["\"quoted\""]': r'$[0][0]',
+      r'$[0][0]["v.x/y"]': r'$[0][0]["v.x/y"]',
+    },
+    'missing parent slash collision' => const {
+      r'$["a/b"].x': r'$["a/b"]',
+      r'$.a.b.x': r'$.a.b',
+    },
+    'array index and numeric object key' => const {r'$[0]["0"]': r'$[0]["0"]'},
+    '2020-12 escaped pointer without declaration' => const {
+      r'$.user.x': r'$.user',
+    },
+    _ => null,
+  };
+  if (expected == null) return true;
+  return locations != null &&
+      locations.length == expected.length &&
+      locations.every(
+        (location) => expected[location['path']] == location['anchor'],
+      );
+}
+
+const arraySchema = {
+  'type': 'array',
+  'items': {
+    'type': 'object',
+    'required': ['id', 'label'],
+    'properties': {
+      'id': {'type': 'integer'},
+      'label': {'type': 'string'},
+    },
+  },
+};
+
+String arraySource(int bytes, String distribution) {
+  const good = '{"id":1234,"label":"abcdefghijklmnopqrstuvwxyz0123456789"}';
+  const bad = '{"id":"42","label":"abcdefghijklmnopqrstuvwxyz0123456789"}';
+  final count = (bytes - 1) ~/ (good.length + 1);
+  assert(count > 0);
+  final source = StringBuffer('[');
+  for (var index = 0; index < count; index++) {
+    if (index != 0) source.write(',');
+    final fails = switch (distribution) {
+      'pass' => false,
+      'sparse' => index % 1000 == 999 || index == count - 1,
+      'dense' => true,
+      _ => throw ArgumentError.value(distribution),
+    };
+    source.write(fails ? bad : good);
+  }
+  source.write(']');
+  source.write(' ' * (bytes - source.length));
+  return source.toString();
+}
+
+void benchmark(Engine engine, int bytes, String distribution, bool first) {
+  if (first && engine != Engine.workiva) {
+    throw ArgumentError('No builder first-error mode');
+  }
+  final run = compile(engine, arraySchema, first: first);
+  for (var i = 0; i < 10; i++) {
+    run(jsonDecode(arraySource(4096, distribution)));
+  }
+  final input = utf8.encode(arraySource(bytes, distribution));
+  final clock = Stopwatch()..start();
+  final source = utf8.decode(input);
+  final utf8Us = clock.elapsedMicroseconds;
+  clock.reset();
+  final body = jsonDecode(source) as List<Object?>;
+  final jsonUs = clock.elapsedMicroseconds;
+  final rssAfterDecode = ProcessInfo.currentRss;
+  clock.reset();
+  final issues = run(body);
+  final validationUs = clock.elapsedMicroseconds;
+  final items = body.length;
+  final expected = switch (distribution) {
+    'pass' => 0,
+    'sparse' => (items + 999) ~/ 1000,
+    'dense' => items,
+    _ => throw ArgumentError.value(distribution),
+  };
+  final expectedReported = first && expected > 0 ? 1 : expected;
+  if (issues.length != expectedReported) exitCode = 1;
+  emit({
+    'engine': engine.name,
+    'bytes': input.length,
+    'distribution': distribution,
+    'mode': first ? 'first' : 'all',
+    'items': items,
+    'utf8Us': utf8Us,
+    'jsonUs': jsonUs,
+    'validationUs': validationUs,
+    'issues': issues.length,
+    'expectedReported': expectedReported,
+    'rssAfterDecodeBytes': rssAfterDecode,
+    'maxRssBytes': ProcessInfo.maxRss,
+  });
+}

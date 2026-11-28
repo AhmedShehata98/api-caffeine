@@ -88,6 +88,17 @@ void main() {
     expect(result.valueOrNull!.statusCode, 404);
   });
 
+  test('preserves a readable body and records invalid UTF-8', () async {
+    final adapter = _FakeAdapter(
+      (_, _, _) async => ResponseBody.fromBytes([0x22, 0xff, 0x22], 200),
+    );
+    final response = (await _repository(
+      adapter,
+    ).send(_get, CancelSignal())).valueOrNull!;
+    expect(response.body, '"\uFFFD"');
+    expect(response.validUtf8, isFalse);
+  });
+
   test('sends method, headers and string body as given', () async {
     final adapter = _FakeAdapter(
       (_, _, _) async => ResponseBody.fromString('', 204),

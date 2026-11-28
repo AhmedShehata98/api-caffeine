@@ -40,6 +40,7 @@ Future<ProviderContainer> _pump(
   WidgetTester tester,
   MockHttpRequestRepository repository, {
   ThemeData? theme,
+  bool stacked = true,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -47,6 +48,7 @@ Future<ProviderContainer> _pump(
 
   final List<Override> overrides = [
     httpRequestRepositoryProvider.overrideWithValue(repository),
+    requestPanesStackedProvider.overrideWithValue(stacked),
     ...fakeBackend(),
   ];
   await tester.pumpWidget(
@@ -84,6 +86,29 @@ void main() {
   });
 
   setUp(() => repository = MockHttpRequestRepository());
+
+  for (final stacked in [true, false]) {
+    testWidgets(
+      'validates and displays response issues with stacked=$stacked',
+      (tester) async {
+        _stubResponse(repository, const Result.success(_jsonResponse));
+        final container = await _pump(tester, repository, stacked: stacked);
+        final draft = container.read(requestDraftProvider.notifier);
+        draft.setUrl('http://a.test');
+        draft.setResponseSchemaSource('{"required":["name"]}');
+        draft.setResponseSchemaEnabled(true);
+        await tester.pump();
+        await tester.runAsync(
+          () => container.read(sendStateProvider.notifier).send(),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Schema failed'), findsOneWidget);
+        expect(find.text(r'$.name'), findsOneWidget);
+        expect(find.textContaining(r'Linked to $'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('shows an idle response pane first', (tester) async {
     await _pump(tester, repository);

@@ -7,10 +7,12 @@ import 'package:api_caffeine/modules/requests/models/key_value.dart';
 import 'package:api_caffeine/modules/requests/models/request_auth.dart';
 import 'package:api_caffeine/modules/requests/models/request_body.dart';
 import 'package:api_caffeine/modules/requests/models/send_state.dart';
+import 'package:api_caffeine/modules/requests/models/schema_test_result.dart';
 import 'package:api_caffeine/modules/requests/providers/request_tabs_providers.dart';
 import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
 import 'package:api_caffeine/modules/requests/repositories/http_request_repository_impl.dart';
 import 'package:api_caffeine/modules/requests/services/send_request_service.dart';
+import 'package:api_caffeine/modules/requests/services/response_schema_worker.dart';
 import 'package:api_caffeine/modules/requests/services/url_params_sync.dart';
 
 final httpRequestRepositoryProvider = Provider<HttpRequestRepository>(
@@ -23,6 +25,21 @@ final sendRequestServiceProvider = Provider<SendRequestService>(
     resolver: ref.watch(variableResolverProvider),
   ),
 );
+
+final responseSchemaWorkerProvider = Provider<ResponseSchemaWorker>(
+  (ref) => ResponseSchemaWorker(),
+);
+
+final schemaEditorRequestProvider = NotifierProvider<SchemaEditorRequest, int>(
+  SchemaEditorRequest.new,
+);
+
+class SchemaEditorRequest extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void open() => state++;
+}
 
 /// The draft of the active tab. Reads follow the active tab; the setters edit it.
 final requestDraftProvider =
@@ -65,6 +82,12 @@ class RequestDraftNotifier extends Notifier<HttpRequestDraft> {
   void setAuth(RequestAuth auth) => _edit((d) => d.copyWith(auth: auth));
 
   void setBody(RequestBody body) => _edit((d) => d.copyWith(body: body));
+
+  void setResponseSchemaEnabled(bool enabled) =>
+      _edit((d) => d.copyWith(responseSchemaEnabled: enabled));
+
+  void setResponseSchemaSource(String source) =>
+      _edit((d) => d.copyWith(responseSchemaSource: source));
 }
 
 /// Send / cancel the active tab's request. The outcome is stored on the tab,
@@ -86,6 +109,7 @@ class SendNotifier extends Notifier<SendState> {
     final tab = ref.read(requestTabsProvider).active;
     if (tab == null || tab.sendState is SendLoading) return;
 
+    _signals.remove(tab.id)?.cancel();
     final signal = CancelSignal();
     _signals[tab.id] = signal;
     tabs.setSendState(tab.id, const SendLoading());
@@ -97,11 +121,35 @@ class SendNotifier extends Notifier<SendState> {
 
     // Ignore the outcome if the request was cancelled or the tab closed.
     if (!ref.mounted || !identical(_signals[tab.id], signal)) return;
-    _signals.remove(tab.id);
+    final response = result.valueOrNull;
+    if (response == null) {
+      _signals.remove(tab.id);
+      tabs.setSendState(tab.id, SendFailed(result.failureOrNull!));
+      return;
+    }
+    if (!tab.draft.responseSchemaEnabled) {
+      _signals.remove(tab.id);
+      tabs.setSendState(tab.id, SendSuccess(response));
+      return;
+    }
     tabs.setSendState(
       tab.id,
-      result.when(success: SendSuccess.new, failure: SendFailed.new),
+      SendSuccess(
+        response,
+        schemaTest: SchemaTestResult(
+          status: SchemaTestStatus.checking,
+          schemaSource: tab.draft.responseSchemaSource,
+        ),
+      ),
     );
+    final verdict = await ref
+        .read(responseSchemaWorkerProvider)
+        .validate(tab.draft, response, signal);
+    if (!ref.mounted || !identical(_signals[tab.id], signal)) return;
+    _signals.remove(tab.id);
+    if (verdict != null) {
+      tabs.setSendState(tab.id, SendSuccess(response, schemaTest: verdict));
+    }
   }
 
   void cancel() {
@@ -109,7 +157,16 @@ class SendNotifier extends Notifier<SendState> {
     final signal = id == null ? null : _signals.remove(id);
     if (id == null || signal == null) return;
     signal.cancel();
-    ref.read(requestTabsProvider.notifier).setSendState(id, const SendIdle());
+    final tabs = ref.read(requestTabsProvider);
+    final current = tabs.active?.sendState;
+    ref
+        .read(requestTabsProvider.notifier)
+        .setSendState(
+          id,
+          current is SendSuccess
+              ? SendSuccess(current.response)
+              : const SendIdle(),
+        );
   }
 }
 

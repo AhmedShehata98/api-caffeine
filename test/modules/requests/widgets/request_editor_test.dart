@@ -2,11 +2,80 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:api_caffeine/core/error/failure.dart';
 import 'package:api_caffeine/modules/requests/models/send_state.dart';
+import 'package:api_caffeine/modules/requests/models/schema_test_result.dart';
+import 'package:api_caffeine/modules/requests/widgets/response_schema_tab.dart';
+import 'package:re_editor/re_editor.dart';
 import 'package:api_caffeine/modules/requests/requests.dart';
 
 import '../../../support/pump_app.dart';
 
 void main() {
+  testWidgets(
+    'schema editor retains its source when disabled and recovery focuses it',
+    (tester) async {
+      final container = await pumpApp(tester, sampleStore());
+      await tester.tap(find.text('New request').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Test').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pumpAndSettle();
+      final editor = tester.widget<CodeEditor>(
+        find.descendant(
+          of: find.byType(ResponseSchemaTab),
+          matching: find.byType(CodeEditor),
+        ),
+      );
+      editor.controller!.text = '{"type":"object"}';
+      await tester.pumpAndSettle();
+      expect(
+        container.read(requestDraftProvider).responseSchemaEnabled,
+        isTrue,
+      );
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(requestDraftProvider).responseSchemaSource,
+        '{"type":"object"}',
+      );
+      final tabs = container.read(requestTabsProvider.notifier);
+      tabs.setSendState(
+        container.read(requestTabsProvider).activeId!,
+        const SendSuccess(
+          HttpResponseResult(
+            statusCode: 200,
+            headers: {},
+            body: '{}',
+            duration: Duration.zero,
+            sizeBytes: 2,
+          ),
+          schemaTest: SchemaTestResult(
+            status: SchemaTestStatus.invalidSchema,
+            schemaSource: '{"type":"object"}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Params'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit schema'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ResponseSchemaTab), findsOneWidget);
+      expect(
+        tester
+            .widget<CodeEditor>(
+              find.descendant(
+                of: find.byType(ResponseSchemaTab),
+                matching: find.byType(CodeEditor),
+              ),
+            )
+            .focusNode!
+            .hasFocus,
+        isTrue,
+      );
+    },
+  );
+
   testWidgets('Send shows the Ctrl+Enter hint', (tester) async {
     await pumpApp(tester, sampleStore());
     await tester.tap(find.text('New request').first);

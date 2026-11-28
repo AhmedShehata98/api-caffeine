@@ -37,12 +37,14 @@ class HttpRequestRepositoryImpl implements HttpRequestRepository {
       stopwatch.stop();
 
       final bytes = response.data ?? const <int>[];
+      final decoded = await _decode(bytes);
       return Result.success(
         HttpResponseResult(
           statusCode: response.statusCode ?? 0,
           reason: response.statusMessage,
           headers: response.headers.map,
-          body: await _decode(bytes),
+          body: decoded.body,
+          validUtf8: decoded.validUtf8,
           duration: stopwatch.elapsed,
           sizeBytes: bytes.length,
         ),
@@ -60,10 +62,18 @@ class HttpRequestRepositoryImpl implements HttpRequestRepository {
     return request.body;
   }
 
-  Future<String> _decode(List<int> bytes) {
+  Future<({String body, bool validUtf8})> _decode(List<int> bytes) {
     if (bytes.length > _isolateDecodeThreshold) {
-      return Isolate.run(() => utf8.decode(bytes, allowMalformed: true));
+      return Isolate.run(() => _decodeBytes(bytes));
     }
-    return Future.value(utf8.decode(bytes, allowMalformed: true));
+    return Future.value(_decodeBytes(bytes));
+  }
+
+  static ({String body, bool validUtf8}) _decodeBytes(List<int> bytes) {
+    try {
+      return (body: utf8.decode(bytes), validUtf8: true);
+    } on FormatException {
+      return (body: utf8.decode(bytes, allowMalformed: true), validUtf8: false);
+    }
   }
 }

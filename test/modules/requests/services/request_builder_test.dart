@@ -17,6 +17,21 @@ PreparedRequest _build(HttpRequestDraft draft) {
 }
 
 void main() {
+  test('response schema settings stay out of the outgoing request', () {
+    const draft = HttpRequestDraft(
+      method: HttpMethod.post,
+      url: 'https://api.test/v1',
+      body: RequestBody(type: BodyType.json, text: '{"sent":true}'),
+    );
+
+    final withSchema = draft.copyWith(
+      responseSchemaEnabled: true,
+      responseSchemaSource: '{ unfinished',
+    );
+
+    expect(_build(withSchema), _build(draft));
+  });
+
   group('URL', () {
     test('keeps method and URL', () {
       final request = _build(

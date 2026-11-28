@@ -41,6 +41,8 @@ const _draft = HttpRequestDraft(
       KeyValue(key: 'b', enabled: false),
     ],
   ),
+  responseSchemaEnabled: true,
+  responseSchemaSource: ' {\r\n  "type": "object"\r\n}\r\n ',
 );
 
 Future<SupabaseClient> _guest() async {
@@ -95,12 +97,16 @@ void main() {
       expect(listed.single.draft, _draft);
       expect(listed.single.name, 'Search users');
 
+      final disabled = _draft.copyWith(
+        method: HttpMethod.get,
+        responseSchemaEnabled: false,
+      );
       final updated = (await requests.update(
         saved.id,
         name: 'Search people',
-        draft: _draft.copyWith(method: HttpMethod.get),
+        draft: disabled,
       )).valueOrNull!;
-      expect(updated.draft.method, HttpMethod.get);
+      expect(updated.draft, disabled);
       expect(
         (await requests.rename(saved.id, 'Find')).valueOrNull!.name,
         'Find',
@@ -116,6 +122,7 @@ void main() {
       final copied = (await requests.listByCollections([copy.id])).valueOrNull!;
       expect(copied.single.name, 'Find');
       expect(copied.single.id, isNot(saved.id));
+      expect(copied.single.draft, disabled);
       expect(
         (await requests.listByCollections([created.id, copy.id])).valueOrNull,
         hasLength(2),

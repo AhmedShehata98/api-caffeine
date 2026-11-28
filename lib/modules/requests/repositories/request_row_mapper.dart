@@ -39,6 +39,8 @@ abstract final class RequestRowMapper {
           text: isForm ? '' : bodyText,
           fields: isForm ? _keyValuesFromJson(_tryDecode(bodyText)) : const [],
         ),
+        responseSchemaEnabled: row['response_schema_enabled'] as bool? ?? false,
+        responseSchemaSource: row['response_schema_source'] as String? ?? '',
       ),
     );
   }
@@ -55,6 +57,8 @@ abstract final class RequestRowMapper {
       'headers': _keyValuesToJson(draft.headers),
       'auth': _authToJson(draft.auth),
       'body_type': body.type.name,
+      'response_schema_enabled': draft.responseSchemaEnabled,
+      'response_schema_source': draft.responseSchemaSource,
       'body': switch (body.type) {
         BodyType.none => null,
         _ when isForm => jsonEncode(_keyValuesToJson(body.fields)),
