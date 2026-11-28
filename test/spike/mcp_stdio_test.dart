@@ -48,7 +48,7 @@ void main() {
       final initialized = await request(101, 'initialize', {
         'protocolVersion': '2025-11-25',
         'capabilities': <String, dynamic>{},
-        'clientInfo': {'name': 'test-point-spike', 'version': '1.0.0'},
+        'clientInfo': {'name': 'api-caffeine-spike', 'version': '1.0.0'},
       });
       expect(initialized['error'], isNull);
       const notification = JsonRpcNotification(

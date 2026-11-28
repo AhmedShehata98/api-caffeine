@@ -1,5 +1,5 @@
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/collections/models/collection.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/collections/models/collection.dart';
 
 abstract interface class CollectionRepository {
   Future<Result<List<Collection>>> list(String workspaceId);

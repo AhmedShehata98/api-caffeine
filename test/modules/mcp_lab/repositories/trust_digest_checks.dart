@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:test_point/modules/mcp_lab/mcp_lab_protocol.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_trust_digest.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab_protocol.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_trust_digest.dart';
 
 void main() {
   void check(bool value, String message) {

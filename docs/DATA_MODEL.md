@@ -129,6 +129,8 @@ Profile row for every `auth.users` entry, created by the `on_auth_user_created` 
 - `auth`: JSONB, `{ "type": "none" | "bearer" | "basic" | "apiKey", ... }`
 - `body_type`: VARCHAR(30), default `none` (`none`, `json`, `formData`, `urlEncoded`, `raw`)
 - `body`: TEXT. The text for `json` / `raw` bodies; for `form-data` / `urlencoded` a JSON-encoded list `[{ "key", "value", "enabled" }]`; null for no body
+- `response_schema_enabled`: BOOLEAN, defaults to false.
+- `response_schema_source`: TEXT, defaults to empty. Stores the editor source verbatim, including disabled or invalid drafts.
 - `position`: INT, order in the sidebar tree
 
 ## Functions
@@ -155,5 +157,5 @@ Profile row for every `auth.users` entry, created by the `on_auth_user_created` 
 ## Local development
 
 `supabase db reset` re-runs the migrations and `supabase/seed.sql`, which adds a
-dev account (`dev@testpoint.local` / `password123`) with a sample collection and
+dev account (`dev@api-caffeine.local` / `password123`) with a sample collection and
 environment.

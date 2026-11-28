@@ -1,7 +1,7 @@
 -- Dev seed data. Runs after migrations on `supabase db reset`.
 -- Workspaces are created per user by the on_auth_user_created trigger, so this
 -- seeds one email/password dev user whose default workspace gets sample data.
--- Dev login: dev@testpoint.local / password123
+-- Dev login: dev@api-caffeine.local / password123
 
 insert into auth.users (
     instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -10,7 +10,7 @@ insert into auth.users (
 ) values (
     '00000000-0000-0000-0000-000000000000',
     '11111111-1111-1111-1111-111111111111',
-    'authenticated', 'authenticated', 'dev@testpoint.local',
+    'authenticated', 'authenticated', 'dev@api-caffeine.local',
     extensions.crypt('password123', extensions.gen_salt('bf')), now(),
     '{"provider":"email","providers":["email"]}', '{}', now(), now(),
     '', '', '', ''
@@ -22,7 +22,7 @@ insert into auth.identities (
     gen_random_uuid(),
     '11111111-1111-1111-1111-111111111111',
     '11111111-1111-1111-1111-111111111111',
-    '{"sub":"11111111-1111-1111-1111-111111111111","email":"dev@testpoint.local"}',
+    '{"sub":"11111111-1111-1111-1111-111111111111","email":"dev@api-caffeine.local"}',
     'email', now(), now(), now()
 );
 

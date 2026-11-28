@@ -22,7 +22,7 @@ Current implementation status: [full phase progress](implementation-progress.md)
 | **S1: Core lab** | stdio + Streamable HTTP, protocol eras (`legacy` default, `auto`, `modern`), tools / resources / prompts, raw-JSON args fallback, Protocol / Network / Console monitors, Supabase catalog (migration + RLS), failure model | **In progress.** Step 0 complete; models, catalog/trust repositories and catalog service unit-tested. Database validation and live-session/UI work remain pending; apply spec §6.7 throughout S1. |
 | S2: Remote auth | OAuth (CIMD → pre-registered → DCR), secret store, stored-auth-only harness | **Blocked on Q13** (CIMD hosting domain) |
 | S3: Interactions | Subscriptions, listChanged, progress, elicitation, sampling, roots, MRTR, tasks, logs | After S1 |
-| S4: Test Point integration | `{{variables}}`, tabs / status bar, saved calls, import / export | After S1 (independent of S2/S3) |
+| S4: API Caffeine integration | `{{variables}}`, tabs / status bar, saved calls, import / export | After S1 (independent of S2/S3) |
 
 ### 1.2 What already exists and must be reused
 
@@ -116,7 +116,7 @@ Tests: unit tests with a fake process (`StdioLauncher` takes a `ProcessStarter` 
 | Service | Responsibilities | ACs |
 |---|---|---|
 | `McpCatalogService(McpServerRepository, SecretStore)` | Validate the draft: name, URL scheme `http`/`https` only, and transport inference (url only → http, command only → stdio, both / neither → `ValidationFailure`). Auto-mark credential headers as secret (Q1 rule). Split secret values out (placeholder `''` synced, real values in `SecretStore`) and merge them back on load with `missingOnDevice`. Remove deletes the secrets key. | AC-CON-03.3, AC-CFG-01/03/04 |
-| `McpConnectService(McpConnectionRepository, McpTrustRepository, SecretStore)` | Before connecting: if any secret is missing → `ValidationFailure` naming the key (the placeholder is never sent). For stdio, compare the trust hash → return `NeedsApproval(resolvedCommand, changedFields)`. Era negotiation: `legacy` → `initialize` then `notifications/initialized`; `auto` → `server/discover`, on failure `initialize` (both in the transcript); `modern` → `server/discover` only, failing with `protocol_version_unsupported`. Modern requests carry `_meta` protocolVersion / clientCapabilities / clientInfo (`Test Point` + app version). Default timeout = `networkSettingsProvider.timeout`, unless the server overrides it (Q6). | AC-CON-01/02/07, AC-SEC-01/04, AC-ERA-01…05, AC-PRO-02, AC-CFG-01.4 |
+| `McpConnectService(McpConnectionRepository, McpTrustRepository, SecretStore)` | Before connecting: if any secret is missing → `ValidationFailure` naming the key (the placeholder is never sent). For stdio, compare the trust hash → return `NeedsApproval(resolvedCommand, changedFields)`. Era negotiation: `legacy` → `initialize` then `notifications/initialized`; `auto` → `server/discover`, on failure `initialize` (both in the transcript); `modern` → `server/discover` only, failing with `protocol_version_unsupported`. Modern requests carry `_meta` protocolVersion / clientCapabilities / clientInfo (`API Caffeine` + app version). Default timeout = `networkSettingsProvider.timeout`, unless the server overrides it (Q6). | AC-CON-01/02/07, AC-SEC-01/04, AC-ERA-01…05, AC-PRO-02, AC-CFG-01.4 |
 | `McpToolService` | `list` (paging aggregated in S1), `call(name, args)` → `ToolCallResult`; `isError` is a **successful** result with outcome code `tool_error`, identical in UI and harness, flagged as a tool error, distinct from `Err` (FR-TOL-04); `input_required` / `task` → notice only (S3) | AC-TOL-01/03/04, AC-PRO-01 |
 | `McpResourceService`, `McpPromptService` | List resources + templates, read; list prompts, get with arguments; `-32602`/`-32002` → "Resource not found" | AC-RES-01/02, AC-PRM-01/02, AC-PRO-05 |
 | `SchemaFormBuilder` (pure) | JSON Schema → `FormSpec` tree: `type`, `properties`, `required`, `enum`, `default`, arrays, nested objects, local `$ref`/`$defs`, `oneOf`/`anyOf` as a variant picker. Returns `RawJsonOnly(reason)` for an external `$ref` (never fetched), depth > 32, a build over 100 ms (`Stopwatch`), or unsupported keywords. Also coerces form values to arguments (JSON-then-schema, FR-TST-04). | AC-TOL-02, AC-TOL-08 (A1) |
@@ -210,7 +210,7 @@ Each later slice gets its own acceptance criteria document before it starts, in 
 - Server-initiated requests as pending-request dialogs only (Q9): elicitation (form and URL mode, "Open in browser?"), sampling, roots (#18). MRTR rounds driven by the Step 0 wrapper.
 - Tasks tab and detail drawer (#20); Logs panel (deprecated, both eras' level control).
 
-### S4: Test Point integration
+### S4: API Caffeine integration
 - `{{variables}}` in URL, headers, args, env and arguments via `variableResolverProvider` from `modules/environments/environments.dart`; amber chips for unresolved ones; masked secrets in the transcript.
 - Top-bar tabs and status bar for MCP sessions and saved calls (`TOOL` / `RES` / `PROMPT` pills).
 - Saved MCP calls in collections. Decide between a `mcp_saved_calls` table and a `kind` column on `requests` at the start of S4.

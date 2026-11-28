@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/utils/names.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/utils/names.dart';
 
 void main() {
   group('validateName', () {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/modules/auth/providers/auth_providers.dart';
-import 'package:test_point/modules/auth/widgets/account_dialog.dart';
+import 'package:api_caffeine/modules/auth/providers/auth_providers.dart';
+import 'package:api_caffeine/modules/auth/widgets/account_dialog.dart';
 
 /// Avatar for the nav rail: a person icon for guests, the initial once signed
 /// in. Clicking it opens the Account dialog.

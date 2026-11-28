@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/secrets/secure_secret_store.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/secrets/secure_secret_store.dart';
 
 /// Device-only storage for secret values (OS keychain / credential store).
 ///

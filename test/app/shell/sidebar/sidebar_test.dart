@@ -2,11 +2,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/app/shell/sidebar/sidebar.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/widgets/method_pill.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/app/shell/sidebar/sidebar.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/widgets/method_pill.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 import '../../../support/fake_backend.dart';
 import '../../../support/pump_app.dart';

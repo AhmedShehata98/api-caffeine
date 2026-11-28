@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/collections/models/collection.dart';
-import 'package:test_point/modules/collections/repositories/collection_repository.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/collections/models/collection.dart';
+import 'package:api_caffeine/modules/collections/repositories/collection_repository.dart';
 
 class CollectionRepositoryImpl implements CollectionRepository {
   CollectionRepositoryImpl(this._client);

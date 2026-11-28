@@ -3,15 +3,32 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/models/send_state.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/models/send_state.dart';
+import 'package:api_caffeine/modules/requests/models/schema_test_result.dart';
+import 'package:api_caffeine/modules/requests/services/response_schema_worker.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 import '../../../support/fake_backend.dart';
 
 class MockHttpRequestRepository extends Mock implements HttpRequestRepository {}
+
+class PendingSchemaWorker extends ResponseSchemaWorker {
+  final pending = <Completer<SchemaTestResult?>>[];
+
+  @override
+  Future<SchemaTestResult?> validate(
+    HttpRequestDraft draft,
+    HttpResponseResult response,
+    CancelSignal signal,
+  ) {
+    final completer = Completer<SchemaTestResult?>();
+    pending.add(completer);
+    return completer.future;
+  }
+}
 
 const _ok = HttpResponseResult(
   statusCode: 200,
@@ -73,6 +90,56 @@ void main() {
   });
 
   group('send', () {
+    test('publishes the response before validation and ignores a superseded verdict', () async {
+      when(() => repository.send(any(), any()))
+          .thenAnswer((_) async => const Result.success(_ok));
+      final worker = PendingSchemaWorker();
+      final container = ProviderContainer.test(
+        overrides: [
+          httpRequestRepositoryProvider.overrideWithValue(repository),
+          responseSchemaWorkerProvider.overrideWithValue(worker),
+          ...fakeBackend(),
+        ],
+      );
+      final tabs = container.read(requestTabsProvider.notifier);
+      tabs.openDraft(
+        const HttpRequestDraft(
+          url: 'http://a.test',
+          responseSchemaEnabled: true,
+          responseSchemaSource: 'true',
+        ),
+      );
+      final notifier = container.read(sendStateProvider.notifier);
+      final first = notifier.send();
+      await Future<void>.delayed(Duration.zero);
+      final checking = container.read(sendStateProvider) as SendSuccess;
+      expect(checking.response, same(_ok));
+      expect(checking.schemaTest!.status, SchemaTestStatus.checking);
+      final second = notifier.send();
+      await Future<void>.delayed(Duration.zero);
+      worker.pending.first.complete(
+        const SchemaTestResult(
+          status: SchemaTestStatus.failed,
+          schemaSource: 'true',
+        ),
+      );
+      await first;
+      expect(
+        (container.read(sendStateProvider) as SendSuccess).schemaTest!.status,
+        SchemaTestStatus.checking,
+      );
+      worker.pending.last.complete(
+        const SchemaTestResult(
+          status: SchemaTestStatus.passed,
+          schemaSource: 'true',
+        ),
+      );
+      await second;
+      expect(
+        (container.read(sendStateProvider) as SendSuccess).schemaTest!.status,
+        SchemaTestStatus.passed,
+      );
+    });
     test('success stores the response', () async {
       when(() => repository.send(any(), any()))
           .thenAnswer((_) async => const Result.success(_ok));

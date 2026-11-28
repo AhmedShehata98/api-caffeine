@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:re_editor/re_editor.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
 
 /// A pretty-printed JSON array of roughly [megabytes] MB.
 String _bigJson(int megabytes) {

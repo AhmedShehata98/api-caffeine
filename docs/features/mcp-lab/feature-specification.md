@@ -1,18 +1,18 @@
-# MCP Lab — Feature Specification (Flutter / Test Point)
+# MCP Lab — Feature Specification (Flutter / API Caffeine)
 
 | | |
 |---|---|
-| **Product** | Test Point — **MCP Lab** |
+| **Product** | API Caffeine — **MCP Lab** |
 | **Document type** | Feature requirements adapted for Flutter desktop |
 | **Source** | Product-owner analysis of MCP Inspector (`@modelcontextprotocol/inspector`), 2026-11-15 |
-| **Adapted for** | Test Point stack: Flutter (desktop-first), Riverpod, go_router, Dio, Supabase, modular monolith |
+| **Adapted for** | API Caffeine stack: Flutter (desktop-first), Riverpod, go_router, Dio, Supabase, modular monolith |
 | **Date** | 2026-11-15 |
 | **Status** | Draft v1.4: high-priority review corrections applied; S1 transport spike pending; Q13 open for S2 |
 | **Related** | [PRD.md](../../PRD.md) · [ARCHITECTURE.md](../../ARCHITECTURE.md) · [AGENTS.md](../../../AGENTS.md) · [gap-review.md](gap-review.md) · [open-questions-brief.md](open-questions-brief.md) |
 
 > **v1.3 changes:** resolved open questions Q1–Q3, Q5–Q10, Q12, Q14–Q16 and confirmed S1 assumptions A1–A5 (see §12). Q13 remains waiting on owner domain/hosting. Requirement text updated for NFR-SEC-05/10, NFR-PRF-01…03, NFR-CMP-06, FR-CON-09, FR-SEC-03, FR-AUT-01.
 
-> **v1.2 changes:** corrections for the deprecations, tasks, subscriptions and OAuth changes in 2026-07-28; new protocol fundamentals (§7.15 FR-PRO); Test Point integration (§6.5, §7.16 FR-TPI); failure model (§6.6); platform, process and secret-store NFRs; proposed release slices (§4.1). The reasoning for each change is in [gap-review.md](gap-review.md).
+> **v1.2 changes:** corrections for the deprecations, tasks, subscriptions and OAuth changes in 2026-07-28; new protocol fundamentals (§7.15 FR-PRO); API Caffeine integration (§6.5, §7.16 FR-TPI); failure model (§6.6); platform, process and secret-store NFRs; proposed release slices (§4.1). The reasoning for each change is in [gap-review.md](gap-review.md).
 
 > **Decisions (2026-11-15):**
 > 1. **Library:** use [`mcp_dart`](https://pub.dev/packages/mcp_dart) (resolves Q4).
@@ -23,7 +23,7 @@
 > 6. **Failures:** module-local `McpFailure` codes; do not extend core `Failure` yet (resolves Q15).
 > 7. **CI fixtures:** Dart fixtures on the `mcp_dart` server side (resolves Q14).
 
-> **How to read this document.** Capabilities are *derived* from the official MCP Inspector (Basis `Documented` / `Proposed` from the PO analysis), then **rewritten as requirements for building MCP Lab inside Test Point**. Technology that is Node/web/CLI-specific in the source is mapped to Flutter desktop equivalents. Priorities use **MoSCoW** (Must / Should / Could / Won't).
+> **How to read this document.** Capabilities are *derived* from the official MCP Inspector (Basis `Documented` / `Proposed` from the PO analysis), then **rewritten as requirements for building MCP Lab inside API Caffeine**. Technology that is Node/web/CLI-specific in the source is mapped to Flutter desktop equivalents. Priorities use **MoSCoW** (Must / Should / Could / Won't).
 
 ---
 
@@ -51,11 +51,11 @@
 
 ## 1. Product overview
 
-**MCP Lab** is a Test Point workspace feature for testing and debugging **Model Context Protocol (MCP) servers**. It acts as an MCP *client* so a server author can exercise a server without wiring it into an LLM host (Claude Desktop, Cursor, etc.).
+**MCP Lab** is a API Caffeine workspace feature for testing and debugging **Model Context Protocol (MCP) servers**. It acts as an MCP *client* so a server author can exercise a server without wiring it into an LLM host (Claude Desktop, Cursor, etc.).
 
 Unlike the reference Inspector (npm package with Web / CLI / TUI clients + Node backend), MCP Lab is a **native desktop UI** inside the Flutter app. The app process *is* the MCP client: no separate Node proxy, no browser UI, no `npx` launcher.
 
-| Surface | Role in Test Point |
+| Surface | Role in API Caffeine |
 |---|---|
 | **Desktop UI** (primary) | Full graphical lab in the app shell (nav rail section **MCP Lab**) |
 | **Headless Dart harness** (secondary) | Integration / CI smoke tests against the same protocol services (not a user-facing CLI product) |
@@ -65,7 +65,7 @@ Unlike the reference Inspector (npm package with Web / CLI / TUI clients + Node 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Test Point (Flutter desktop)                               │
+│  API Caffeine (Flutter desktop)                               │
 │  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐  │
 │  │ App shell   │  │ MCP Lab UI   │  │ Other modules      │  │
 │  │ nav · theme │──│ screens /    │  │ collections · HTTP │  │
@@ -86,7 +86,7 @@ Unlike the reference Inspector (npm package with Web / CLI / TUI clients + Node 
                     └──────────────┘
 ```
 
-> **Adaptation note.** The Inspector’s *client (6274) + proxy (6277)* and later *backend + API token* model do **not** apply. Test Point connects from the Dart isolate(s) directly. Security focus shifts from “unauthenticated web proxy RCE” to **local process spawn**, **secret storage**, and **OAuth loopback**.
+> **Adaptation note.** The Inspector’s *client (6274) + proxy (6277)* and later *backend + API token* model do **not** apply. API Caffeine connects from the Dart isolate(s) directly. Security focus shifts from “unauthenticated web proxy RCE” to **local process spawn**, **secret storage**, and **OAuth loopback**.
 
 ---
 
@@ -95,7 +95,7 @@ Unlike the reference Inspector (npm package with Web / CLI / TUI clients + Node 
 ### Problem statement
 Building an MCP server means implementing a JSON-RPC protocol with several primitives (tools, resources, prompts, tasks, logging, …), multiple transports, and an evolving spec. Without a purpose-built client, developers must wire the server into a full LLM host to test it — slow, non-deterministic, and opaque.
 
-Test Point already shortens the HTTP *edit → run → observe* loop. **MCP Lab** extends that value to MCP servers in the same desktop product.
+API Caffeine already shortens the HTTP *edit → run → observe* loop. **MCP Lab** extends that value to MCP servers in the same desktop product.
 
 ### Goals
 
@@ -108,7 +108,7 @@ Test Point already shortens the HTTP *edit → run → observe* loop. **MCP Lab*
 | G-5 | Be **safe by default** despite spawning processes and holding credentials | No silent credential leakage; clear warnings for process spawn and secret-store fallback |
 
 ### Out of scope as a business goal
-MCP Lab is a *developer tool surface* inside Test Point — not a production gateway, load tester, LLM agent host, or standalone npm/Docker product.
+MCP Lab is a *developer tool surface* inside API Caffeine — not a production gateway, load tester, LLM agent host, or standalone npm/Docker product.
 
 ---
 
@@ -116,13 +116,13 @@ MCP Lab is a *developer tool surface* inside Test Point — not a production gat
 
 | Stakeholder | Role | Primary interest |
 |---|---|---|
-| **MCP server developer** (primary) | Builds servers in TS/Python/other SDKs | Fast, visual testing and debugging in Test Point |
+| **MCP server developer** (primary) | Builds servers in TS/Python/other SDKs | Fast, visual testing and debugging in API Caffeine |
 | **QA / test automation engineer** | Verifies servers in pipelines | Deterministic Dart/Flutter tests, stable failures |
 | **AI-agent / coding-assistant user** | Agents verifying server changes | Machine-readable test output (headless harness) |
 | **MCP Apps author** | Builds tools that ship UI | Sandboxed preview (post-MVP / Could) |
 | **Security / platform engineer** | Approves tool use in the org | Threat model, secret handling, process spawn |
 | **Server integrator / evaluator** | Assesses a third-party server before adoption | Quick capability survey, config import/export |
-| **Test Point product / eng** | Ships MCP Lab as a module | Fits modular monolith, KISS, desktop UX |
+| **API Caffeine product / eng** | Ships MCP Lab as a module | Fits modular monolith, KISS, desktop UX |
 
 ### Personas (condensed)
 
@@ -142,7 +142,7 @@ MCP Lab is a *developer tool surface* inside Test Point — not a production gat
 - Handling server-initiated interactions (elicitation, sampling, roots) so servers that need them can be tested.
 - Protocol observability (JSON-RPC transcript, HTTP network view, stdio stderr console).
 - Multi-server catalog, import/export of `mcpServers` configs, OAuth for remote servers, secret storage.
-- Desktop UI integrated with the Test Point shell (nav rail, theme, keyboard hints with `Ctrl`).
+- Desktop UI integrated with the API Caffeine shell (nav rail, theme, keyboard hints with `Ctrl`).
 - Shared protocol services usable from unit/integration tests.
 
 ### Out of scope (v1)
@@ -151,7 +151,7 @@ MCP Lab is a *developer tool surface* inside Test Point — not a production gat
 - Acting as an LLM host or running a model.
 - Modifying the server under test.
 - Shipping a separate Web UI, Node backend, npm CLI, TUI, or `mcpdo` daemon.
-- Docker image for MCP Lab itself (Test Point remains a desktop app).
+- Docker image for MCP Lab itself (API Caffeine remains a desktop app).
 - MCP Apps sandboxed iframe/port model (Could / later — see FR-APP).
 
 ### 4.1 Release slices
@@ -163,7 +163,7 @@ MCP Lab is a *developer tool surface* inside Test Point — not a production gat
 | **S1: Core lab** | stdio + Streamable HTTP, both eras (`legacy` default), tools / resources / prompts, raw-JSON args fallback, Protocol + Network + Console, catalog in Supabase (with migrations and RLS), failure model | FR-CON-01…07, FR-TOL-01…04/08, FR-RES-01/02, FR-PRM-01/02, FR-PRO-01…03/05/06/07 (required lifecycle), FR-MON-01…03/10, FR-ERA-01…05, FR-SEC-01/04, FR-TST-01/02/05/06 |
 | **S2: Remote auth** | OAuth (CIMD / pre-registered / DCR fallback), secret store, stored-auth-only harness | FR-AUT-*, NFR-SEC-03…06/12, FR-TST-08 |
 | **S3: Interactions** | Subscriptions, listChanged, progress, elicitation, sampling, roots, MRTR, tasks, logs | FR-RES-03/05, FR-PRO-07 (optional notification-stream controls)/08/09, FR-INT-*, FR-TSK-*, FR-MON-04 |
-| **S4: Test Point integration** | Environment variables, saved MCP calls, history, import/export, synced catalog | FR-TPI-*, FR-CFG-05…10 |
+| **S4: API Caffeine integration** | Environment variables, saved MCP calls, history, import/export, synced catalog | FR-TPI-*, FR-CFG-05…10 |
 | **Later** | MCP Apps, Skills, extension toggles, OpenTelemetry | FR-APP-*, FR-SKL-01, FR-ERA-06/07, FR-MON-09 |
 
 S1 acceptance criteria (Given/When/Then, with test level and fixtures): [s1-acceptance-criteria.md](s1-acceptance-criteria.md). S1 also covers the core of FR-CFG-01/03/04, because it ships the Supabase catalog.
@@ -177,7 +177,7 @@ S1 acceptance criteria (Given/When/Then, with test level and fixtures): [s1-acce
 | Technique | How applied here |
 |---|---|
 | **Document analysis** | PO spec reverse-engineered from MCP Inspector docs/repo |
-| **Stack adaptation** | Mapped Node/web/CLI surfaces onto Test Point Flutter architecture |
+| **Stack adaptation** | Mapped Node/web/CLI surfaces onto API Caffeine Flutter architecture |
 | **Persona & scenario modelling** | Section 3 personas → user stories below |
 | **Threat modelling** | Inspector security lessons (e.g. CVE-2025-49596 class) reinterpreted for desktop spawn + secrets |
 | **Gap analysis** | Documented Inspector behaviour vs Flutter-feasible delivery (Section 12) |
@@ -199,14 +199,14 @@ S1 acceptance criteria (Given/When/Then, with test level and fixtures): [s1-acce
 | N11 | *…reuse my existing client configs and export mine.* | Configuration | FR-CFG-01…10 |
 | N12 | *As an MCP App author, I want to render and review my tool's UI.* | MCP Apps | FR-APP-01…03 (Could / later) |
 | N13 | *As security, I want safe defaults and clear secret handling.* | Security | FR-SEC-01…05 + NFR-SEC |
-| N14 | *As a Test Point user, I want to reuse my environments, save calls and replay them like HTTP requests.* | Test Point integration | FR-TPI-01…06 |
+| N14 | *As a API Caffeine user, I want to reuse my environments, save calls and replay them like HTTP requests.* | API Caffeine integration | FR-TPI-01…06 |
 
 ### 5.3 Key insights from analysis
 1. **MCP Lab is a protocol microscope, not an LLM client.** Requirements prioritise *fidelity and visibility* over convenience.
 2. **Defaults are deliberate.** `legacy` remains the default protocol era (auto-probing can stall silent stdio servers and pollute the transcript).
 3. **One client core, many UIs later.** Behaviour lives in Dart services/repositories so UI and tests cannot drift (replaces Inspector’s “three clients, one core”).
 4. **Process spawn + secrets are the highest-risk areas** on desktop (not a public HTTP API token surface).
-5. **Fit the existing product.** Catalog, theme, split panes, code editor, Failure mapping, and module boundaries follow Test Point conventions — do not invent a parallel app-inside-the-app.
+5. **Fit the existing product.** Catalog, theme, split panes, code editor, Failure mapping, and module boundaries follow API Caffeine conventions — do not invent a parallel app-inside-the-app.
 
 ---
 
@@ -274,11 +274,11 @@ Shared HTTP proxy settings from `modules/settings` should be reused for remote t
 - Turning on the flag for a value that is already synced uploads the placeholder over it. The previous plaintext may still exist in Supabase backups, so the UI warns about it.
 | UI prefs (sidebar width, pinned monitor) | `shared_preferences` | Same pattern as theme/layout |
 
-### 6.5 Test Point integration
+### 6.5 API Caffeine integration
 
-MCP Lab is part of Test Point, not a separate app inside it. It reuses the product's existing parts through their public API files only:
+MCP Lab is part of API Caffeine, not a separate app inside it. It reuses the product's existing parts through their public API files only:
 
-| Test Point concept | MCP Lab behaviour | Via |
+| API Caffeine concept | MCP Lab behaviour | Via |
 |---|---|---|
 | **Environments / `{{variables}}`** | Resolve in server URL, headers, stdio args, env values and tool / prompt arguments. Unresolved variables show as amber chips. Secret variables stay masked in the transcript. | `modules/environments/environments.dart` |
 | **Request tabs** | Each open server, or each saved MCP call, is a top-bar tab with the unsaved dot. The method pill shows the MCP method family (`TOOL`, `RES`, `PROMPT`). | shell / `core/ui/widgets` |
@@ -329,13 +329,13 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 ## 7. Functional requirements
 
 **Priority:** M = Must · S = Should · C = Could · W = Won't (this release)
-**Basis:** D = Documented in Inspector source · P = Proposed · **A** = Adapted for Flutter/Test Point
+**Basis:** D = Documented in Inspector source · P = Proposed · **A** = Adapted for Flutter/API Caffeine
 
 ### 7.1 Launch & connection management (FR-CON)
 
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
-| FR-CON-01 | The user shall open MCP Lab from the Test Point nav rail with no separate installer or `npx` step. | M | A |
+| FR-CON-01 | The user shall open MCP Lab from the API Caffeine nav rail with no separate installer or `npx` step. | M | A |
 | FR-CON-02 | The system shall accept an ad-hoc **stdio** target as a command + arguments (e.g. `node build/index.js arg1`) spawned via Dart `Process`. | M | D/A |
 | FR-CON-03 | The system shall accept an ad-hoc **remote** target via server URL with transport `http` (Streamable HTTP, default) \| `sse`. The legacy HTTP+SSE transport is **Deprecated** (SEP-2596) and shall be labelled as such in the UI. | M | D/A |
 | FR-CON-04 | The system shall pass environment variables and a working directory to stdio servers. | M | D |
@@ -451,7 +451,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
 | FR-AUT-01 | The system shall support OAuth for remote servers. Registration is tried in this order: **Client ID Metadata Document (CIMD)** → pre-registered (static) client → **Dynamic Client Registration** as a fallback. DCR is Deprecated (PR #2858) and kept only for authorization servers without CIMD. CIMD needs a hosted https metadata document; draft JSON is in Appendix D. **Waiting for owner (Q13):** a stable domain or GitHub Pages URL they control. | M | D |
-| FR-AUT-02 | The system shall use a **loopback-only** OAuth callback (default `http://127.0.0.1:<port>/oauth/callback`) and reject non-loopback hosts. This flow is separate from Test Point's Supabase GitHub sign-in deep link. | M | D/A |
+| FR-AUT-02 | The system shall use a **loopback-only** OAuth callback (default `http://127.0.0.1:<port>/oauth/callback`) and reject non-loopback hosts. This flow is separate from API Caffeine's Supabase GitHub sign-in deep link. | M | D/A |
 | FR-AUT-03 | The system shall support scopes, refresh-token requests, token revocation on clear, and authorization/token URL overrides. | S | D |
 | FR-AUT-04 | The system shall handle `403 insufficient_scope` by step-up re-authorization or surfacing the error (configurable). | S | D |
 | FR-AUT-05 | Automated tests shall offer **stored-auth-only** (never interactive) reuse of tokens obtained in the UI. | M | D/A |
@@ -471,7 +471,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 | FR-CFG-03 | The catalog shall use the standard `mcpServers` shape with per-server Lab settings (`protocolEra`, log level, headers, roots, timeouts, OAuth). | M | D |
 | FR-CFG-04 | The system shall auto-detect or declare the transport type (`stdio`, `streamable-http`/`http`, and the deprecated `sse`). | M | D |
 | FR-CFG-05 | The system shall **export** server config as *Server Entry* and *Servers File* for use in Cursor, Claude Code, or other clients. | S | D |
-| FR-CFG-06 | The system shall **import** existing client configs (Claude Desktop, Cursor, Cline: `mcpServers`; VS Code `.vscode/mcp.json`: `servers` + `inputs`) and registry `server.json` via `file_picker`, using a per-source adapter. `${env:…}` / `${input:…}` placeholders shall become Test Point variables or prompts. They are never left as literal strings. | S | D/A |
+| FR-CFG-06 | The system shall **import** existing client configs (Claude Desktop, Cursor, Cline: `mcpServers`; VS Code `.vscode/mcp.json`: `servers` + `inputs`) and registry `server.json` via `file_picker`, using a per-source adapter. `${env:…}` / `${input:…}` placeholders shall become API Caffeine variables or prompts. They are never left as literal strings. | S | D/A |
 | FR-CFG-07 | First-run Lab may seed sample servers that work on every OS (no `/tmp`-only paths). If the required runtime (`node`, `uvx`, …) is missing, the sample shows "runtime not found". An empty catalog is acceptable for guests with no imports. | C | D/A |
 | FR-CFG-08 | Exports shall omit default-valued fields to keep diffs minimal. | C | D |
 | FR-CFG-09 | Import shall **never connect automatically**. Before confirming, it shows a summary listing every stdio command + args that would be spawned and every remote URL, plus what was skipped (same pattern as Postman import). | M | P/A |
@@ -490,7 +490,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
-| FR-DST-01 | MCP Lab ships as part of the Test Point desktop binaries (Windows, macOS, Linux) — not as an npm package. | M | A |
+| FR-DST-01 | MCP Lab ships as part of the API Caffeine desktop binaries (Windows, macOS, Linux) — not as an npm package. | M | A |
 | FR-DST-02 | Development runs via `flutter run -d windows\|macos\|linux` with existing `--dart-define` for Supabase. | M | A |
 
 ### 7.14 Security-facing product behaviours (FR-SEC)
@@ -520,7 +520,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 | FR-PRO-11 | Lists and details shall show `title` (falling back to `name`) and icons. `data:` icons are rendered inline. Remote icon URLs are fetched only after the user allows it per server (privacy), with a size limit. | C | D/P |
 | FR-PRO-12 | HTTP 429 shall map to `rate_limited`, showing `Retry-After` when present. The system does not retry automatically. | S | D |
 
-### 7.16 Test Point integration (FR-TPI)
+### 7.16 API Caffeine integration (FR-TPI)
 
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
@@ -550,7 +550,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 
 | ID | Requirement | Pri | Basis |
 |---|---|---|---|
-| NFR-SEC-01 | stdio servers run as **child processes of the Test Point app** (same user). Document that users must only launch trusted commands. | M | A |
+| NFR-SEC-01 | stdio servers run as **child processes of the API Caffeine app** (same user). Document that users must only launch trusted commands. | M | A |
 | NFR-SEC-02 | There is **no** network-exposed process-spawning HTTP API in MCP Lab v1 (eliminates the Inspector web-proxy RCE class by architecture). | M | A |
 | NFR-SEC-03 | OAuth callback listeners bind **loopback only**; non-loopback hosts are rejected with no override. | M | D/A |
 | NFR-SEC-04 | Secrets shall be stored in the **OS secure store** on the device only. Supabase rows and catalog exports hold a placeholder in place of each secret value (§6.4). | M | D/A |
@@ -595,7 +595,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 | NFR-USE-03 | Monitoring layout and sidebar width shall persist across sessions. | C | D/A |
 | NFR-USE-04 | Error UI shall be actionable (stable error code, cause, status, URL) via `Failure` mapping. | M | D/A |
 | NFR-USE-05 | Secret-store state shall be visible where secrets are entered (warning footer). | S | D |
-| NFR-USE-06 | Meet **WCAG 2.2 AA** contrast and keyboard navigation within MCP Lab screens (aligned with Test Point NFR). | S | P |
+| NFR-USE-06 | Meet **WCAG 2.2 AA** contrast and keyboard navigation within MCP Lab screens (aligned with API Caffeine NFR). | S | P |
 | NFR-USE-07 | Keyboard shortcuts for connect, call tool, focus filter (`Ctrl+K`), search transcript (`Ctrl+F`), consistent with the rest of the app. | S | P/A |
 
 ### 8.5 Compatibility & portability (NFR-CMP)
@@ -629,7 +629,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 | NFR-MNT-03 | Follow modular monolith rules: public API file only; no circular module deps. | M | A |
 | NFR-MNT-04 | Prefer freezed models + `json_serializable`; no new packages without justification. | S | A |
 | NFR-MNT-05 | Core services/repositories aim for strong automated coverage; widget tests for key Lab screens. | S | P/A |
-| NFR-MNT-06 | License / product: part of Test Point (project license). | M | A |
+| NFR-MNT-06 | License / product: part of API Caffeine (project license). | M | A |
 
 ### 8.8 Observability of the tool itself (NFR-OBS)
 
@@ -660,7 +660,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 
 ### Assumptions
 - Users trust the stdio servers they launch (they run as the user).
-- Users run Test Point on a single-user, trusted machine.
+- Users run API Caffeine on a single-user, trusted machine.
 - MCP spec revisions continue to land; Lab must carry two eras for some time.
 - Existing Settings proxy / timeout preferences are the default knobs unless overridden per server.
 
@@ -724,7 +724,7 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 | Q10 | ~~Nav rail IA: top-level **MCP Lab** vs nested under a future Protocols section?~~ **Resolved:** top-level, as in Stitch #14–#22. | Design | Shell |
 | Q11 | ~~One secrets rule for the whole app?~~ **Resolved:** secret values stay on the device; Supabase stores a placeholder (§6.4). Implemented in the environments module. | Product / Security | NFR-SEC-04, environments |
 | Q12 | ~~Proxy precedence: does the Settings proxy override `HTTPS_PROXY`/`NO_PROXY`, or the other way round?~~ **Resolved:** Settings proxy on → it wins and `NO_PROXY` is honoured; Settings proxy off → use env vars. `127.0.0.1` / `localhost` always bypass (FR-CON-09). | Eng | FR-CON-09 |
-| Q13 | Who hosts Test Point's public **CIMD** client metadata document (https URL), and what redirect URIs does it list? **Recommendation:** host static JSON on the project site or GitHub Pages (e.g. `https://<domain>/oauth/client.json`); draft in Appendix D. **Waiting for owner:** a domain or GitHub Pages site they control. | Eng / Ops | FR-AUT-01 |
+| Q13 | Who hosts API Caffeine's public **CIMD** client metadata document (https URL), and what redirect URIs does it list? **Recommendation:** host static JSON on the project site or GitHub Pages (e.g. `https://<domain>/oauth/client.json`); draft in Appendix D. **Waiting for owner:** a domain or GitHub Pages site they control. | Eng / Ops | FR-AUT-01 |
 | Q14 | ~~CI fixture runtime: Node Inspector servers or Dart fixtures?~~ **Resolved:** Dart fixtures on the `mcp_dart` server side — no Node in CI, same library as the app, both eras (NFR-MNT-02, NFR-DOC-02). | Eng | NFR-MNT-02, NFR-DOC-02 |
 | Q15 | ~~Should `code` move up into core `Failure`, or stay module-local?~~ **Resolved:** module-local `McpFailure` with `code`; promote to core only when a second module needs codes (§6.6). | Eng | Failure model |
 | Q16 | ~~macOS distribution: sandboxed App Store or unsandboxed notarized?~~ **Resolved:** notarized build outside the App Store, without the App Sandbox, so stdio works. App Store / sandboxed variant out of scope for v1 (NFR-CMP-06). | Product / Eng | NFR-CMP-06 |
@@ -744,9 +744,9 @@ These decisions supersede earlier assumptions A4/A5 and apply to the specificati
 - MCP spec — [2026-07-28 changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog) · [Release-candidate post](https://blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate/)
 - Dart — [`mcp_dart`](https://pub.dev/packages/mcp_dart) · [`dart_mcp`](https://pub.dev/documentation/dart_mcp/latest/)
 - Review — [gap-review.md](gap-review.md)
-- Test Point — [ARCHITECTURE.md](../../ARCHITECTURE.md), [PRD.md](../../PRD.md), [AGENTS.md](../../../AGENTS.md)
+- API Caffeine — [ARCHITECTURE.md](../../ARCHITECTURE.md), [PRD.md](../../PRD.md), [AGENTS.md](../../../AGENTS.md)
 
-> Items marked **Proposed** / **Adapted** are recommendations for Test Point, not guarantees of the upstream Inspector. Section 12 is resolved except Q13 (owner domain for CIMD).
+> Items marked **Proposed** / **Adapted** are recommendations for API Caffeine, not guarantees of the upstream Inspector. Section 12 is resolved except Q13 (owner domain for CIMD).
 
 ---
 
@@ -757,7 +757,7 @@ Demonstrates FR-TST-05/06/08 and NFR-REL-01 against the shared protocol service 
 ```dart
 // test/modules/mcp_lab/mcp_lab_smoke_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
 
 void main() {
   late McpLabClient lab;
@@ -820,7 +820,7 @@ void main() {
 
 ## Appendix B — Settings, storage & platform notes
 
-| Item | Test Point approach | Notes |
+| Item | API Caffeine approach | Notes |
 |---|---|---|
 | App entry | Flutter desktop binary | No `CLIENT_PORT` / Inspector backend |
 | OAuth callback | Loopback HTTP and/or custom URL scheme | Reject non-loopback; align with existing auth patterns where possible |
@@ -844,7 +844,7 @@ Upstream Inspector ports (`6274`–`6278`) and `MCP_INSPECTOR_API_TOKEN` / `DANG
 
 ## Appendix C — Source → Flutter adaptation map
 
-| Inspector (source) | MCP Lab (Test Point / Flutter) |
+| Inspector (source) | MCP Lab (API Caffeine / Flutter) |
 |---|---|
 | `npx` Web UI + Node backend | In-app desktop screens (`modules/mcp_lab`) |
 | CLI client | Dart protocol services + `flutter test` harness (FR-TST) |
@@ -868,7 +868,7 @@ Redirect is loopback only (FR-AUT-02). The app listens on a free ephemeral port 
 ```json
 {
   "client_id": "https://<domain>/oauth/client.json",
-  "client_name": "Test Point",
+  "client_name": "API Caffeine",
   "client_uri": "https://<domain>/",
   "redirect_uris": ["http://127.0.0.1/oauth/callback"],
   "token_endpoint_auth_method": "none",

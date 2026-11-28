@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_stdio_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_launcher.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_stdio_connection_repository.dart';
 
 class _Process extends Mock implements Process {}
 

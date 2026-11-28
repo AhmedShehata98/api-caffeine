@@ -5,14 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/app/router/app_router.dart';
-import 'package:test_point/app/shell/nav_rail.dart';
-import 'package:test_point/app/shell/sidebar/sidebar.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/modules/auth/auth.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/app/router/app_router.dart';
+import 'package:api_caffeine/app/shell/nav_rail.dart';
+import 'package:api_caffeine/app/shell/sidebar/sidebar.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 import '../../support/fake_backend.dart';
 

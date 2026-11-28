@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_sse_parser.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_sse_parser.dart';
 
 void main() {
   test(

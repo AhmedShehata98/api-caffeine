@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/import/models/import_result.dart';
-import 'package:test_point/modules/import/services/postman_importer.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/import/models/import_result.dart';
+import 'package:api_caffeine/modules/import/services/postman_importer.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 Future<ParsedImport> _sample() async {
   final source = File('test/fixtures/postman_sample_v21.json')

@@ -1,0 +1,7 @@
+name: response_schema_spike
+publish_to: none
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+dependencies:
+  json_schema: 5.2.2
+  json_schema_builder: 0.1.7

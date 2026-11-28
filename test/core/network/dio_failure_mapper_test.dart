@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/network/dio_failure_mapper.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/network/dio_failure_mapper.dart';
 
 final _options = RequestOptions(path: 'http://a.test');
 

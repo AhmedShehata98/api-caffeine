@@ -1,7 +1,7 @@
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
 
 /// A draft with its `{{variables}}` replaced, ready for [RequestBuilder].
 class ResolvedDraft {

@@ -1,5 +1,5 @@
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/settings/models/app_settings.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/settings/models/app_settings.dart';
 
 abstract interface class SettingsRepository {
   /// Stored settings; anything missing or unreadable falls back to defaults.

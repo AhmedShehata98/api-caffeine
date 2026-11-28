@@ -10,7 +10,7 @@
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
   // When the browser returns from GitHub, Windows starts a second process with
-  // the testpoint:// link. Hand the link to the running app and exit.
+  // the api-caffeine:// link. Hand the link to the running app and exit.
   if (SendAppLinkToInstance()) {
     return EXIT_SUCCESS;
   }

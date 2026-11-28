@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/app/router/app_router.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/modules/settings/settings.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/app/router/app_router.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});

@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/database/supabase_client_provider.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/auth/models/auth_user.dart';
-import 'package:test_point/modules/auth/repositories/auth_repository.dart';
-import 'package:test_point/modules/auth/repositories/auth_repository_impl.dart';
+import 'package:api_caffeine/core/database/supabase_client_provider.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/auth/models/auth_user.dart';
+import 'package:api_caffeine/modules/auth/repositories/auth_repository.dart';
+import 'package:api_caffeine/modules/auth/repositories/auth_repository_impl.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepositoryImpl(ref.watch(supabaseClientProvider)),
@@ -31,17 +31,29 @@ final sessionProvider = AsyncNotifierProvider<SessionNotifier, AuthUser?>(
 
 class SessionNotifier extends AsyncNotifier<AuthUser?> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+  bool _signingOut = false;
 
   @override
   Future<AuthUser?> build() async {
     final repository = ref.watch(authRepositoryProvider);
 
     final subscription = repository.userChanges.listen((user) {
-      if (user != null) state = AsyncData(user);
+      if (user != null) {
+        state = AsyncData(user);
+      } else if (!_signingOut &&
+          state.hasValue &&
+          !state.isLoading &&
+          repository.currentUser == null) {
+        ref.invalidateSelf();
+      }
     });
     ref.onDispose(subscription.cancel);
 
-    final existing = repository.currentUser;
+    final restored = await repository.restoreSession();
+    final existing = restored.when(
+      success: (user) => user,
+      failure: (failure) => throw failure,
+    );
     if (existing != null) return existing;
 
     final result = await repository.signInAnonymously();
@@ -67,16 +79,24 @@ class SessionNotifier extends AsyncNotifier<AuthUser?> {
 
   /// Signs out and starts a fresh guest session.
   Future<Result<void>> signOut() async {
-    final result = await _repository.signOut();
-    if (!result.isSuccess) return result;
+    _signingOut = true;
+    try {
+      final result = await _repository.signOut();
+      if (!result.isSuccess) {
+        if (_repository.currentUser == null) ref.invalidateSelf();
+        return result;
+      }
 
-    state = const AsyncLoading();
-    final guest = await _repository.signInAnonymously();
-    state = guest.when(
-      success: AsyncData.new,
-      failure: (failure) => AsyncError(failure, StackTrace.current),
-    );
-    return guest;
+      state = const AsyncLoading();
+      final guest = await _repository.signInAnonymously();
+      state = guest.when(
+        success: (user) => AsyncData(_repository.currentUser ?? user),
+        failure: (failure) => AsyncError(failure, StackTrace.current),
+      );
+      return guest;
+    } finally {
+      _signingOut = false;
+    }
   }
 
   Future<Result<AuthUser>> _adopt(Future<Result<AuthUser>> pending) async {

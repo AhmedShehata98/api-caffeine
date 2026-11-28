@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:re_editor/re_editor.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/code_view.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
-import 'package:test_point/modules/requests/widgets/key_value_table.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/widgets/key_value_table.dart';
 
 /// Body tab: none, JSON, form-data, x-www-form-urlencoded or raw.
 class BodyTab extends StatefulWidget {

@@ -1,10 +1,10 @@
-# Test Point — Stitch MVP Design: Progress Notes
+# API Caffeine — Stitch MVP Design: Progress Notes
 
 _Last updated: 2026-11-10. Resume from "Next steps"._
 
 ## Goal
 
-MVP screens for Test Point, a lightweight Postman/Insomnia-style desktop API client built with Flutter.
+MVP screens for API Caffeine, a lightweight Postman/Insomnia-style desktop API client built with Flutter.
 Style: Material 3 Expressive, orange brand, dark theme first and light theme after. Only the core features are in scope.
 
 **Decisions**

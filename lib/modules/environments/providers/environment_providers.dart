@@ -1,14 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/database/supabase_client_provider.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/secrets/secret_store.dart';
-import 'package:test_point/modules/environments/models/environment.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
-import 'package:test_point/modules/environments/repositories/environment_repository.dart';
-import 'package:test_point/modules/environments/repositories/environment_repository_impl.dart';
-import 'package:test_point/modules/environments/services/environment_service.dart';
-import 'package:test_point/modules/environments/services/variable_resolver.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/core/database/supabase_client_provider.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/secrets/secret_store.dart';
+import 'package:api_caffeine/modules/environments/models/environment.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/modules/environments/repositories/environment_repository.dart';
+import 'package:api_caffeine/modules/environments/repositories/environment_repository_impl.dart';
+import 'package:api_caffeine/modules/environments/services/environment_service.dart';
+import 'package:api_caffeine/modules/environments/services/variable_resolver.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 final environmentRepositoryProvider = Provider<EnvironmentRepository>(
   (ref) => EnvironmentRepositoryImpl(ref.watch(supabaseClientProvider)),

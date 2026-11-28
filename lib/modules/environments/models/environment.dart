@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
 
 part 'environment.freezed.dart';
 part 'environment.g.dart';

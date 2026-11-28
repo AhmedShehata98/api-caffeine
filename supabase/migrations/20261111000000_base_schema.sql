@@ -1,4 +1,4 @@
--- Base schema for Test Point (see docs/data_model.md and docs/IMPLEMENTATION_PLAN.md §4).
+-- Base schema for API Caffeine (see docs/data_model.md and docs/IMPLEMENTATION_PLAN.md §4).
 
 -- ---------------------------------------------------------------------------
 -- Tables

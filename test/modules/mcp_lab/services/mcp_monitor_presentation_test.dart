@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_sanitizer.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_monitor_presentation.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_diagnostic_sanitizer.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_monitor_presentation.dart';
 
 void main() {
   McpMonitorEntry entry(

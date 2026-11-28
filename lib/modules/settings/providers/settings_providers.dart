@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/settings/models/app_settings.dart';
-import 'package:test_point/modules/settings/repositories/settings_repository.dart';
-import 'package:test_point/modules/settings/repositories/settings_repository_impl.dart';
-import 'package:test_point/modules/settings/services/settings_service.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/settings/models/app_settings.dart';
+import 'package:api_caffeine/modules/settings/repositories/settings_repository.dart';
+import 'package:api_caffeine/modules/settings/repositories/settings_repository_impl.dart';
+import 'package:api_caffeine/modules/settings/services/settings_service.dart';
 
 /// Preloaded in `main()` and overridden there; tests override it too.
 final sharedPreferencesProvider = Provider<SharedPreferences>(

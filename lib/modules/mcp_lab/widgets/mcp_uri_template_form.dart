@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
 
 import '../services/mcp_uri_template.dart';
 import '../models/mcp_uri_template_input.dart';

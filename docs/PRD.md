@@ -1,4 +1,4 @@
-# Test Point — Product Requirements Document (MVP)
+# API Caffeine — Product Requirements Document (MVP)
 
 _Status: Draft · Last updated: 2026-11-15_
 
@@ -15,7 +15,7 @@ Related docs:
 
 ## 1. Overview
 
-**Test Point** is a lightweight desktop API client built with Flutter. Developers
+**API Caffeine** is a lightweight desktop API client built with Flutter. Developers
 use it to build, send, organize and inspect HTTP requests, in the style of
 Postman or Insomnia but faster and simpler.
 
@@ -122,7 +122,7 @@ Each feature maps to a module under `lib/modules/`.
   - **Guest:** dialog with one **Continue with GitHub** button (GitHub OAuth is the only sign-in method; no email or password).
     The browser opens GitHub, then returns to the app. While waiting, the dialog shows a "Waiting for GitHub" state with Cancel.
   - **First time with GitHub:** the GitHub identity is linked to the guest user in place, so all guest data is kept.
-  - **GitHub account already used** in Test Point: if the guest has data, a warning says it
+  - **GitHub account already used** in API Caffeine: if the guest has data, a warning says it
     will not be carried over; after confirming, the account's workspace loads.
   - **Signed in:** a smaller dialog shows the GitHub name or email and **Sign out**. Sign out starts a fresh guest session.
 - The avatar shows a guest icon for guests and the user's initial (GitHub name, else email) when signed in.
@@ -216,7 +216,7 @@ Full requirements: [features/mcp-lab/feature-specification.md](features/mcp-lab/
 | M4  | Environments      | Environments manager, variable resolution and autocomplete                                         |
 | M5  | Import & Settings | cURL and Postman import, settings screen                                                           |
 | M6  | Account & Polish  | Continue with GitHub account flow (§5.8), light theme, keyboard shortcuts, performance pass, tests |
-| M7  | MCP Lab           | MCP Lab (§5.9) in four slices: core lab, remote auth, interactions, Test Point integration         |
+| M7  | MCP Lab           | MCP Lab (§5.9) in four slices: core lab, remote auth, interactions, API Caffeine integration         |
 
 ## 12. Success Metrics
 

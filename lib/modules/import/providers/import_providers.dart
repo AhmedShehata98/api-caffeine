@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/import/models/import_result.dart';
-import 'package:test_point/modules/import/services/curl_parser.dart';
-import 'package:test_point/modules/import/services/postman_importer.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/import/models/import_result.dart';
+import 'package:api_caffeine/modules/import/services/curl_parser.dart';
+import 'package:api_caffeine/modules/import/services/postman_importer.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// Lets the user choose a Postman JSON file and returns its text, or null if
 /// they cancel. A provider so tests can replace the native picker.

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
 
 final _variable = RegExp(r'\{\{\s*([^{}]+?)\s*\}\}');
 

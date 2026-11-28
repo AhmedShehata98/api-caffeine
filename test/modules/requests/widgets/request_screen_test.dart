@@ -6,14 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/widgets/status_chip.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/requests/screens/request_screen.dart';
-import 'package:test_point/modules/requests/widgets/response_viewer.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/core/ui/widgets/status_chip.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/requests/screens/request_screen.dart';
+import 'package:api_caffeine/modules/requests/widgets/response_viewer.dart';
 
 import '../../../support/fake_backend.dart';
 
@@ -39,6 +40,7 @@ Future<ProviderContainer> _pump(
   WidgetTester tester,
   MockHttpRequestRepository repository, {
   ThemeData? theme,
+  bool stacked = true,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -46,6 +48,7 @@ Future<ProviderContainer> _pump(
 
   final List<Override> overrides = [
     httpRequestRepositoryProvider.overrideWithValue(repository),
+    requestPanesStackedProvider.overrideWithValue(stacked),
     ...fakeBackend(),
   ];
   await tester.pumpWidget(
@@ -83,6 +86,29 @@ void main() {
   });
 
   setUp(() => repository = MockHttpRequestRepository());
+
+  for (final stacked in [true, false]) {
+    testWidgets(
+      'validates and displays response issues with stacked=$stacked',
+      (tester) async {
+        _stubResponse(repository, const Result.success(_jsonResponse));
+        final container = await _pump(tester, repository, stacked: stacked);
+        final draft = container.read(requestDraftProvider.notifier);
+        draft.setUrl('http://a.test');
+        draft.setResponseSchemaSource('{"required":["name"]}');
+        draft.setResponseSchemaEnabled(true);
+        await tester.pump();
+        await tester.runAsync(
+          () => container.read(sendStateProvider.notifier).send(),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Schema failed'), findsOneWidget);
+        expect(find.text(r'$.name'), findsOneWidget);
+        expect(find.textContaining(r'Linked to $'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('shows an idle response pane first', (tester) async {
     await _pump(tester, repository);
@@ -201,7 +227,9 @@ void main() {
     expect(find.text('The request timed out.'), findsOneWidget);
   });
 
-  testWidgets('toggles Pretty / Raw and copies the shown body', (tester) async {
+  testWidgets('highlights and copies JSON in both Pretty and Raw', (
+    tester,
+  ) async {
     _stubResponse(repository, const Result.success(_jsonResponse));
     String? copied;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -223,6 +251,10 @@ void main() {
     await tester.enterText(_urlField, 'http://a.test');
     await tester.tap(find.text('Send'));
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<CodeView>(find.byType(CodeView)).highlightJson,
+      isTrue,
+    );
 
     await tester.tap(find.byTooltip('Copy body'));
     await tester.pump();
@@ -230,6 +262,10 @@ void main() {
 
     await tester.tap(find.text('Raw'));
     await tester.pump();
+    expect(
+      tester.widget<CodeView>(find.byType(CodeView)).highlightJson,
+      isTrue,
+    );
     await tester.tap(find.byTooltip('Copy body'));
     await tester.pump();
     expect(copied, _jsonResponse.body);

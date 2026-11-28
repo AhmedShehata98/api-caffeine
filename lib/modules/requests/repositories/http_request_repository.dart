@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/requests/models/http_response_result.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/requests/models/http_response_result.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
 
 /// Lets the caller cancel an in-flight request without knowing the HTTP client.
 class CancelSignal {

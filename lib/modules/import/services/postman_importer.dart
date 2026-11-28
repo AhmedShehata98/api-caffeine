@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/import/models/import_result.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/import/models/import_result.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// Files above this size are decoded off the main isolate.
 const _isolateThreshold = 1024 * 1024;

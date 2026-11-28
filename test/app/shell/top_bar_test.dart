@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/requests/requests.dart';
-import 'package:test_point/modules/settings/settings.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
 
 import '../../support/fake_backend.dart';
 import '../../support/pump_app.dart';

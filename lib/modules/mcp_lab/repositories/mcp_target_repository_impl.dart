@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_target_settings.dart';
 

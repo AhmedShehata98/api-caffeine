@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/import/services/curl_parser.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/import/services/curl_parser.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 HttpRequestDraft _parse(String command) {
   final result = const CurlParser().parse(command);

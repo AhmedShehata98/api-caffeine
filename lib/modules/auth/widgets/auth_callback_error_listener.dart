@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/modules/auth/providers/auth_providers.dart';
+import 'package:api_caffeine/modules/auth/providers/auth_providers.dart';
 
 /// Shows a snackbar when a GitHub redirect fails while no dialog is waiting
 /// for it (for example when the browser started the app fresh).

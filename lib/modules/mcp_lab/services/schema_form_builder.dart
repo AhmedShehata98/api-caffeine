@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_failure.dart';
 import '../models/mcp_schema_form.dart';

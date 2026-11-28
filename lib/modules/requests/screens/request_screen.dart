@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/resizable_split_pane.dart';
-import 'package:test_point/modules/requests/providers/request_providers.dart';
-import 'package:test_point/modules/requests/providers/request_tabs_providers.dart';
-import 'package:test_point/modules/requests/widgets/request_editor.dart';
-import 'package:test_point/modules/requests/widgets/response_viewer.dart';
-import 'package:test_point/modules/requests/widgets/save_request_flow.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/resizable_split_pane.dart';
+import 'package:api_caffeine/modules/requests/providers/request_providers.dart';
+import 'package:api_caffeine/modules/requests/providers/request_tabs_providers.dart';
+import 'package:api_caffeine/modules/requests/widgets/request_editor.dart';
+import 'package:api_caffeine/modules/requests/widgets/response_viewer.dart';
+import 'package:api_caffeine/modules/requests/widgets/save_request_flow.dart';
 
 class _SendIntent extends Intent {
   const _SendIntent();

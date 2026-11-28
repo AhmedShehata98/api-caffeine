@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
 
 part 'request_body.freezed.dart';
 

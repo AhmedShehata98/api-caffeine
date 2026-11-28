@@ -1,7 +1,7 @@
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/import/models/import_result.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/import/models/import_result.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// Options that take a value but have no effect on the request we build.
 const _ignoredWithValue = {

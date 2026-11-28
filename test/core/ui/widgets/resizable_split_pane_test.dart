@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/ui/widgets/resizable_split_pane.dart';
+import 'package:api_caffeine/core/ui/widgets/resizable_split_pane.dart';
 
 const _first = Key('first');
 const _second = Key('second');

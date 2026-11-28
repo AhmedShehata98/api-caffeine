@@ -5,11 +5,11 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/network/dio_provider.dart';
-import 'package:test_point/modules/requests/models/prepared_request.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository.dart';
-import 'package:test_point/modules/requests/repositories/http_request_repository_impl.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/network/dio_provider.dart';
+import 'package:api_caffeine/modules/requests/models/prepared_request.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository.dart';
+import 'package:api_caffeine/modules/requests/repositories/http_request_repository_impl.dart';
 
 typedef _Handler = Future<ResponseBody> Function(
   RequestOptions options,
@@ -86,6 +86,17 @@ void main() {
     final result = await _repository(adapter).send(_get, CancelSignal());
 
     expect(result.valueOrNull!.statusCode, 404);
+  });
+
+  test('preserves a readable body and records invalid UTF-8', () async {
+    final adapter = _FakeAdapter(
+      (_, _, _) async => ResponseBody.fromBytes([0x22, 0xff, 0x22], 200),
+    );
+    final response = (await _repository(
+      adapter,
+    ).send(_get, CancelSignal())).valueOrNull!;
+    expect(response.body, '"\uFFFD"');
+    expect(response.validUtf8, isFalse);
   });
 
   test('sends method, headers and string body as given', () async {

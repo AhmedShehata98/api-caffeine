@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
-import 'package:test_point/modules/auth/models/auth_user.dart';
-import 'package:test_point/modules/auth/providers/auth_providers.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/modules/auth/models/auth_user.dart';
+import 'package:api_caffeine/modules/auth/providers/auth_providers.dart';
 
 /// Shown for a signed-in user: their email and a Sign out button.
 class SignedInDialog extends ConsumerStatefulWidget {

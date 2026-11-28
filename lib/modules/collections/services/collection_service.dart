@@ -1,7 +1,7 @@
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/utils/names.dart';
-import 'package:test_point/modules/collections/models/collection.dart';
-import 'package:test_point/modules/collections/repositories/collection_repository.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/utils/names.dart';
+import 'package:api_caffeine/modules/collections/models/collection.dart';
+import 'package:api_caffeine/modules/collections/repositories/collection_repository.dart';
 
 /// Collection rules (names, copy naming) on top of the repository.
 class CollectionService {

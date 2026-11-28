@@ -88,7 +88,7 @@ static void my_application_activate(GApplication* application) {
 
 // Implements GApplication::command_line.
 // The first launch opens the window; later launches (the browser handing back
-// `testpoint://auth-callback?...`) reach this running instance, which forwards
+// `api-caffeine://auth-callback?...`) reach this running instance, which forwards
 // the link to Flutter and brings the window forward.
 static int my_application_command_line(GApplication* application,
                                         GApplicationCommandLine* command_line) {

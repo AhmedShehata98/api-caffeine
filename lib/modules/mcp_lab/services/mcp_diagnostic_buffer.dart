@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_diagnostics.dart';
 import '../models/mcp_failure.dart';

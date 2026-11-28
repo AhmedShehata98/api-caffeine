@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/key_value.dart';
-import 'package:test_point/modules/requests/models/request_auth.dart';
-import 'package:test_point/modules/requests/models/request_body.dart';
-import 'package:test_point/modules/requests/models/saved_request.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/key_value.dart';
+import 'package:api_caffeine/modules/requests/models/request_auth.dart';
+import 'package:api_caffeine/modules/requests/models/request_body.dart';
+import 'package:api_caffeine/modules/requests/models/saved_request.dart';
 
 /// Maps `requests` table rows to [SavedRequest] and back (see docs/data_model.md).
 ///
@@ -39,6 +39,8 @@ abstract final class RequestRowMapper {
           text: isForm ? '' : bodyText,
           fields: isForm ? _keyValuesFromJson(_tryDecode(bodyText)) : const [],
         ),
+        responseSchemaEnabled: row['response_schema_enabled'] as bool? ?? false,
+        responseSchemaSource: row['response_schema_source'] as String? ?? '',
       ),
     );
   }
@@ -55,6 +57,8 @@ abstract final class RequestRowMapper {
       'headers': _keyValuesToJson(draft.headers),
       'auth': _authToJson(draft.auth),
       'body_type': body.type.name,
+      'response_schema_enabled': draft.responseSchemaEnabled,
+      'response_schema_source': draft.responseSchemaSource,
       'body': switch (body.type) {
         BodyType.none => null,
         _ when isForm => jsonEncode(_keyValuesToJson(body.fields)),

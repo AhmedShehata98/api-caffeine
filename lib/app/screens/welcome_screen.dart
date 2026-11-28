@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:test_point/app/shell/sidebar/sidebar_actions.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/import/import.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/app/shell/sidebar/sidebar_actions.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/import/import.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// Shown when the workspace has no collections yet.
 class WelcomeScreen extends ConsumerWidget {

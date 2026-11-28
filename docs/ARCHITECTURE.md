@@ -1,6 +1,6 @@
 # Architecture
 
-Test Point is a **modular monolith**: one Flutter app, split into independent
+API Caffeine is a **modular monolith**: one Flutter app, split into independent
 **modules** (business areas). Each module owns its layers in a flat folder
 structure and exposes a single public API file.
 
@@ -191,12 +191,12 @@ final createProjectServiceProvider = Provider(
 
 ```dart
 // ✅ requests module using projects module
-import 'package:test_point/modules/projects/projects.dart';
+import 'package:api_caffeine/modules/projects/projects.dart';
 
 final project = ref.watch(selectedProjectProvider);
 
 // ❌ reaching into internals
-import 'package:test_point/modules/projects/repositories/project_repository_impl.dart';
+import 'package:api_caffeine/modules/projects/repositories/project_repository_impl.dart';
 ```
 
 ---

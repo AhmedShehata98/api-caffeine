@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/secrets/secret_store.dart';
-import 'package:test_point/core/utils/names.dart';
-import 'package:test_point/modules/environments/models/environment.dart';
-import 'package:test_point/modules/environments/models/environment_variable.dart';
-import 'package:test_point/modules/environments/repositories/environment_repository.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/secrets/secret_store.dart';
+import 'package:api_caffeine/core/utils/names.dart';
+import 'package:api_caffeine/modules/environments/models/environment.dart';
+import 'package:api_caffeine/modules/environments/models/environment_variable.dart';
+import 'package:api_caffeine/modules/environments/repositories/environment_repository.dart';
 
 /// Environment rules (names, variable keys) on top of the repository.
 ///

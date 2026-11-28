@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/workspaces/workspaces.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
+import 'package:api_caffeine/modules/workspaces/workspaces.dart';
 
 /// Shows [child] once the guest session and default workspace are ready;
 /// otherwise a loading or error state with a retry button.
@@ -21,7 +22,13 @@ class WorkspaceGate extends ConsumerWidget {
         message: error is Failure
             ? error.message
             : const UnexpectedFailure().message,
-        onRetry: () => ref.invalidate(currentWorkspaceProvider),
+        onRetry: () {
+          if (ref.read(sessionProvider).hasError) {
+            ref.invalidate(sessionProvider);
+          } else {
+            ref.invalidate(currentWorkspaceProvider);
+          }
+        },
       ),
     );
   }

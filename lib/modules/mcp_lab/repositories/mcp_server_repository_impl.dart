@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_server.dart';
 import 'mcp_server_repository.dart';

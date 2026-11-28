@@ -1,4 +1,4 @@
-# Test Point — Implementation Plan (MVP)
+# API Caffeine — Implementation Plan (MVP)
 
 _Status: Draft · Last updated: 2026-11-15_
 
@@ -39,7 +39,7 @@ Related docs:
 | D6  | Online-only for the MVP                                                                                                                                                                                   | No local cache; revisit PRD Q2 later.                                                                                                                                                                                                                                        |
 | D7  | **Continue with GitHub first links the identity to the guest user in place**                                                                                                                              | `auth.linkIdentity(OAuthProvider.github)` adds GitHub to the same anonymous user, so the user id, organization, workspace and data are kept. Needs manual identity linking enabled in Supabase.                                                                              |
 | D8  | **If that GitHub account already exists, warn, then sign in and discard the guest data**                                                                                                                  | Linking fails with `identity_already_exists`. If the guest has any collections, requests or environments, a confirm dialog says they will not be carried over; on confirm, `auth.signInWithOAuth(OAuthProvider.github)` loads that account's workspace. Merging is post-MVP. |
-| D9  | **Desktop OAuth returns through a custom URL scheme**                                                                                                                                                     | The browser opens GitHub's consent page and redirects to `testpoint://auth-callback`, which the app registers on Windows, macOS and Linux. The redirect URL is added to Supabase's allowed redirect list.                                                                    |
+| D9  | **Desktop OAuth returns through a custom URL scheme**                                                                                                                                                     | The browser opens GitHub's consent page and redirects to `api-caffeine://auth-callback`, which the app registers on Windows, macOS and Linux. The redirect URL is added to Supabase's allowed redirect list.                                                                    |
 | D10 | **MCP Lab uses `mcp_dart`** behind an `mcp_lab` repository contract                                                                                                                                       | The wrapper records every raw frame for the transcript and drives multi-round tool calls manually. Spec Q4.                                                                                                                                                                  |
 | D11 | **The MCP Lab server catalog is stored in Supabase, per workspace**                                                                                                                                       | Secret fields follow D5 (placeholders). Starting a stdio server needs per-device approval of the command (spec FR-SEC-04). Spec Q-DATA-1.                                                                                                                                    |
 
@@ -102,7 +102,7 @@ Auth settings in `supabase/config.toml` (and the same in the hosted project):
   from environment variables (`SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID`,
   `SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET`); never commit the secret. The GitHub OAuth app's callback URL is the
   Supabase `/auth/v1/callback` URL.
-- `[auth] additional_redirect_urls` includes `testpoint://auth-callback` (D9).
+- `[auth] additional_redirect_urls` includes `api-caffeine://auth-callback` (D9).
 - Email / password sign-in is not used by the app; the local dev account in
   `seed.sql` is only for tests and manual checks.
 
@@ -260,7 +260,7 @@ _Moved here from the former Phase 5b. Method changed from email / password to Gi
 - Clicking the avatar opens an **Account dialog** over the workspace (no route change).
 - **Guest** user: dialog with one **Continue with GitHub** button and the helper
   "Signing in with GitHub keeps your guest workspace." No tabs, no email or password fields.
-  1. **Link** (D7): `auth.linkIdentity(OAuthProvider.github, redirectTo: 'testpoint://auth-callback')`
+  1. **Link** (D7): `auth.linkIdentity(OAuthProvider.github, redirectTo: 'api-caffeine://auth-callback')`
      opens the browser; the dialog shows a **Waiting for GitHub** state with Cancel.
      When the redirect returns, the guest user now has a GitHub identity.
      Same user id, so all data is kept.
@@ -285,14 +285,14 @@ _Moved here from the former Phase 5b. Method changed from email / password to Gi
   GitHub states), `widgets/signed_in_dialog.dart` (account + Sign out) and
   `widgets/guest_data_warning_dialog.dart`, opened with `showDialog` from
   the avatar; dialogs use the 28px dialog shape. No route in `app/router/`.
-- Register the `testpoint://` URL scheme in the desktop runners:
+- Register the `api-caffeine://` URL scheme in the desktop runners:
   - **Windows (done):** `windows/runner/main.cpp` forwards the link to the
     running instance (`SendAppLinkToInstance`); `windows/register_url_scheme.ps1`
     writes the per-user registry keys for development builds (an installer must
     do the same for releases).
   - **macOS (done):** `CFBundleURLTypes` in `macos/Runner/Info.plist`. Not built or tested yet.
-  - **Linux (written, unbuilt):** `linux/testpoint.desktop` registers
-    `x-scheme-handler/testpoint`, and `linux/runner/my_application.cc` is now a
+  - **Linux (written, unbuilt):** `linux/com.example.api_caffeine.desktop` registers
+    `x-scheme-handler/api-caffeine`, and `linux/runner/my_application.cc` is now a
     unique `GApplication` that handles the command line (raises the running
     window on a second launch). Not built or tested yet; forwarding the link to
     Dart on a running instance still needs checking on Linux.
@@ -334,7 +334,7 @@ and sign out back to a fresh guest session.
   Shift 64 px; Enter or Home resets; tested).
 - Open: light-theme comparison with a Stitch light variant (only one early light screen
   exists; the Phase 7 audit reviewed the light captures instead); Linux runner for
-  `testpoint://` (written, not built); macOS and Linux builds; demo of US-1 to US-10 on
+  `api-caffeine://` (written, not built); macOS and Linux builds; demo of US-1 to US-10 on
   all three platforms.
 
 **Part B done when** all PRD MVP stories (US-1 to US-10) can be demonstrated on all
@@ -430,7 +430,7 @@ Build plan (S1 by layer, S2–S4 outline): [features/mcp-lab/implementation-plan
 
 **S3 — Interactions:** subscriptions, `listChanged`, progress, elicitation (form and URL), sampling, roots, MRTR, tasks, logs (pending-request dialogs only, Q9).
 
-**S4 — Test Point integration:** `{{variables}}`, tabs and status bar, saved MCP calls in collections, import/export of client configs. MCP Apps stay after S4 (Q8).
+**S4 — API Caffeine integration:** `{{variables}}`, tabs and status bar, saved MCP calls in collections, import/export of client configs. MCP Apps stay after S4 (Q8).
 
 **Tests** unit tests for the transport wrapper, launcher and services with a mocked `mcp_dart`; integration tests against **Dart** fixture servers (Q14); widget tests for the tool form and transcript; launch tests on Windows, macOS and Linux.
 

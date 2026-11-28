@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_protocol_models.dart';
 import '../repositories/mcp_resource_export_repository.dart';

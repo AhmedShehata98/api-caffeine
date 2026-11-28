@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/mcp_lab/services/mcp_output_diagnostics.dart';
+import 'package:api_caffeine/modules/mcp_lab/services/mcp_output_diagnostics.dart';
 
 void main() {
   const schema = {

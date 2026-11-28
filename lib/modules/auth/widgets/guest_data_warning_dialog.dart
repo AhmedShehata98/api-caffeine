@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:test_point/core/ui/widgets/confirm_dialog.dart';
+import 'package:api_caffeine/core/ui/widgets/confirm_dialog.dart';
 
 /// Warns that signing in to an existing GitHub account discards the guest's work.
 /// Returns true only if the user chose to sign in anyway.

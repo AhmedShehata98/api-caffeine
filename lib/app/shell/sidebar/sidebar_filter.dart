@@ -1,5 +1,5 @@
-import 'package:test_point/modules/collections/collections.dart';
-import 'package:test_point/modules/requests/requests.dart';
+import 'package:api_caffeine/modules/collections/collections.dart';
+import 'package:api_caffeine/modules/requests/requests.dart';
 
 /// A collection and the requests of it that should be shown.
 class SidebarGroup {

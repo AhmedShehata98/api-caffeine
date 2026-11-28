@@ -17,7 +17,7 @@ This tracks the complete feature, not just the latest change. Implementation fol
 | S1 integration and exit (§3.7) | Seven stdio + twenty HTTP groups and three 20 MiB binary transport/export checks pass on Windows; partial fixture matrix | Native large-result responsiveness, remaining protocol/fixture matrix, Windows early-parent descendant cleanup, macOS/Linux/manual checks, S1 acceptance exit |
 | S2 — remote auth | Blocked on Q13 | CIMD hosting URL, acceptance criteria, OAuth, callback, tokens, UI |
 | S3 — interactions | Not started | Acceptance criteria, subscriptions, progress, pending requests, MRTR, tasks, logs |
-| S4 — Test Point integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
+| S4 — API Caffeine integration | Not started | Acceptance criteria, variables, tabs/status, saved calls, import/export |
 
 Server management, Tools, Prompts, Resources and diagnostic monitors are accessible through the MCP Lab navigation item. No completion percentage is assigned:
 the remaining live-session and UI work is substantially larger than the completed scaffolding.

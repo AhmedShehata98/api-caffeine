@@ -4,7 +4,7 @@
 |---|---|
 | **Reviewed document** | [feature-specification.md](feature-specification.md) Draft v1.1 → updated to v1.2 |
 | **Date** | 2026-11-15 |
-| **Method** | The spec compared with the final MCP **2026-07-28** specification, the official MCP Inspector docs and roadmap, the Dart MCP packages, and the current Test Point codebase |
+| **Method** | The spec compared with the final MCP **2026-07-28** specification, the official MCP Inspector docs and roadmap, the Dart MCP packages, and the current API Caffeine codebase |
 | **Severity** | **High**: wrong behaviour, a security risk, or blocks implementation · **Med**: a missing requirement that users will hit · **Low**: polish, clarity or doc hygiene |
 
 ## Summary
@@ -14,7 +14,7 @@ The v1.1 spec copies the MCP Inspector faithfully. Most of its gaps are in five 
 - **A:** statements that the final 2026-07-28 spec made wrong or out of date (deprecations, tasks, subscriptions, OAuth registration);
 - **B:** protocol features that are missing entirely;
 - **C:** Flutter desktop and platform problems that the Inspector (Node/browser) never had to solve;
-- **D:** gaps in how MCP Lab fits Test Point's own product, data, auth and failure models;
+- **D:** gaps in how MCP Lab fits API Caffeine's own product, data, auth and failure models;
 - **E:** problems in the document itself.
 
 Spec v1.2 resolves every item marked **→ v1.2**. Items marked **→ follow-up** need a decision or work outside the spec.
@@ -31,7 +31,7 @@ Spec v1.2 resolves every item marked **→ v1.2**. Items marked **→ follow-up*
 | A4 | FR-RES-03 | Only describes `resources/subscribe`. In the modern era these calls are replaced by **`subscriptions/listen`** with opt-in filters and `notifications/subscriptions/acknowledged`. | High | → v1.2: split by era |
 | A5 | FR-TST-02 | `initialize` does not exist in the modern era (SEP-2575), where the probe is **`server/discover`**. `logging/setLevel` is legacy-only. The list also leaves out `resources/directory/read`, `skills/*` and `completion/complete`. | High | → v1.2 |
 | A6 | FR-TOL-07, FR-TSK-* | Tasks are now the `io.modelcontextprotocol/tasks` extension (SEP-2663). On modern servers **the server decides** when a call becomes a task, so "Run as task" is legacy-only. `tasks/list` and the blocking `tasks/result` are gone, and `tasks/update` is new. | Med | → v1.2 |
-| A7 | FR-AUT-02 | The suggestion to align with "custom-scheme patterns" mixes MCP OAuth (loopback, native-app pattern) with Test Point's Supabase GitHub deep link, which is a separate flow. | Low | → v1.2: loopback only; custom scheme dropped |
+| A7 | FR-AUT-02 | The suggestion to align with "custom-scheme patterns" mixes MCP OAuth (loopback, native-app pattern) with API Caffeine's Supabase GitHub deep link, which is a separate flow. | Low | → v1.2: loopback only; custom scheme dropped |
 | A8 | NFR-INT-04, FR-CFG-06 | Assumes every client config uses the `mcpServers` shape. **VS Code `.vscode/mcp.json` uses `servers` plus `inputs`** with `${input:…}` / `${env:…}` placeholders. | Med | → v1.2: per-client import adapters plus placeholder handling |
 | A9 | Appendix A | Uses `failure?.code` and `result.data!`, but `Failure` (`lib/core/error/failure.dart`) has **no `code`** field. | Med | → v1.2: the example uses `McpFailure.code` (see D4) |
 
@@ -75,11 +75,11 @@ Spec v1.2 resolves every item marked **→ v1.2**. Items marked **→ follow-up*
 | C8 | **SSE over Dio** needs `ResponseType.stream` and a line parser. Dio does not read `HTTPS_PROXY`/`NO_PROXY` itself. Whether the Settings proxy or the environment variables win is undefined. | Med | → v1.2 FR-CON-09 updated, Q12 |
 | C9 | **Transcript memory:** needs a bounded ring buffer, large bodies truncated with "load full", and parsing off the UI isolate, in line with the PRD's 5 MB rule. | Med | → v1.2 NFR-PRF-03 expanded |
 
-## D. Gaps in how MCP Lab fits Test Point
+## D. Gaps in how MCP Lab fits API Caffeine
 
 | # | Finding | Sev | Resolution |
 |---|---|---|---|
-| D1 | **Environments and `{{variables}}`:** nothing says whether variables resolve in server URLs, headers, args, env and tool arguments. This is Test Point's main advantage over the Inspector. | Med | → v1.2 §6.5, FR-TPI-01 |
+| D1 | **Environments and `{{variables}}`:** nothing says whether variables resolve in server URLs, headers, args, env and tool arguments. This is API Caffeine's main advantage over the Inspector. | Med | → v1.2 §6.5, FR-TPI-01 |
 | D2 | **Saved calls and history:** a tool call, prompt or resource read cannot be saved or replayed. This is the "organize" pillar from the PRD. | Med | → v1.2 FR-TPI-02/03 |
 | D3 | **Shell integration:** tabs, unsaved marker, status bar, environment dropdown and the number of concurrent connections are not defined. | Med | → v1.2 §6.5, FR-TPI-04/05 |
 | D4 | **Failure model:** `Failure` is sealed and has no `code`, but the spec needs stable codes. | High | → v1.2 §6.6 (module-local `McpFailure` carrying `code`) |
@@ -89,7 +89,7 @@ Spec v1.2 resolves every item marked **→ v1.2**. Items marked **→ follow-up*
 | D8 | **Guest and account rules:** what happens to the catalog and local secrets when a guest links GitHub, signs out or switches account (PRD §5.8)? | Med | → v1.2 FR-TPI-06 |
 | D9 | **Untrusted imports:** an import must never connect automatically. List every command it would spawn. Map `server.json` `packages` (npm, pypi, oci) and `remotes`. | High | → v1.2 FR-CFG-09/10 |
 | D10 | **Hidden text in tool and prompt descriptions:** zero-width or bidi Unicode, ANSI sequences or HTML. Render as plain text and highlight hidden characters. | Med | → v1.2 FR-SEC-05 |
-| D11 | **CIMD needs a public https client metadata document** that Test Point hosts. | Med | → v1.2 Q13 |
+| D11 | **CIMD needs a public https client metadata document** that API Caffeine hosts. | Med | → v1.2 Q13 |
 | D12 | **Sample servers on first run:** the Inspector's filesystem sample uses `/tmp`, which does not exist on Windows. Node or Python may not be installed. | Low | → v1.2 FR-CFG-07 updated |
 | D13 | **Test fixture runtime** not chosen: the Inspector's Node composable servers vs Dart fixtures. | Med | → v1.2 Q14 |
 | D14 | PRD §4/§5 and `IMPLEMENTATION_PLAN.md` don't mention MCP Lab. | Low | → follow-up |
@@ -122,7 +122,7 @@ Spec v1.2 resolves every item marked **→ v1.2**. Items marked **→ follow-up*
 - MCP spec — [2026-07-28 changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog) · [Release-candidate post](https://blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate/)
 - MCP Inspector — [Web client](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector/web) · [CLI client](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector/cli) · [Protocol eras](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector/protocol-eras) · [Security](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector/security) · [Roadmap 2026-H2](https://github.com/modelcontextprotocol/inspector/blob/HEAD/docs/inspector-roadmap-2026-h2.md)
 - Dart — [`mcp_dart`](https://pub.dev/packages/mcp_dart) · [`dart_mcp`](https://pub.dev/documentation/dart_mcp/latest/)
-- Test Point — `lib/core/error/failure.dart`, `lib/core/network/network_settings.dart`, `docs/DATA_MODEL.md`, `docs/PRD.md`
+- API Caffeine — `lib/core/error/failure.dart`, `lib/core/network/network_settings.dart`, `docs/DATA_MODEL.md`, `docs/PRD.md`
 
 ## 2026-11-16 high-priority readiness follow-up
 

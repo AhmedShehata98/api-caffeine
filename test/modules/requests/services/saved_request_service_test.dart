@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/requests/models/http_method.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/saved_request.dart';
-import 'package:test_point/modules/requests/repositories/saved_request_repository.dart';
-import 'package:test_point/modules/requests/services/saved_request_service.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/requests/models/http_method.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/saved_request.dart';
+import 'package:api_caffeine/modules/requests/repositories/saved_request_repository.dart';
+import 'package:api_caffeine/modules/requests/services/saved_request_service.dart';
 
 class MockSavedRequestRepository extends Mock
     implements SavedRequestRepository {}

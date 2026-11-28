@@ -4,12 +4,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/theme/app_fonts.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
-import 'package:test_point/core/ui/widgets/confirm_dialog.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
-import 'package:test_point/core/ui/widgets/resizable_split_pane.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/theme/app_fonts.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/widgets/confirm_dialog.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/core/ui/widgets/resizable_split_pane.dart';
 
 import '../models/mcp_server.dart';
 import '../models/mcp_diagnostics.dart';

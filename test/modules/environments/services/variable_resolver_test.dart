@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
 
 void main() {
   group('VariableResolver', () {

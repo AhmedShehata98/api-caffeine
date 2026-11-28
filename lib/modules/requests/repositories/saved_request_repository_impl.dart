@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:test_point/core/database/supabase_failure_mapper.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/requests/models/http_request_draft.dart';
-import 'package:test_point/modules/requests/models/saved_request.dart';
-import 'package:test_point/modules/requests/repositories/request_row_mapper.dart';
-import 'package:test_point/modules/requests/repositories/saved_request_repository.dart';
+import 'package:api_caffeine/core/database/supabase_failure_mapper.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/requests/models/http_request_draft.dart';
+import 'package:api_caffeine/modules/requests/models/saved_request.dart';
+import 'package:api_caffeine/modules/requests/repositories/request_row_mapper.dart';
+import 'package:api_caffeine/modules/requests/repositories/saved_request_repository.dart';
 
 class SavedRequestRepositoryImpl implements SavedRequestRepository {
   SavedRequestRepositoryImpl(this._client);

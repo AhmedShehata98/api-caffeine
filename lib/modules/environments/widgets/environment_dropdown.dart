@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/ui/theme/app_spacing.dart';
-import 'package:test_point/modules/environments/providers/environment_providers.dart';
+import 'package:api_caffeine/core/ui/theme/app_spacing.dart';
+import 'package:api_caffeine/modules/environments/providers/environment_providers.dart';
 
 /// Top-bar menu that picks the active environment.
 class EnvironmentDropdown extends ConsumerWidget {

@@ -3,7 +3,7 @@ import 'package:mcp_dart/mcp_dart.dart'
         latestInitializationProtocolVersion,
         legacyProtocolVersions,
         stableProtocolVersion;
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_diagnostics.dart';
 import '../models/mcp_failure.dart';

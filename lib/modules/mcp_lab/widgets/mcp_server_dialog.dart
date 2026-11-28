@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/core/ui/widgets/failure_snackbar.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/core/ui/widgets/failure_snackbar.dart';
 
 import '../models/mcp_server.dart';
 import '../models/mcp_launch_trust.dart';

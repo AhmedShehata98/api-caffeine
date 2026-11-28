@@ -12,7 +12,10 @@ abstract class HttpResponseResult with _$HttpResponseResult {
     required int sizeBytes,
     String? reason,
 
-    /// Indented JSON, set when the body is valid JSON.
+    /// Whether the original response bytes were valid UTF-8.
+    @Default(true) bool validUtf8,
+
+    /// Content-type-aware source, set when a Pretty view is available.
     String? prettyBody,
   }) = _HttpResponseResult;
 }

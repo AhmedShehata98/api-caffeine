@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:test_point/app/di/app_overrides.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/network/dio_provider.dart';
-import 'package:test_point/modules/settings/repositories/settings_repository_impl.dart';
-import 'package:test_point/modules/settings/services/settings_service.dart';
-import 'package:test_point/modules/settings/settings.dart';
+import 'package:api_caffeine/app/di/app_overrides.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/network/dio_provider.dart';
+import 'package:api_caffeine/modules/settings/repositories/settings_repository_impl.dart';
+import 'package:api_caffeine/modules/settings/services/settings_service.dart';
+import 'package:api_caffeine/modules/settings/settings.dart';
 
 import '../../support/fake_backend.dart';
 import '../../support/pump_app.dart';

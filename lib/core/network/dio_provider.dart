@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_point/core/network/network_settings.dart';
+import 'package:api_caffeine/core/network/network_settings.dart';
 
 /// Shared Dio client. 4xx/5xx responses are returned as normal responses so
 /// the response viewer can show them; only transport problems throw.

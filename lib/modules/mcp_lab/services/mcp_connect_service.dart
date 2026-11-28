@@ -1,5 +1,5 @@
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/core/error/result.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/core/error/result.dart';
 
 import '../models/mcp_failure.dart';
 import '../models/mcp_launch_trust.dart';

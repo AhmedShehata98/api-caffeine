@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:re_editor/re_editor.dart';
-import 'package:test_point/core/ui/widgets/code_view.dart';
+import 'package:api_caffeine/core/ui/widgets/code_view.dart';
 
 import '../models/mcp_protocol_models.dart';
 import '../services/mcp_resource_preview.dart';

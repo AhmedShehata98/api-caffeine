@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/failure.dart';
-import 'package:test_point/modules/environments/environments.dart';
-import 'package:test_point/modules/environments/services/environment_service.dart';
+import 'package:api_caffeine/core/error/failure.dart';
+import 'package:api_caffeine/modules/environments/environments.dart';
+import 'package:api_caffeine/modules/environments/services/environment_service.dart';
 
 import '../../../support/fake_backend.dart';
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/modules/auth/auth.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/modules/auth/auth.dart';
 
 import '../support/fake_backend.dart';
 import '../support/pump_app.dart';

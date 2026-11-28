@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/ui/theme/app_theme.dart';
-import 'package:test_point/core/ui/theme/http_colors.dart';
-import 'package:test_point/core/ui/widgets/method_pill.dart';
-import 'package:test_point/core/ui/widgets/status_chip.dart';
-import 'package:test_point/core/ui/widgets/variable_chip.dart';
+import 'package:api_caffeine/core/ui/theme/app_theme.dart';
+import 'package:api_caffeine/core/ui/theme/http_colors.dart';
+import 'package:api_caffeine/core/ui/widgets/method_pill.dart';
+import 'package:api_caffeine/core/ui/widgets/status_chip.dart';
+import 'package:api_caffeine/core/ui/widgets/variable_chip.dart';
 
 Widget _host(ThemeData theme, Widget child) => MaterialApp(
   theme: theme,

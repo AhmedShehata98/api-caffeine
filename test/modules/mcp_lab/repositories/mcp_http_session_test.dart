@@ -4,14 +4,14 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:test_point/core/error/result.dart';
-import 'package:test_point/modules/mcp_lab/mcp_lab.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_sanitizer.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_diagnostic_stream.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_rpc_diagnostics.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_frame_limits.dart';
-import 'package:test_point/modules/mcp_lab/repositories/mcp_sse_parser.dart';
+import 'package:api_caffeine/core/error/result.dart';
+import 'package:api_caffeine/modules/mcp_lab/mcp_lab.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_diagnostic_sanitizer.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_diagnostic_stream.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_http_connection_repository.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_rpc_diagnostics.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_frame_limits.dart';
+import 'package:api_caffeine/modules/mcp_lab/repositories/mcp_sse_parser.dart';
 
 class _Adapter implements HttpClientAdapter {
   final requests = <RequestOptions>[];
